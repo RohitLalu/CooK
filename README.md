@@ -1,2 +1,3 @@
-# go-go-Power-Rangers
-RiscV based SoC with Adaptive Filtering and FFT core designed to identify harmonics in Bench Power Supply
+# CooK - Cluster of On-chip Konnectivity
+
+NoC unit based on mesh topology including 3 PicoRV32 cores and 1 DMA/DDR4 engine along with on chip memory connected using AXI
