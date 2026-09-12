@@ -59,6 +59,10 @@ module link_buffer #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             out_valid_reg <= 1'b0;
+            out_type_reg  <= 2'b00;
+            out_dx_reg    <= {DX_W{1'b0}};
+            out_dy_reg    <= {DY_W{1'b0}};
+            out_data_reg  <= {DATA_W{1'b0}};
         end else if (in_ready) begin
             out_valid_reg <= in_valid;
             if (in_valid) begin
