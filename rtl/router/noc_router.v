@@ -30,6 +30,32 @@ module noc_router #(
     output wire [5*DATA_W-1:0]   out_data
   );
 
+
+  //
+  """
+  FIXING CONVENTION HERE:
+    Port order for every bus below: index 0=N, 1=S, 2=E, 3=W, 4=L
+    {same for out}
+    in_valid[0] -> N
+    in_valid[1] -> S
+    in_valid[2] -> E
+    in_valid[3] -> W
+    in_valid[4] -> L (to NI to PE)
+
+    in_ready[0] -> N
+    in_ready[1] -> S
+    in_ready[2] -> E
+    in_ready[3] -> W
+    in_ready[4] -> L (to NI to PE)
+
+    in_type[1:0] -> N
+    in_type[3:2] -> S
+    in_type[5:4] -> E
+    in_type[7:6] -> W
+    in_type[9:8] -> L (to NI to PE)
+
+
+  """
   localparam N = 0, S = 1, E = 2, W = 3, L = 4;
   localparam [1:0] BODY = 2'b00, HEAD = 2'b01, HEADTAIL = 2'b10, TAIL = 2'b11;
 
