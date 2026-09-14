@@ -1,3 +1,5 @@
+
+`include "/Users/hello.welcometothisdevice/CooK/rtl/router/noc_router.v"
 `timescale 1ns/1ps
 
 module tb_noc_router;
@@ -89,7 +91,8 @@ module tb_noc_router;
         repeat (3) @(posedge clk);
         rst_n = 1;
         @(posedge clk);
-
+        $dumpfile("/Users/hello.welcometothisdevice/CooK/sim/waveforms/noc_router.vcd");
+        $dumpvars(0,tb_noc_router);
         // Want output N: dx=0, dy=-1. Legal sources: S,E,W,L
         send_and_check(S, 0, -1, 8'hA1, N);
         send_and_check(E, 0, -1, 8'hA2, N);

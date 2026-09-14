@@ -13,7 +13,7 @@ VERILOG_SOURCES += $(PWD)/../rtl/router/noc_router.v
 TOPLEVEL = noc_router
 
 # The Python file (without .py) containing the @cocotb.test() functions.
-MODULE = test_router_pyuvm
+MODULE = test_router
 
 # Router parameters -- MUST be overridden here to match what the Python
 # testbench assumes, or the simulator silently uses noc_router.v's own
