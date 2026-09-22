@@ -4,13 +4,14 @@
 
 module tb_noc_router;
 
-    localparam DX_W = 4, DY_W = 4, DATA_W = 8;
+    localparam DX_W = 4, DY_W = 4, DATA_W = 8, ROUTER_CODE = 1, TOTAL_ROUTERS = 4;
     localparam N=0, S=1, E=2, W=3, L=4;
     localparam [1:0] BODY=2'b00, HEAD=2'b01, HEADTAIL=2'b10, TAIL=2'b11;
 
     reg clk = 0;
     reg rst_n = 0;
 
+    reg [$clog2(TOTAL_ROUTERS):0] in_router_code_flit = 3'd7;
     reg [4:0] in_valid = 5'b0;
     wire [4:0] in_ready;
     reg [9:0] in_type = 10'b0;
@@ -18,6 +19,7 @@ module tb_noc_router;
     reg [5*DY_W-1:0] in_dy = 0;
     reg [5*DATA_W-1:0] in_data = 0;
 
+    wire [$clog2(TOTAL_ROUTERS):0] out_router_code_flit = 3'd7;
     wire [4:0] out_valid;
     reg  [4:0] out_ready = 5'b11111;
     wire [9:0] out_type;
@@ -28,10 +30,12 @@ module tb_noc_router;
     integer errors = 0;
     integer tests  = 0;
 
-    noc_router #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W)) dut (
+    noc_router #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W),.ROUTER_CODE(ROUTER_CODE) .TOTAL_ROUTERS(TOTAL_ROUTERS)) dut (
         .clk(clk), .rst_n(rst_n),
+        .in_router_code_flit(in_router_code_flit),
         .in_valid(in_valid), .in_ready(in_ready), .in_type(in_type),
         .in_dx(in_dx), .in_dy(in_dy), .in_data(in_data),
+        .out_router_code_flit(out_router_code_flit),
         .out_valid(out_valid), .out_ready(out_ready), .out_type(out_type),
         .out_dx(out_dx), .out_dy(out_dy), .out_data(out_data)
     );
@@ -44,6 +48,7 @@ module tb_noc_router;
     // registered state itself can change ON that edge).
     task send_and_check;
         input [2:0] port;
+        input [$clog2(TOTAL_ROUTERS):0] router_code_flit;
         input signed [DX_W-1:0] dx;
         input signed [DY_W-1:0] dy;
         input [DATA_W-1:0] data;
@@ -51,6 +56,7 @@ module tb_noc_router;
         integer k;
         begin
             tests = tests + 1;
+            in_router_code_flit[$clog2(TOTAL_ROUTERS)*port +: $clog2(TOTAL_ROUTERS)] = router_code_flit;
             in_valid[port] = 1'b1;
             in_type[2*port +: 2] = HEADTAIL;
             in_dx[DX_W*port +: DX_W] = dx;
@@ -94,34 +100,34 @@ module tb_noc_router;
         $dumpfile("/Users/hello.welcometothisdevice/CooK/sim/waveforms/noc_router.vcd");
         $dumpvars(0,tb_noc_router);
         // Want output N: dx=0, dy=-1. Legal sources: S,E,W,L
-        send_and_check(S, 0, -1, 8'hA1, N);
-        send_and_check(E, 0, -1, 8'hA2, N);
-        send_and_check(W, 0, -1, 8'hA3, N);
-        send_and_check(L, 0, -1, 8'hA4, N);
+        send_and_check(S, 3'd1, 0, -1, 8'hA1, N);
+        send_and_check(E, 3'd1, 0, -1, 8'hA2, N);
+        send_and_check(W, 3'd1, 0, -1, 8'hA3, N);
+        send_and_check(L, 3'd1, 0, -1, 8'hA4, N);
 
         // Want output S: dx=0, dy=+1. Legal sources: N,E,W,L
-        send_and_check(N, 0, 1, 8'hB1, S);
-        send_and_check(E, 0, 1, 8'hB2, S);
-        send_and_check(W, 0, 1, 8'hB3, S);
-        send_and_check(L, 0, 1, 8'hB4, S);
+        send_and_check(N, 3'd1, 0, 1, 8'hB1, S);
+        send_and_check(E, 3'd1, 0, 1, 8'hB2, S);
+        send_and_check(W, 3'd1, 0, 1, 8'hB3, S);
+        send_and_check(L, 3'd1, 0, 1, 8'hB4, S);
 
         // Want output E: dx=+1. Legal sources: N,S,W,L
-        send_and_check(N, 1, 0, 8'hC1, E);
-        send_and_check(S, 1, 0, 8'hC2, E);
-        send_and_check(W, 1, 0, 8'hC3, E);
-        send_and_check(L, 1, 0, 8'hC4, E);
+        send_and_check(N, 3'd1, 1, 0, 8'hC1, E);
+        send_and_check(S, 3'd1, 1, 0, 8'hC2, E);
+        send_and_check(W, 3'd1, 1, 0, 8'hC3, E);
+        send_and_check(L, 3'd1, 1, 0, 8'hC4, E);
 
         // Want output W: dx=-1. Legal sources: N,S,E,L
-        send_and_check(N, -1, 0, 8'hD1, W);
-        send_and_check(S, -1, 0, 8'hD2, W);
-        send_and_check(E, -1, 0, 8'hD3, W);
-        send_and_check(L, -1, 0, 8'hD4, W);
+        send_and_check(N, 3'd1, -1, 0, 8'hD1, W);
+        send_and_check(S, 3'd1, -1, 0, 8'hD2, W);
+        send_and_check(E, 3'd1, -1, 0, 8'hD3, W);
+        send_and_check(L, 3'd1, -1, 0, 8'hD4, W);
 
         // Want output L (destination reached): dx=0, dy=0. Legal sources: N,S,E,W
-        send_and_check(N, 0, 0, 8'hE1, L);
-        send_and_check(S, 0, 0, 8'hE2, L);
-        send_and_check(E, 0, 0, 8'hE3, L);
-        send_and_check(W, 0, 0, 8'hE4, L);
+        send_and_check(N, 3'd1, 0, 0, 8'hE1, L);
+        send_and_check(S, 3'd1, 0, 0, 8'hE2, L);
+        send_and_check(E, 3'd1, 0, 0, 8'hE3, L);
+        send_and_check(W, 3'd1, 0, 0, 8'hE4, L);
 
         // Multi-flit packet: Head/Body/Tail from S toward N -- checks
         // wormhole route-holding (Body carries no routing info at all,
@@ -129,6 +135,7 @@ module tb_noc_router;
         // route genuinely releases after Tail, not just "looks released".
         begin : multi_flit_test
             tests = tests + 1;
+            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
             in_valid[S] = 1'b1;
             in_type[2*S +: 2] = HEAD;
             in_dx[DX_W*S +: DX_W] = 0;
@@ -168,6 +175,7 @@ module tb_noc_router;
             // not still stuck holding a route to N.
             tests = tests + 1;
             in_valid[S] = 1'b1;
+            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 1;
             in_dy[DY_W*S +: DY_W] = 0;
@@ -199,6 +207,7 @@ module tb_noc_router;
 
             tests = tests + 1;
             in_valid[S] = 1'b1;
+            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
             in_data[DATA_W*S +: DATA_W] = 8'h55;
@@ -300,6 +309,7 @@ module tb_noc_router;
             // flit must leave no residual state behind.
             tests = tests + 1;
             in_valid[S] = 1'b1;
+            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
             in_data[DATA_W*S +: DATA_W] = 8'h5A;
