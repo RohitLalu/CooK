@@ -1,11 +1,31 @@
 module ni #(
     parameter DX_W   = 4,
     parameter DY_W   = 4,
-    parameter DATA_W = 32
+    parameter DATA_W = 32,
+	parameter ROUTER_CODE = 1,
+    parameter TOTAL_ROUTERS = 4
 ) (
     input clk,
     input rst_n,
     //others
+	input wire [$clog2(TOTAL_ROUTERS)-1:0] in_router_code_flit,
+    input  wire in_valid,
+    output wire in_ready,
+    input  wire [1:0] in_type,
+    input  wire [DX_W-1:0] in_dx,
+    input  wire [DY_W-1:0] in_dy,
+    input  wire [DATA_W-1:0] in_data,
+
+    output wire [$clog2(TOTAL_ROUTERS)-1:0] out_router_code_flit,
+    output wire out_valid,
+    input  wire out_ready,
+    output wire [1:0] out_type,
+    output wire [DX_W-1:0] out_dx,
+    output wire [DY_W-1:0] out_dy,
+    output wire [DATA_W-1:0] out_data,
+
+    output wire correct_flit_check, // network interface sends signal to access router code
+    input wire [$clog2(TOTAL_ROUTERS):0] router_code
 );
     
 

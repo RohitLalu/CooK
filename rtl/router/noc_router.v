@@ -11,7 +11,7 @@ module noc_router #(
     parameter DY_W   = 4,
     parameter DATA_W = 32,
     parameter ROUTER_CODE = 1,
-    parameter TOTAL_ROUTERS = 4,
+    parameter TOTAL_ROUTERS = 4
   // DIFFERENT ROUTER CODE FOR EACH ROUTER (ONE CODE FOR ONE ROUTER - CORE) // ALSO ROUTER CODE IS CHECKED BY NETWORK INTERFACE
   )(
     input  wire                  clk,
@@ -77,9 +77,9 @@ module noc_router #(
   end
 
 
-  // ---------------------------------------------------------------
-  // Unpack the flattened input buses into per-port arrays
-  // ---------------------------------------------------------------
+
+  // unpack the flattened input buses into per-port arrays
+ 
   wire [1:0]             p_in_type [0:4];
   wire signed [DX_W-1:0] p_in_dx   [0:4];
   wire signed [DY_W-1:0] p_in_dy   [0:4];
@@ -96,9 +96,9 @@ module noc_router #(
     end
   endgenerate
 
-  // ---------------------------------------------------------------
+
   // Routing function: which output does (dx,dy) want? X first, then Y.
-  // ---------------------------------------------------------------
+
   function [2:0] route_of;
     input signed [DX_W-1:0] dx;
     input signed [DY_W-1:0] dy;
@@ -143,8 +143,7 @@ module noc_router #(
     end
   endfunction
 
-  // Candidate input for output `outp`, at rotation slot 0..3
-  // (the four ports other than outp itself -- no same-direction bounce-back)
+  // Candidate input for output `outp`, at rotation slot 0 to 3 (the four ports other than outp itself -- no same-direction bounce-back)
   function [2:0] cand_input;
     input [2:0] outp;
     input [1:0] slot;
@@ -209,9 +208,9 @@ module noc_router #(
     end
   endfunction
 
-  // ---------------------------------------------------------------
-  // Per-input route-hold state (wormhole-style)
-  // ---------------------------------------------------------------
+
+  // per-input route-hold state (wormhole-style)
+
   reg       route_active [0:4];
   reg [2:0] route_dest   [0:4];
 
@@ -255,9 +254,9 @@ module noc_router #(
     end
   end
 
-  // ---------------------------------------------------------------
+
   // Per-output round-robin arbitration among the 4 legal candidates
-  // ---------------------------------------------------------------
+
   reg [1:0] rr_ptr [0:4];
 
   reg [2:0] grant_input [0:4];
@@ -291,9 +290,9 @@ module noc_router #(
     end
   end
 
-  // ---------------------------------------------------------------
+
   // Crossbar: drive each output from its granted input
-  // ---------------------------------------------------------------
+
   reg [1:0]              p_out_type [0:4];
   reg signed [DX_W-1:0]  p_out_dx   [0:4];
   reg signed [DY_W-1:0]  p_out_dy   [0:4];
