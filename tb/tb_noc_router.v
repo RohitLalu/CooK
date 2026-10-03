@@ -11,7 +11,7 @@ module tb_noc_router;
     reg clk = 0;
     reg rst_n = 0;
 
-    reg [$clog2(TOTAL_ROUTERS):0] in_router_code_flit = 3'd7;
+    reg [5*($clog2(TOTAL_ROUTERS)+1)-1:0] in_router_code_flit = {5{3'd7}};
     reg [4:0] in_valid = 5'b0;
     wire [4:0] in_ready;
     reg [9:0] in_type = 10'b0;
@@ -19,18 +19,18 @@ module tb_noc_router;
     reg [5*DY_W-1:0] in_dy = 0;
     reg [5*DATA_W-1:0] in_data = 0;
 
-    wire [$clog2(TOTAL_ROUTERS):0] out_router_code_flit = 3'd7;
     wire [4:0] out_valid;
     reg  [4:0] out_ready = 5'b11111;
     wire [9:0] out_type;
     wire [5*DX_W-1:0] out_dx;
     wire [5*DY_W-1:0] out_dy;
     wire [5*DATA_W-1:0] out_data;
+    wire [5*($clog2(TOTAL_ROUTERS)+1)-1:0] out_router_code_flit;
 
     integer errors = 0;
     integer tests  = 0;
 
-    noc_router #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W),.ROUTER_CODE(ROUTER_CODE) .TOTAL_ROUTERS(TOTAL_ROUTERS)) dut (
+    noc_router #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W),.ROUTER_CODE(ROUTER_CODE), .TOTAL_ROUTERS(TOTAL_ROUTERS)) dut (
         .clk(clk), .rst_n(rst_n),
         .in_router_code_flit(in_router_code_flit),
         .in_valid(in_valid), .in_ready(in_ready), .in_type(in_type),
@@ -56,7 +56,7 @@ module tb_noc_router;
         integer k;
         begin
             tests = tests + 1;
-            in_router_code_flit[$clog2(TOTAL_ROUTERS)*port +: $clog2(TOTAL_ROUTERS)] = router_code_flit;
+            in_router_code_flit[($clog2(TOTAL_ROUTERS)+1)*port +: ($clog2(TOTAL_ROUTERS)+1)] = router_code_flit;
             in_valid[port] = 1'b1;
             in_type[2*port +: 2] = HEADTAIL;
             in_dx[DX_W*port +: DX_W] = dx;
@@ -135,7 +135,7 @@ module tb_noc_router;
         // route genuinely releases after Tail, not just "looks released".
         begin : multi_flit_test
             tests = tests + 1;
-            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
+            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
             in_valid[S] = 1'b1;
             in_type[2*S +: 2] = HEAD;
             in_dx[DX_W*S +: DX_W] = 0;
@@ -175,7 +175,7 @@ module tb_noc_router;
             // not still stuck holding a route to N.
             tests = tests + 1;
             in_valid[S] = 1'b1;
-            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
+            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 1;
             in_dy[DY_W*S +: DY_W] = 0;
@@ -207,7 +207,7 @@ module tb_noc_router;
 
             tests = tests + 1;
             in_valid[S] = 1'b1;
-            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
+            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
             in_data[DATA_W*S +: DATA_W] = 8'h55;
@@ -309,7 +309,7 @@ module tb_noc_router;
             // flit must leave no residual state behind.
             tests = tests + 1;
             in_valid[S] = 1'b1;
-            in_router_code_flit[S*$clog2(TOTAL_ROUTERS) +: $clog2(TOTAL_ROUTERS)] = 3'd1;
+            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
             in_type[2*S +: 2] = HEADTAIL;
             in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
             in_data[DATA_W*S +: DATA_W] = 8'h5A;

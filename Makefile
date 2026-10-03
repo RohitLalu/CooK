@@ -11,6 +11,8 @@ src = $(DIR)/rtl/*.v
 
 all: clean compile waveform
 
+all_router: clean compile_router vvp_router wv_router
+
 compile:
 	@echo "Compiling RTL files..."
 	@mkdir -p $(SIM_DIR)
@@ -18,7 +20,7 @@ compile:
 
 compile_router:
 	@echo "Compiling NOC Router files..."
-	@mkdir -p $(SIM_DIR)
+	@mkdir -p $(SIM_DIR)/build
 	@iverilog -o $(SIM_DIR)/build/noc_router.out $(DIR)/tb/tb_noc_router.v
 	@echo "Done compilation"
 
@@ -28,7 +30,6 @@ vvp_router:
 	@mkdir -p $(WV_DIR)
 	@vvp $(BUILD_DIR)/noc_router.out
 	@echo "Done vvp"
-
 
 wv_router:
 	@echo "Loading waveform"
@@ -42,7 +43,9 @@ compile_lb:
 
 clean:
 	@echo "Cleaning up..."
-	@rm -rf $(SIM_DIR)/build $(SIM_DIR)/waveforms
+	@clear
+
+# @rm -rf $(SIM_DIR)/build $(SIM_DIR)/waveforms
 
 waveform:
 	@echo "Generating waveform..."

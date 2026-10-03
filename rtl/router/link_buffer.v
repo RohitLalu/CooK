@@ -62,7 +62,7 @@ module link_buffer #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            out_router_code_flit_reg <=$clog2(TOTAL_ROUTERS){1'b1};
+            out_router_code_flit_reg <= {($clog2(TOTAL_ROUTERS)+1){1'b1}};
             out_valid_reg <= 1'b0;
             out_type_reg  <= 2'b00;
             out_dx_reg    <= {DX_W{1'b0}};

@@ -1,4 +1,3 @@
-
 // noc_router.v
 // 5-port NoC router: N, S, E, W, L (local / CR-facing).
 // Deterministic X-Y routing, wormhole-style route holding (Head
@@ -18,7 +17,7 @@ module noc_router #(
     input  wire                  rst_n,
 
     // Port order for every bus below: index 0=N, 1=S, 2=E, 3=W, 4=L (local)
-    input wire [5*$clog2(TOTAL_ROUTERS)-1:0] in_router_code_flit,
+    input wire [5*($clog2(TOTAL_ROUTERS)+1)-1:0] in_router_code_flit,
     input  wire [4:0]            in_valid,
     output wire [4:0]            in_ready,
     input  wire [9:0]            in_type,   // 2 bits per port
@@ -26,7 +25,7 @@ module noc_router #(
     input  wire [5*DY_W-1:0]     in_dy,
     input  wire [5*DATA_W-1:0]   in_data,
 
-    output wire [5*$clog2(TOTAL_ROUTERS)-1:0] out_router_code_flit,
+    output wire [5*($clog2(TOTAL_ROUTERS)+1)-1:0] out_router_code_flit,
     output wire [4:0]            out_valid,
     input  wire [4:0]            out_ready,
     output wire [9:0]            out_type,
@@ -35,12 +34,12 @@ module noc_router #(
     output wire [5*DATA_W-1:0]   out_data,
 
     input wire correct_flit_check, // network interface sends signal to access router code
-    output wire [$clog2(TOTAL_ROUTERS):0] router_code
+    output reg  [$clog2(TOTAL_ROUTERS):0] router_code
   );
 
 
   //
-  """
+  /*
   FIXING CONVENTION HERE:
     Port order for every bus below: index 0=N, 1=S, 2=E, 3=W, 4=L
     {same for out}
@@ -62,14 +61,14 @@ module noc_router #(
     in_type[7:6] -> W
     in_type[9:8] -> L (to NI to PE)
 
-  """
+  */
   localparam N = 0, S = 1, E = 2, W = 3, L = 4;
   localparam [1:0] BODY = 2'b00, HEAD = 2'b01, HEADTAIL = 2'b10, TAIL = 2'b11;
 
   integer i, j, s;
 
   always@(*)begin
-    if (correct_flit_check) & (in_ready[4]) begin
+    if (correct_flit_check && in_ready[4]) begin
       //send router code of currently held flit. NI performs check
       router_code = 0 ; //fill stuff here after flit is modified
     end
