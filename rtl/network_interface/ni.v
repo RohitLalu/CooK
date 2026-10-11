@@ -24,8 +24,9 @@ module ni #(
     output wire [DY_W-1:0] out_dy,
     output wire [DATA_W-1:0] out_data,
 
-    output wire correct_flit_check, // network interface sends signal to access router code
-    input wire [$clog2(TOTAL_ROUTERS):0] router_code
+	// NOT SURE IF NEEDED
+    // output wire correct_flit_check, // network interface sends signal to access router code
+    // input wire [$clog2(TOTAL_ROUTERS):0] router_code
 );
     
 

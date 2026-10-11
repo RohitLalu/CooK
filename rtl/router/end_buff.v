@@ -4,11 +4,13 @@ module end_buff #(
     parameter DX_W   = 4,
     parameter DY_W   = 4,
     parameter DATA_W = 32,
-    parameter ROUTER_CODE = 1,
     parameter TOTAL_ROUTERS = 4
 ) (
     input clk,
     input rst_n,
+
+// NO INPUTS FROM UPSTREAM: SO THAT BIST CAN IDENTIFY BROKEN LINK AND NEVER SEND DATA HERE
+
     output reg [$clog2(TOTAL_ROUTERS):0] out_router_code_flit,
     output reg  out_valid,
     output reg  out_ready,
