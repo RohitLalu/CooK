@@ -31,10 +31,7 @@ module noc_router #(
     output wire [9:0]            out_type,
     output wire [5*DX_W-1:0]     out_dx,
     output wire [5*DY_W-1:0]     out_dy,
-    output wire [5*DATA_W-1:0]   out_data,
-
-    input wire correct_flit_check, // network interface sends signal to access router code
-    output reg  [$clog2(TOTAL_ROUTERS):0] router_code
+    output wire [5*DATA_W-1:0]   out_data
   );
 
 
@@ -63,19 +60,14 @@ module noc_router #(
 
   */
   localparam N = 0, S = 1, E = 2, W = 3, L = 4;
+  // Source-tile tag carried alongside every flit. One code per tile plus an
+  // all-ones "no valid source" sentinel, which is why this is clog2+1 and not
+  // clog2. link_buffer, end_buff and ni must all use this same width.
+  localparam RC_W = $clog2(TOTAL_ROUTERS) + 1;
+  localparam [RC_W-1:0] RC_INVALID = {RC_W{1'b1}};
   localparam [1:0] BODY = 2'b00, HEAD = 2'b01, HEADTAIL = 2'b10, TAIL = 2'b11;
 
   integer i, j, s;
-
-  always@(*)begin
-    if (correct_flit_check && in_ready[4]) begin
-      //send router code of currently held flit. NI performs check
-      router_code = 0 ; //fill stuff here after flit is modified
-    end
-    else router_code = $clog2(TOTAL_ROUTERS); 
-  end
-
-
 
   // unpack the flattened input buses into per-port arrays
  
@@ -83,6 +75,7 @@ module noc_router #(
   wire signed [DX_W-1:0] p_in_dx   [0:4];
   wire signed [DY_W-1:0] p_in_dy   [0:4];
   wire [DATA_W-1:0]      p_in_data [0:4];
+  wire [RC_W-1:0]        p_in_rc   [0:4];
 
   genvar g;
   generate
@@ -92,6 +85,7 @@ module noc_router #(
       assign p_in_dx[g]   = in_dx[DX_W*g +: DX_W];
       assign p_in_dy[g]   = in_dy[DY_W*g +: DY_W];
       assign p_in_data[g] = in_data[DATA_W*g +: DATA_W];
+      assign p_in_rc[g]   = in_router_code_flit[RC_W*g +: RC_W];
     end
   endgenerate
 
@@ -296,6 +290,7 @@ module noc_router #(
   reg signed [DX_W-1:0]  p_out_dx   [0:4];
   reg signed [DY_W-1:0]  p_out_dy   [0:4];
   reg [DATA_W-1:0]       p_out_data [0:4];
+  reg [RC_W-1:0]         p_out_rc   [0:4];
 
   always @(*)
   begin
@@ -305,6 +300,7 @@ module noc_router #(
       begin
         p_out_type[j] = p_in_type[grant_input[j]];
         p_out_data[j] = p_in_data[grant_input[j]];
+        p_out_rc[j]   = p_in_rc[grant_input[j]];
         if (p_in_type[grant_input[j]] == HEAD || p_in_type[grant_input[j]] == HEADTAIL)
         begin
           p_out_dx[j] = next_dx(p_in_dx[grant_input[j]]);
@@ -322,6 +318,7 @@ module noc_router #(
         p_out_dx[j]   = {DX_W{1'b0}};
         p_out_dy[j]   = {DY_W{1'b0}};
         p_out_data[j] = {DATA_W{1'b0}};
+        p_out_rc[j]   = RC_INVALID;
       end
     end
   end
@@ -335,6 +332,7 @@ module noc_router #(
       assign out_dx[DX_W*g +: DX_W]       = p_out_dx[g];
       assign out_dy[DY_W*g +: DY_W]       = p_out_dy[g];
       assign out_data[DATA_W*g +: DATA_W] = p_out_data[g];
+      assign out_router_code_flit[RC_W*g +: RC_W] = p_out_rc[g];
     end
   endgenerate
 

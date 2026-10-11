@@ -1,78 +1,116 @@
+// tb_four_router.v
+// End-to-end baremetal test of the 2x2 tile mesh.
+//
+// Tile 0's core executes a real rv32i program that does a remote load from
+// tile 3's status register. The path exercised is:
+//
+//   tile0 core -> NI initiator -> r00 -E-> link_buffer -> r10 -S-> link_buffer
+//     -> r11 -L-> tile3 NI responder -> back the other way -> tile0 core
+//
+// Tile 3's core is only spinning: the responder lives in hardware, so a status
+// read is served whether or not the remote core is doing anything. That is the
+// property the availability scheme depends on.
+
 `timescale 1ns/1ps
-module tb_two_router;
+`include "rtl/integrated/four_router_config/four_router_top.v"
+
+module tb_four_router;
+
     localparam DX_W=4, DY_W=4, DATA_W=32;
-    localparam N=0, S=1, E=2, W=3, L=4;
-    localparam [1:0] HEADTAIL = 2'b10;
 
     reg clk = 0;
     reg rst_n = 0;
+    wire [3:0] tile_trap;
     always #5 clk = ~clk;
 
-    two_router_top #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W)) dut (
-        .clk(clk), .rst_n(rst_n)
+    four_router_top #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W)) dut (
+        .clk(clk), .rst_n(rst_n), .tile_trap(tile_trap)
     );
 
     integer errors = 0;
+    integer i;
+    integer cyc = 0;
+
+    // offset 0x100 is the first memory word -> array index 64
+    localparam TEXT_BASE = 64;
+    localparam RESULT_IX = 12'h200 >> 2;   // 128
+    localparam MARKER_IX = 12'h204 >> 2;   // 129
 
     initial begin
-        rst_n = 0;
-        // Drive R00's Local input to a known idle value before reset lifts
-        force dut.to_r00_in_valid[L] = 1'b0;
-        repeat (3) @(posedge clk);
+        // Zero every tile's memory so nothing fetches X, then load images.
+        for (i = 0; i < 1024; i = i + 1) begin
+            dut.r00_ni.mem[i] = 32'h0;
+            dut.r10_ni.mem[i] = 32'h0;
+            dut.r01_ni.mem[i] = 32'h0;
+            dut.r11_ni.mem[i] = 32'h0;
+        end
+        $readmemh("sw/tile0.hex", dut.r00_ni.mem, TEXT_BASE, TEXT_BASE+63);
+        $readmemh("sw/spin.hex",  dut.r10_ni.mem, TEXT_BASE, TEXT_BASE+63);
+        $readmemh("sw/spin.hex",  dut.r01_ni.mem, TEXT_BASE, TEXT_BASE+63);
+        $readmemh("sw/spin.hex",  dut.r11_ni.mem, TEXT_BASE, TEXT_BASE+63);
+
+        repeat (4) @(posedge clk);
         rst_n = 1;
-        @(posedge clk); #1;
+        $display("reset released; tile0 running a remote load from tile 3");
 
-        // Inject at R00's Local port: dx=0, dy=+1 (needs one hop south).
-        // Expect: R00 routes it out its South port, next_dy decrements
-        // to 0, it crosses r00_to_r01 (the real link_buffer), and
-        // arrives at R01's North input with dy now 0 and data intact.
-        force dut.to_r00_in_valid[L]              = 1'b1;
-        force dut.to_r00_in_type[2*L+1:2*L]        = HEADTAIL;
-        force dut.to_r00_in_dx[(L+1)*DX_W-1:L*DX_W] = 4'sd0;
-        force dut.to_r00_in_dy[(L+1)*DY_W-1:L*DY_W] = 4'sd1;
-        force dut.to_r00_in_data[(L+1)*DATA_W-1:L*DATA_W] = 32'hCAFEF00D;
-        #1;
-
-        if (!dut.to_r00_in_ready[L]) begin
-            $display("FAIL: R00 did not accept the injected flit at its Local port");
-            errors = errors + 1;
-        end else
-            $display("PASS: R00 accepted the flit at its Local port (wants South)");
-
-        @(posedge clk); #1;
-        force dut.to_r00_in_valid[L] = 1'b0;
-
-        // One cycle later, the link_buffer between r00 and r01 should be
-        // presenting the flit at r01's North input.
-        @(posedge clk); #1;
-
-        if (dut.to_r01_in_valid[N] &&
-            dut.to_r01_in_dx[(N+1)*DX_W-1:N*DX_W] === 4'sd0 &&
-            dut.to_r01_in_dy[(N+1)*DY_W-1:N*DY_W] === 4'sd0 &&
-            dut.to_r01_in_data[(N+1)*DATA_W-1:N*DATA_W] === 32'hCAFEF00D) begin
-            $display("PASS: flit crossed the real link -- arrived at r01's North input, dy correctly decremented 1->0, data intact");
-        end else begin
-            $display("FAIL: flit did not correctly arrive at r01 North (valid=%b dx=%0d dy=%0d data=%h)",
-                      dut.to_r01_in_valid[N],
-                      dut.to_r01_in_dx[(N+1)*DX_W-1:N*DX_W],
-                      dut.to_r01_in_dy[(N+1)*DY_W-1:N*DY_W],
-                      dut.to_r01_in_data[(N+1)*DATA_W-1:N*DATA_W]);
-            errors = errors + 1;
+        // Run until tile 0 writes its completion marker, or give up.
+        while (cyc < 4000 && dut.r00_ni.mem[MARKER_IX] !== 32'h0000C0DE) begin
+            @(posedge clk);
+            cyc = cyc + 1;
+            if (|tile_trap) begin
+                $display("FAIL: a core trapped (tile_trap=%b) at cycle %0d", tile_trap, cyc);
+                errors = errors + 1;
+                cyc = 4000;
+            end
         end
 
-        // Confirm r01 internally recognizes this as "destination reached"
-        // (dx=0,dy=0 -> wants its own Local port), even though nothing
-        // real is attached there yet to actually consume it.
-        if (dut.r01.want_out[N] === L && dut.r01.want_valid[N] === 1'b1)
-            $display("PASS: r01 correctly computes this flit now wants its own Local port (destination reached)");
-        else begin
-            $display("FAIL: r01 did not correctly recompute the route on arrival");
+        $display("");
+        if (dut.r00_ni.mem[MARKER_IX] !== 32'h0000C0DE) begin
+            $display("FAIL: program never completed (no marker after %0d cycles)", cyc);
+            $display("      tile0 err flags: timeout=%b illegal=%b",
+                     dut.r00_ni.err_timeout, dut.r00_ni.err_illegal);
             errors = errors + 1;
+        end else begin
+            $display("PASS: tile0 program completed in %0d cycles", cyc);
+
+            if (dut.r00_ni.mem[RESULT_IX] !== 32'd3) begin
+                $display("FAIL: remote read of tile3 status returned %0d, expected 3",
+                         dut.r00_ni.mem[RESULT_IX]);
+                errors = errors + 1;
+            end else
+                $display("PASS: remote read tile0 -> tile3 status register returned %0d",
+                         dut.r00_ni.mem[RESULT_IX]);
+
+            if (dut.r00_ni.mem[12'h208 >> 2] !== 32'hDEAD_BEEF) begin
+                $display("FAIL: out-of-window read returned %h, expected POISON DEADBEEF",
+                         dut.r00_ni.mem[12'h208 >> 2]);
+                errors = errors + 1;
+            end else
+                $display("PASS: out-of-window read returned POISON instead of hanging");
+
+            if (dut.r00_ni.mem[12'h20C >> 2] !== 32'd2) begin
+                $display("FAIL: error CSR read back %0d, expected 2 (illegal set, timeout clear)",
+                         dut.r00_ni.mem[12'h20C >> 2]);
+                errors = errors + 1;
+            end else
+                $display("PASS: error CSR reports illegal=1 timeout=0");
+
+            if (dut.r00_ni.err_timeout !== 1'b0) begin
+                $display("FAIL: timeout flag set on a healthy path");
+                errors = errors + 1;
+            end else
+                $display("PASS: no timeout on a healthy path");
+
+            if (|tile_trap) begin
+                $display("FAIL: tile_trap=%b", tile_trap);
+                errors = errors + 1;
+            end else
+                $display("PASS: no core trapped");
         end
 
         $display("----------------------------------------");
-        if (errors == 0) $display("ALL TESTS PASSED (%0d checks)", 3);
-        else $display("%0d FAILURES", errors);
+        if (errors == 0) $display("ALL TESTS PASSED");
+        else             $display("TOTAL: %0d errors", errors);
         $finish;
     end
 endmodule

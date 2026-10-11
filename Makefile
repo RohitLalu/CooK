@@ -1,53 +1,72 @@
+# All compiles run from the repo root with -I. so that every `include in the
+# RTL can use a path relative to the root. No absolute paths anywhere.
 
-DIR  = $(shell pwd)
-SIM_DIR = $(DIR)/sim
-BUILD_DIR = $(SIM_DIR)/build
-VCD_DIR = $(SIM_DIR)/vcd_files
-WV_DIR = $(SIM_DIR)/waveforms
+IV        = iverilog -g2012 -I.
+BUILD     = sim/build
+VCD       = sim/waveforms
 
-src = $(DIR)/rtl/*.v
+TB_ROUTER = tb/tb_noc_router.v
+TB_LB     = tb/tb_link_buffer.v
+TB_ADEC   = tb/tb_address_decoder.v
+TB_4R     = rtl/integrated/four_router_config/tb_four_router.v
 
-.phony: all clean compile waveform compile_router compile_lb vvp_router wv_router
+.PHONY: all test clean sw \
+        router link_buffer address_decoder four_router \
+        all_router vvp_router wv_router compile_router compile_lb waveform
 
-all: clean compile waveform
+# Run the whole regression suite.
+test: address_decoder link_buffer router four_router
+	@echo ""
+	@echo "=== all suites completed ==="
 
-all_router: clean compile_router vvp_router wv_router
+all: test
 
-compile:
-	@echo "Compiling RTL files..."
-	@mkdir -p $(SIM_DIR)
-	@iverilog -o $(SIM_DIR)/build/top.out $(DIR)/tb/tb_top.v
+$(BUILD):
+	@mkdir -p $(BUILD) $(VCD)
 
-compile_router:
-	@echo "Compiling NOC Router files..."
-	@mkdir -p $(SIM_DIR)/build
-	@iverilog -o $(SIM_DIR)/build/noc_router.out $(DIR)/tb/tb_noc_router.v
-	@echo "Done compilation"
+# ---- individual suites ----
 
-# need this vcd file to be in vcd_files folder
-vvp_router:
-	@echo "VVP router check"
-	@mkdir -p $(WV_DIR)
-	@vvp $(BUILD_DIR)/noc_router.out
-	@echo "Done vvp"
+address_decoder: | $(BUILD)
+	@echo "=== address_decoder ==="
+	@$(IV) -o $(BUILD)/adec.out $(TB_ADEC)
+	@vvp $(BUILD)/adec.out
 
-wv_router:
-	@echo "Loading waveform"
-	@gtkwave $(WV_DIR)/noc_router.vcd
+link_buffer: | $(BUILD)
+	@echo "=== link_buffer ==="
+	@$(IV) -o $(BUILD)/lb.out $(TB_LB)
+	@vvp $(BUILD)/lb.out
 
-compile_lb:
-	@echo "Compiling Link Buffer files..."
-	@mkdir -p $(SIM_DIR)
-	@iverilog -o $(SIM_DIR)/build/lb.out $(DIR)/tb/tb_link_buffer.v
-	@echo "Done compilation"
+router: | $(BUILD)
+	@echo "=== noc_router ==="
+	@$(IV) -o $(BUILD)/noc_router.out $(TB_ROUTER)
+	@vvp $(BUILD)/noc_router.out
+
+# Full 2x2 mesh: 4 picorv32 cores running real rv32i images.
+four_router: sw | $(BUILD)
+	@echo "=== four_router (baremetal, 4 cores) ==="
+	@$(IV) -o $(BUILD)/four_router.out $(TB_4R)
+	@vvp $(BUILD)/four_router.out
+
+# ---- software images ----
+
+sw: sw/tile0.hex sw/spin.hex
+
+sw/tile0.hex sw/spin.hex: sw/tile0.S sw/spin.S sw/build.sh
+	@echo "=== building baremetal images ==="
+	@sh sw/build.sh
+
+# ---- waveform ----
+
+wv_router: router
+	@gtkwave $(VCD)/noc_router.vcd
+
+# ---- backwards-compatible aliases for the old target names ----
+compile_router: router
+compile_lb:     link_buffer
+vvp_router:     router
+all_router:     router wv_router
+waveform:       wv_router
 
 clean:
-	@echo "Cleaning up..."
-	@clear
-
-# @rm -rf $(SIM_DIR)/build $(SIM_DIR)/waveforms
-
-waveform:
-	@echo "Generating waveform..."
-	@mkdir -p $(WV_DIR)
-	@vvp $(BUILD_DIR) -lxt2 
+	@rm -rf $(BUILD) $(VCD) sw/*.elf sw/*.bin sw/*.hex
+	@echo "cleaned"

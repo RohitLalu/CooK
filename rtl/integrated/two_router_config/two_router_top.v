@@ -1,8 +1,9 @@
 // TODO: REMOVE THE INCLUDE LINES WHEN NOT RUNNING IN YOUR MACHINE. I AM HARDCODING PATH FOR MYSLEF
 
-`include "/Users/hello.welcometothisdevice/CooK/rtl/router/noc_router.v"
-`include "/Users/hello.welcometothisdevice/CooK/rtl/router/link_buffer.v"
-`include "/Users/hello.welcometothisdevice/CooK/rtl/network_interface/ni.v"
+`include "rtl/router/noc_router.v"
+`include "rtl/router/link_buffer.v"
+`include "rtl/network_interface/address_decoder.v"
+`include "rtl/network_interface/ni.v"
 
 // TODO: need to add BIST module later once the single tile seems to work fine
 module two_router_top #(

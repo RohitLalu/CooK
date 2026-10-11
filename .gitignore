@@ -1,2 +1,13 @@
 __pycache__
 .DS_Store
+# build artifacts
+sim/build/
+sim/waveforms/
+*.vcd
+sw/*.elf
+sw/*.bin
+sw/*.hex
+cocotb/sim_build/
+cocotb/__pycache__/
+cocotb/results.xml
+.DS_Store

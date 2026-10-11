@@ -2,8 +2,8 @@
 // TODO: REMOVE THE INCLUDE LINES WHEN NOT RUNNING IN YOUR MACHINE. I AM HARDCODING PATH FOR MYSLEF
 
 `include "end_buff.v"
-`include "/Users/hello.welcometothisdevice/CooK/rtl/router/noc_router.v"
-`include "/Users/hello.welcometothisdevice/CooK/rtl/router/link_buffer.v"
+`include "rtl/router/noc_router.v"
+`include "rtl/router/link_buffer.v"
 
 
 // //TODO: NEED TO ADD NETWORK INTERFACE HERE

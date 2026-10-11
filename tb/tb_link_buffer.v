@@ -1,3 +1,4 @@
+`include "rtl/router/link_buffer.v"
 `timescale 1ns/1ps
 
 module tb_link_buffer;
