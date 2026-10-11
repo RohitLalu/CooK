@@ -44,3 +44,5 @@ always@(*) begin
         out_data = {DATA_W{1'b0}};
     end
 end
+
+endmodule

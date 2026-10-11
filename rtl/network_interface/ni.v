@@ -131,4 +131,23 @@ module ni #(
 	output reg [35:0] trace_data
 );
 
+
+always@(*) begin
+	if (in_valid && (in_router_code_flit == ROUTER_CODE)) begin
+		out_router_code_flit = in_router_code_flit;
+		out_valid = in_valid;
+		out_type = in_type;
+		out_dx = in_dx;
+		out_dy = in_dy;
+		out_data = in_data;
+	end else begin
+		out_router_code_flit = {($clog2(TOTAL_ROUTERS)){1'b1}};
+		out_valid = 1'b0;
+		out_type = 2'b00;
+		out_dx = {DX_W{1'b0}};
+		out_dy = {DY_W{1'b0}};
+		out_data = {DATA_W{1'b0}};
+	end
+end
+
 endmodule
