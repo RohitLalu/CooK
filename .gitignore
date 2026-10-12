@@ -10,4 +10,3 @@ sw/*.hex
 cocotb/sim_build/
 cocotb/__pycache__/
 cocotb/results.xml
-.DS_Store
