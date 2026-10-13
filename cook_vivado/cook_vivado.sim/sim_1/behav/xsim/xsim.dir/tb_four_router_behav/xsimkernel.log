@@ -2,3 +2,6 @@ Running: xsim.dir/tb_four_router_behav/xsimk.exe -simmode gui -wdb tb_four_route
 Design successfully loaded
 Design Loading Memory Usage: 11516 KB (Peak: 11516 KB)
 Design Loading CPU Usage: 15 ms
+Simulation completed
+Simulation Memory Usage: 14352 KB (Peak: 14352 KB)
+Simulation CPU Usage: 140 ms
