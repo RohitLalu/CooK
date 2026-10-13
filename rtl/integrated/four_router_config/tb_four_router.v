@@ -12,7 +12,7 @@
 // property the availability scheme depends on.
 
 `timescale 1ns/1ps
-`include "rtl/integrated/four_router_config/four_router_top.v"
+//`include "rtl/integrated/four_router_config/four_router_top.v"
 
 module tb_four_router;
 

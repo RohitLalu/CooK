@@ -1,5 +1,5 @@
 
-`include "rtl/router/noc_router.v"
+//`include "rtl/router/noc_router.v"
 `timescale 1ns/1ps
 
 module tb_noc_router;

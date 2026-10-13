@@ -11,7 +11,7 @@ module noc_router #(
     parameter DATA_W = 32,
     parameter ROUTER_CODE = 1,
     parameter TOTAL_ROUTERS = 4
-  // DIFFERENT ROUTER CODE FOR EACH ROUTER (ONE CODE FOR ONE ROUTER - CORE) // ALSO ROUTER CODE IS CHECKED BY NETWORK INTERFACE
+    // DIFFERENT ROUTER CODE FOR EACH ROUTER (ONE CODE FOR ONE ROUTER - CORE) // ALSO ROUTER CODE IS CHECKED BY NETWORK INTERFACE
   )(
     input  wire                  clk,
     input  wire                  rst_n,
@@ -70,7 +70,7 @@ module noc_router #(
   integer i, j, s;
 
   // unpack the flattened input buses into per-port arrays
- 
+
   wire [1:0]             p_in_type [0:4];
   wire signed [DX_W-1:0] p_in_dx   [0:4];
   wire signed [DY_W-1:0] p_in_dy   [0:4];
