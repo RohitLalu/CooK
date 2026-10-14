@@ -1,9 +1,9 @@
 # tile0.S -- orchestrator tile.
 #
-# 1. Remote read of tile 3's status register. Tile 3's NI answers in hardware,
+# 1. Remotea read of tile 3's status register. Tile 3's NI answers in hardware,
 #    so tile 3's core does not need to be running anything.
 # 2. Read of an address OUTSIDE the NoC window. This must come back as POISON
-#    with the illegal flag latched -- NOT a hang. This is the case that makes
+#    with the illegal flg latched -- NOT a hang. This is the case that makes
 #    picorv32's default STACKADDR (0xffff_ffff) survivable instead of fatal.
 # 3. Completion marker, then spin.
 #

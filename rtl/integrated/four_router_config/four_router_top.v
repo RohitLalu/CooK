@@ -2,12 +2,12 @@
 // there (the Makefile does this). No absolute paths -- they break on every
 // machine except the one that wrote them.
 
-`include "rtl/router/noc_router.v"
-`include "rtl/router/link_buffer.v"
-`include "rtl/router/end_buff.v"
-`include "rtl/network_interface/address_decoder.v"
-`include "rtl/network_interface/ni.v"
-`include "rtl/core/picorv32.v"
+//`include "rtl/router/noc_router.v"
+//`include "rtl/router/link_buffer.v"
+//`include "rtl/router/end_buff.v"
+//`include "rtl/network_interface/address_decoder.v"
+//`include "rtl/network_interface/ni.v"
+//`include "rtl/core/picorv32.v"
 
 // TODO: need to add BIST module later once the single tile seems to work fine
 

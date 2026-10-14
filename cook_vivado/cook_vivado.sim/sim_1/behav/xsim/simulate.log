@@ -1,0 +1,13 @@
+Time resolution is 1 ps
+WARNING: File sw/tile0.hex referenced on C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v at line 189 cannot be opened for reading. Please ensure that this file is available in the current working directory or parent directory of xsim.dir location specified via -xsimdir switch.
+WARNING: File sw/spin.hex referenced on C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v at line 189 cannot be opened for reading. Please ensure that this file is available in the current working directory or parent directory of xsim.dir location specified via -xsimdir switch.
+WARNING: File sw/spin.hex referenced on C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v at line 189 cannot be opened for reading. Please ensure that this file is available in the current working directory or parent directory of xsim.dir location specified via -xsimdir switch.
+WARNING: File sw/spin.hex referenced on C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v at line 189 cannot be opened for reading. Please ensure that this file is available in the current working directory or parent directory of xsim.dir location specified via -xsimdir switch.
+reset released; tile0 running a remote load from tile 3
+FAIL: a core trapped (tile_trap=1111) at cycle 8
+
+FAIL: program never completed (no marker after 4000 cycles)
+      tile0 err flags: timeout=0 illegal=0
+----------------------------------------
+TOTAL: 2 errors
+$finish called at time : 115 ns : File "C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/four_router_config/tb_four_router.v" Line 114

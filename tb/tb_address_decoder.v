@@ -4,7 +4,7 @@
 // that only show up once real baremetal software is running.
 
 `timescale 1ns/1ps
-`include "rtl/network_interface/address_decoder.v"
+//`include "rtl/network_interface/address_decoder.v"
 
 module tb_address_decoder;
 
