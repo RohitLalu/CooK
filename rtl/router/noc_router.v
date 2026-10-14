@@ -90,7 +90,7 @@ module noc_router #(
   endgenerate
 
 
-  // Routing function: which output does (dx,dy) want? X first, then Y.
+  // Routing function: X first, then Y.
 
   function [2:0] route_of;
     input signed [DX_W-1:0] dx;
@@ -351,9 +351,7 @@ module noc_router #(
   end
   assign in_ready = {ready_i[L], ready_i[W], ready_i[E], ready_i[S], ready_i[N]};
 
-  // ---------------------------------------------------------------
   // Sequential: route-hold state and round-robin pointers
-  // ---------------------------------------------------------------
   always @(posedge clk or negedge rst_n)
   begin
     if (!rst_n)
