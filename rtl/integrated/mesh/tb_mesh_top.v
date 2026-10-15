@@ -12,6 +12,9 @@
 //           S output dead -- no hang anywhere.
 // TEST = 2  bit-flip fault on the same link (2x2 only). Router 3 must flag a
 //           check-bit error on its N input; tile 0 again gets POISON.
+// TEST = 3  all-to-all self-check: every tile runs alltoall.S at once and
+//           tests every other tile (byte lanes, read-after-write, walking
+//           ones/zeros, remote instruction fetch). Any mesh size.
 //
 // Run with e.g.  iverilog -Ptb_mesh_top.TEST=1 ...
 
@@ -33,14 +36,14 @@ module tb_mesh_top;
 `endif
 
     localparam integer NT = `NOC_NUM_TILES;
-    localparam [4*NT-1:0] FAULT_MASK = (TEST == 0) ? {4*NT{1'b0}} : ({{(4*NT-1){1'b0}}, 1'b1} << (1*4 + 1));
+    localparam [4*NT-1:0] FAULT_MASK = (TEST != 1 && TEST != 2) ? {4*NT{1'b0}} : ({{(4*NT-1){1'b0}}, 1'b1} << (1*4 + 1));
     localparam integer    FAULT_MODE = (TEST == 2) ? 2 : 1;
 
     generate
         if (NT < 4) begin : tb_check_nt
             TB_ERROR_mesh_test_needs_at_least_4_tiles u_err ();
         end
-        if (TEST != 0 && (`NOC_MESH_X != 2 || `NOC_MESH_Y != 2)) begin : tb_check_fault
+        if ((TEST == 1 || TEST == 2) && (`NOC_MESH_X != 2 || `NOC_MESH_Y != 2)) begin : tb_check_fault
             TB_ERROR_fault_tests_assume_a_2x2_mesh u_err ();
         end
     endgenerate
@@ -49,46 +52,65 @@ module tb_mesh_top;
     reg rst_n = 0;
     always #5 clk = ~clk;
 
-    wire [NT-1:0]   tile_trap;
-    wire [NT*5-1:0] tile_err;
+    wire [NT-1:0]    tile_trap;
+    wire [NT*5-1:0]  tile_err;
+    wire [NT*32-1:0] tile_sw;
 
     mesh_top #(
         .LINK_FAULT_MASK(FAULT_MASK),
         .LINK_FAULT_MODE(FAULT_MODE)
     ) dut (
-        .clk(clk), .rst_n(rst_n), .tile_trap(tile_trap), .tile_err(tile_err)
+        .clk(clk), .rst_n(rst_n), .tile_trap(tile_trap), .tile_err(tile_err),
+        .tile_sw(tile_sw),
+        .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
+        .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt()
     );
 
-    // offset 0x100 is the first memory word -> array index 64
-    localparam TEXT_BASE = 64;
     localparam RESULT_IX = 12'h200 >> 2;
     localparam MARKER_IX = 12'h204 >> 2;
     localparam POISON_IX = 12'h208 >> 2;
     localparam ERRCSR_IX = 12'h20C >> 2;
     localparam SLOT_IX   = 12'h300 >> 2;
+    // alltoall.S result block
+    localparam A2A_ERR_IX    = 12'hF00 >> 2;
+    localparam A2A_MARK_IX   = 12'hF04 >> 2;
+    localparam A2A_CHECKS_IX = 12'hF08 >> 2;
+    localparam A2A_PER_TILE  = 74;
 
-    // ---- load images ----
+    // ---- load images (full-memory .mem files from sw/build.sh) ----
     genvar gt;
     generate
         for (gt = 0; gt < NT; gt = gt + 1) begin : load
-            integer w;
             initial begin
-                for (w = 0; w < (1 << (`NOC_OFFSET_BITS - 2)); w = w + 1)
-                    dut.g_tile[gt].u_ni.mem[w] = 32'h0;
-                if (gt == 0)
-                    $readmemh({SW_DIR, "tile0.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                if (TEST == 3)
+                    $readmemh({SW_DIR, "alltoall.mem"}, dut.g_tile[gt].u_ni.mem);
+                else if (gt == 0)
+                    $readmemh({SW_DIR, "tile0.mem"}, dut.g_tile[gt].u_ni.mem);
                 else if ((gt == 1 || gt == 2) && TEST == 0)
-                    $readmemh({SW_DIR, "hammer.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                    $readmemh({SW_DIR, "hammer.mem"}, dut.g_tile[gt].u_ni.mem);
                 else
-                    $readmemh({SW_DIR, "spin.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                    $readmemh({SW_DIR, "spin.mem"}, dut.g_tile[gt].u_ni.mem);
             end
+            // per-tile alltoall.S results, flattened so the checker can loop
+            assign a2a_mark[gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_MARK_IX];
+            assign a2a_err [gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_ERR_IX];
+            assign a2a_chk [gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_CHECKS_IX];
         end
     endgenerate
+
+    wire [NT*32-1:0] a2a_mark, a2a_err, a2a_chk;
+    integer ti;
+    reg     a2a_done;
+    always @(*) begin
+        a2a_done = 1'b1;
+        for (ti = 0; ti < NT; ti = ti + 1)
+            if (a2a_mark[ti*32 +: 32] !== 32'h0000C0DE) a2a_done = 1'b0;
+    end
 
     integer errors = 0;
     integer checks = 0;
     integer cyc = 0;
-    integer limit = 20000;
+    integer limit = 200000;
     reg     done;
 
     task check;
@@ -113,7 +135,7 @@ module tb_mesh_top;
         while (!done && cyc < limit) begin
             @(posedge clk);
             cyc = cyc + 1;
-            done = (dut.g_tile[0].u_ni.mem[MARKER_IX] === 32'h0000C0DE);
+            done = (TEST == 3) ? a2a_done : (dut.g_tile[0].u_ni.mem[MARKER_IX] === 32'h0000C0DE);
             if (TEST == 0)
                 done = done && (dut.g_tile[1].u_ni.mem[MARKER_IX] === 32'h0000C0DE)
                             && (dut.g_tile[2].u_ni.mem[MARKER_IX] === 32'h0000C0DE);
@@ -126,10 +148,28 @@ module tb_mesh_top;
 
         check(done, "all programs completed (no hang)");
         $display("      finished after %0d cycles", cyc);
-        check(dut.g_tile[0].u_ni.mem[POISON_IX] === `NOC_POISON_DATA,
-              "out-of-window read returned POISON instead of hanging");
+        if (TEST != 3)
+            check(dut.g_tile[0].u_ni.mem[POISON_IX] === `NOC_POISON_DATA,
+                  "out-of-window read returned POISON instead of hanging");
 
-        if (TEST == 0) begin
+        if (TEST == 3) begin
+            for (ti = 0; ti < NT; ti = ti + 1) begin
+                checks = checks + 1;
+                if (a2a_err[ti*32 +: 32] !== 0 ||
+                    a2a_chk[ti*32 +: 32] !== A2A_PER_TILE*(NT-1) ||
+                    tile_sw[ti*32 +: 32] !== (32'h600D0000 | A2A_PER_TILE*(NT-1))) begin
+                    errors = errors + 1;
+                    $display("FAIL: tile %0d: %0d errors, %0d checks, status %h",
+                             ti, a2a_err[ti*32 +: 32], a2a_chk[ti*32 +: 32], tile_sw[ti*32 +: 32]);
+                end
+            end
+            $display("%0s: every tile passed %0d checks against %0d other tiles",
+                     (errors == 0) ? "PASS" : "FAIL", A2A_PER_TILE, NT-1);
+            check(tile_err === {5*NT{1'b0}}, "no NI error flags on any tile");
+            check(dut.u_mesh.rt_drop_cnt === {8*NT{1'b0}}, "no router dropped anything");
+            check(dut.u_mesh.rt_out_dead === {5*NT{1'b0}}, "no output declared dead");
+            check(dut.u_mesh.rt_in_err === {5*NT*`NOC_E_W{1'b0}}, "no router error flags");
+        end else if (TEST == 0) begin
             check(dut.g_tile[0].u_ni.mem[RESULT_IX] === 32'd3, "tile0 remote read of tile3 ID returned 3");
             check(dut.g_tile[0].u_ni.mem[ERRCSR_IX] === 32'd2, "tile0 error CSR: illegal only");
             check(dut.g_tile[1].u_ni.mem[RESULT_IX] === 32'd48, "tile1 hammer sum = 48");

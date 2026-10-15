@@ -46,31 +46,41 @@ bonus milestone, not a requirement.
 | Router (crossbar, X-Y on absolute coordinates, **per-output wormhole lock**, whole-packet admission, same-cycle drop checks, poison TAILs, per-output watchdog, debug/BIST hooks) | `rtl/router/noc_router.v` | **Built and verified.** 159 directed checks + 2 cocotb tests |
 | Link buffer (multi-flit FIFO, registered ready, whole-packet room, fault injection) | `rtl/router/link_buffer.v` | **Built and verified.** 229 checks incl. randomized stalls |
 | Address decoder (absolute target coordinates) | `rtl/network_interface/address_decoder.v` | **Built and verified.** 17 tests, incl. out-of-window aliasing |
-| Network interface (initiator + responder + response queue + tags + timeout/retry + local mem + CSRs) | `rtl/network_interface/ni.v` | **Built, verified end-to-end** in the generated mesh |
+| Network interface (initiator + responder + response queue + tags + timeout/retry + block-RAM local memory with init file + CSRs) | `rtl/network_interface/ni.v` | **Built and verified.** 48 unit checks + every mesh test |
 | End terminator (`MODE`: healthy sink vs silent) | `rtl/router/end_buff.v` | **Built.** Used on every mesh-edge port |
-| **Generated mesh, one PicoRV32 per tile, real baremetal images** | `rtl/integrated/mesh/` | **Working.** 2×2 healthy with contention, silent-link fault, bit-flip fault, and 3×3 via knob override |
+| **Generated mesh, one PicoRV32 per tile, real baremetal images** | `rtl/integrated/mesh/` | **Working.** 2×2 healthy with contention, silent-link fault, bit-flip fault, all-to-all self-check on 2×2 and 3×3 |
+| **Nexys4 DDR board top** (MMCM to 50 MHz, reset synchronizer, blink-code and 7-segment status panel, constraints) | `rtl/board/` | **Built, simulated as built** (programs from init files, result read from LEDs). Not yet run through Vivado or on the board |
 | Hand-wired two- and four-router configs | `rtl/integrated/two_router_config/`, `four_router_config/` | **Legacy.** Superseded by the generated mesh; no longer compile against the new port lists |
-| Baremetal images | `sw/tile0.S`, `sw/spin.S`, `sw/hammer.S`, `sw/build.sh` | **Working.** rv32i, linked at 0x100; `hammer.S` is position independent |
+| Baremetal images | `sw/*.S`, `sw/build.sh` | **Working.** rv32i, linked at 0x100. `alltoall.S` and `hammer.S` are position and mesh-size independent. `build.sh` writes full-memory `.mem` images, plus `tileNN.mem` for the FPGA |
 | DMA engine, DDR/BRAM model, gateway tile | `rtl/dma_ddr/` | **Not started** |
 | BIST module | — | **Not started** |
 | 3-core single-bus baseline (Step 9) | `rtl/baseline/` | **Not started** |
 | cocotb / pyuvm router testbench | `cocotb/test_router.py`, `cocotb/noc_defs.py` | Working: 20/20 routing + no-interleave |
 
-Run everything with `make test`. `make synth_check` runs Yosys on the fabric and reports
-latches and logic loops (currently zero of both). `make cocotb` runs the pyuvm bench.
+Run everything with `make test` (12 suites). `make synth_check` runs Yosys on the fabric
+and reports latches and logic loops (currently zero of both). `make cocotb` runs the pyuvm
+bench. A Yosys `synth_xilinx` run of the whole board top maps every tile memory to one
+RAMB36 and uses roughly 11.6k LUTs and 6.6k flip-flops; Vivado timing is still to be run.
+
+> **Board status at a glance (Nexys4 DDR):**
+> LED[3:0] tile has an error · LED[7:4] tile software pass · LED[11:8] tile software fail ·
+> LED[12] 1 Hz heartbeat · LED[13] out of reset · LED[14] blinks tile+1 · LED[15] blinks the
+> error code · BTNC clears router error flags · 7-segment shows code, tile, and that tile's
+> status low half. Codes, highest priority first: 1 trap, 2 NI timeout, 3 check-bit error,
+> 4 poison received, 5 stale response, 6 router output dead, 7 watchdog fired, 8 router
+> input error, 9 software failure, 10 illegal address. Details in `rtl/board/status_panel.v`.
 
 > **Note:** `mesh_top` puts a core on every tile by default. `CORE_MASK` removes the core
 > from a tile without rewiring anything; tile 3 loses its core when the DMA/DDR gateway
 > lands, matching the thesis's own gateway routers.
 
-> **Vivado:** `cook_vivado/cook_vivado.xpr` lists only the current files. Design sources:
-> the two headers in `rtl/include` (also set as the Verilog include directory), router,
-> link buffer, end terminator, decoder, NI, picorv32, `noc_mesh` and `mesh_top` (synthesis
-> top). Simulation set `sim_1` runs `tb_mesh_top` (default), `tb_link_buffer` or
-> `tb_address_decoder`. Simulation set `sim_router` runs `tb_noc_router` with
-> `NOC_MESH_X=3`, `NOC_MESH_Y=3` defined, which that bench requires. `tb_mesh_top` finds the
-> `sw/*.hex` images from XSim's run directory automatically; run `sh sw/build.sh` first.
-> To run a fault test in XSim, add `-generic_top TEST=1` (or `2`) to the elaborate options.
+> **Vivado:** `cook_vivado/cook_vivado.xpr` targets `xc7a100tcsg324-1` (Nexys4 DDR) and
+> lists only the current files. Synthesis top: `nexys4ddr_top`, constraints
+> `rtl/board/nexys4ddr/nexys4ddr.xdc`, block-RAM images `sw/tile00..03.mem` (commit them, or
+> run `sh sw/build.sh`, before synthesis). Include directory: `rtl/include`. Simulation set
+> `sim_1`: `tb_mesh_top` (default; `-generic_top TEST=1|2|3` for the fault and all-to-all
+> modes), `tb_board`, `tb_ni`, `tb_status_panel`, `tb_link_buffer`, `tb_address_decoder`.
+> Simulation set `sim_router`: `tb_noc_router` with `NOC_MESH_X=3`, `NOC_MESH_Y=3`.
 
 ### Bugs found and fixed
 
@@ -198,7 +208,12 @@ the availability bitmap.
 
 CSRs: `0x000` tile ID (read-only), `0x004` error flags, write 1 to clear: bit 0 timeout
 (retries exhausted), bit 1 illegal address, bit 2 poison TAIL received, bit 3 stale
-response discarded, bit 4 check-bit error.
+response discarded, bit 4 check-bit error. `0x008` software status (read/write; upper half
+`0x600D` = pass, `0xFA11` = fail, shown on the board). `0x00C` number of tiles (read-only),
+so one binary adapts to any mesh size.
+
+Local memory is one true-dual-port block RAM per tile: the core on one port, the network
+on the other. `INIT_FILE` preloads it for the FPGA.
 
 `PROGADDR_RESET` for tile N is `(N<<12) + 0x100`.
 
@@ -338,17 +353,17 @@ line.
 9. **Memory protection — open.** Each tile's 4KB is shared between its own code/stack and
    what remote tiles may write. A remote tile can scribble on a local stack. Consider
    splitting into a local-only region and a small NoC-exposed mailbox.
-10. **Reset fanout — open.** `rst_n` is async-asserted with high fanout. The thesis itself
-   rejects a global reset for exactly this reason (*"impractical fanout and would not
-   arrive at all routers at the same time"*). Use a reset synchronizer with synchronous
-   de-assertion before FPGA bring-up.
+10. ~~**Reset fanout.**~~ **Resolved for bring-up.** The board top passes the reset button
+   and MMCM lock through `reset_sync` (asynchronous assert, synchronous de-assert), so every
+   flip-flop leaves reset on the same edge. Fanout is still high; Vivado replicates it if
+   timing needs.
 
 ---
 
 ## 7. Deliberately excluded
 
 - **Odd-Even (adaptive) routing** — better throughput under load, but real turn-restriction complexity for a benefit (load balancing) this project is not optimizing for.
-- **Software-based self-test** — its main benefit (no external ATE) is already true of the ping-pong BIST.
+- **Software-based self-test *of the network*** — its main benefit (no external ATE) is already true of the ping-pong BIST. Software self-test of the *cores* is a different job and is planned (`alltoall.S` is its first piece).
 - **Full distance-vector routing** — per-router tables, a neighbour-exchange protocol, and transient-loop risk during reconvergence. X-Y needs none of that and is loop-free by construction.
 
 ---
@@ -356,11 +371,10 @@ line.
 ## 8. Immediate next steps
 
 - Build the BIST module on the router debug hooks (`port_disable`, error flags, capture register); give debug access a path that does not depend on the fabric under test (serial ring or JTAG via BSCANE2)
-- Update the Vivado project to the generated mesh (see the note in §2)
+- Run Vivado synthesis and implementation for `nexys4ddr_top`; check timing at 50 MHz on the -1 part, then program the board and read the LEDs
 - Build the 3-core single-bus baseline in `rtl/baseline/` and collect M1–M5
 - Replace tile 3's core with the DMA/DDR gateway
 - Add the local-alias window (§6.8) so all tiles share one binary
-- Reset synchronizer before any FPGA run
 
 ---
 

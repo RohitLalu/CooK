@@ -21,10 +21,15 @@ RTL_NI     = rtl/network_interface/address_decoder.v rtl/network_interface/ni.v
 RTL_MESH   = rtl/integrated/mesh/noc_mesh.v rtl/integrated/mesh/mesh_top.v
 RTL_CORE   = rtl/core/picorv32.v
 RTL_ALL    = $(RTL_ROUTER) $(RTL_NI) $(RTL_MESH) $(RTL_CORE)
+RTL_BOARD  = rtl/board/reset_sync.v rtl/board/status_panel.v rtl/board/seven_seg.v \
+             rtl/board/nexys4ddr/nexys4ddr_top.v
 
 TB_ROUTER = tb/tb_noc_router.v
 TB_LB     = tb/tb_link_buffer.v
 TB_ADEC   = tb/tb_address_decoder.v
+TB_NI     = tb/tb_ni.v
+TB_PANEL  = tb/tb_status_panel.v
+TB_BOARD  = tb/tb_board.v
 TB_MESH   = rtl/integrated/mesh/tb_mesh_top.v
 
 # the router unit test needs a neighbour on every side of the DUT
@@ -32,11 +37,12 @@ ROUTER_DEFS = -DNOC_MESH_X=3 -DNOC_MESH_Y=3
 MESH_DEFS   ?=
 
 .PHONY: all test clean sw synth_check cocotb \
-        router link_buffer address_decoder mesh mesh_faults mesh_3x3 \
-        wv_router
+        router link_buffer address_decoder ni mesh mesh_faults mesh_3x3 \
+        alltoall alltoall_3x3 status_panel board wv_router
 
 # Run the whole regression suite.
-test: address_decoder link_buffer router mesh mesh_faults mesh_3x3
+test: address_decoder link_buffer router ni mesh mesh_faults mesh_3x3 \
+      alltoall alltoall_3x3 status_panel board
 	@echo ""
 	@echo "=== all suites completed ==="
 
@@ -62,6 +68,11 @@ router: | $(BUILD)
 	@$(call compile,noc_router,$(ROUTER_DEFS) $(TB_ROUTER) rtl/router/noc_router.v)
 	@$(call run,noc_router,FAIL|PASSED|TOTAL)
 
+ni: | $(BUILD)
+	@echo "=== network interface ==="
+	@$(call compile,ni,$(TB_NI) $(RTL_NI))
+	@$(call run,ni,FAIL|PASSED|TOTAL)
+
 # ---- full mesh, real picorv32 cores running baremetal images ----
 
 mesh: sw | $(BUILD)
@@ -83,6 +94,29 @@ mesh_3x3: sw | $(BUILD)
 	@$(call compile,mesh33,-DNOC_MESH_X=3 -DNOC_MESH_Y=3 -Ptb_mesh_top.TEST=0 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
 	@$(call run,mesh33,^mesh|FAIL|PASSED|TOTAL)
 
+# Every tile tests every other tile at once (alltoall.S).
+alltoall: sw | $(BUILD)
+	@echo "=== mesh, all-to-all self-check ==="
+	@$(call compile,a2a,$(MESH_DEFS) -Ptb_mesh_top.TEST=3 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
+	@$(call run,a2a,^mesh|FAIL|PASSED|TOTAL)
+
+alltoall_3x3: sw | $(BUILD)
+	@echo "=== mesh, all-to-all self-check, 3x3 ==="
+	@$(call compile,a2a33,-DNOC_MESH_X=3 -DNOC_MESH_Y=3 -Ptb_mesh_top.TEST=3 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
+	@$(call run,a2a33,^mesh|FAIL|PASSED|TOTAL)
+
+# ---- board top: status panel, then the whole Nexys4 DDR top from init files ----
+
+status_panel: | $(BUILD)
+	@echo "=== status panel (blink codes, priority, display) ==="
+	@$(call compile,panel,$(TB_PANEL) rtl/board/status_panel.v)
+	@$(call run,panel,FAIL|PASSED|TOTAL)
+
+board: sw | $(BUILD)
+	@echo "=== nexys4ddr_top, programs from tileNN.mem, read back from LEDs ==="
+	@$(call compile,board,-s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
+	@$(call run,board,FAIL|PASSED|TOTAL)
+
 # ---- synthesis sanity: no combinational loops, no latches ----
 
 synth_check: | $(BUILD)
@@ -98,9 +132,10 @@ cocotb:
 
 # ---- software images ----
 
-sw: sw/tile0.hex sw/spin.hex sw/hammer.hex
+SW_PROGS = tile0 spin hammer alltoall
+sw: $(SW_PROGS:%=sw/%.mem)
 
-sw/tile0.hex sw/spin.hex sw/hammer.hex: sw/tile0.S sw/spin.S sw/hammer.S sw/build.sh
+$(SW_PROGS:%=sw/%.mem): $(SW_PROGS:%=sw/%.S) sw/build.sh
 	@echo "=== building baremetal images ==="
 	@sh sw/build.sh
 
@@ -110,5 +145,5 @@ wv_router: router
 	@gtkwave $(VCD)/noc_router.vcd
 
 clean:
-	@rm -rf $(BUILD) $(VCD) sw/*.elf sw/*.bin sw/*.hex
+	@rm -rf $(BUILD) $(VCD) sw/*.elf sw/*.bin
 	@echo "cleaned"

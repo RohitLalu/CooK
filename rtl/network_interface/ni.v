@@ -41,6 +41,16 @@
 //   set. The NI discards the partial packet and sets a sticky flag; the
 //   requester's timeout then retries.
 //
+// LOCAL MEMORY = ONE TRUE-DUAL-PORT BLOCK RAM
+//   Port A belongs to the core, port B to the network. Each port is written
+//   in its own always block in the exact shape of Vivado's byte-write
+//   true-dual-port template (UG901), so it maps onto block RAM instead of
+//   thousands of flip-flops. Reads are synchronous: data appears the cycle
+//   after the address, which the core path (C_LOCAL) and the remote-read
+//   path (rd_pend) both wait for. CSRs are registers, not RAM.
+//   INIT_FILE, when not "none", preloads the RAM from a $readmemh file at
+//   synthesis and in simulation; that is how the FPGA gets its program.
+//
 // ADDRESS MAP within a tile's region:
 //   0x000         tile ID (read-only)
 //   0x004         error flags, write 1 to clear:
@@ -49,7 +59,12 @@
 //                   bit 2 poison TAIL received
 //                   bit 3 stale or unexpected response discarded
 //                   bit 4 check-bit error on a received flit
-//   0x008..0x0FF  reserved CSRs (read 0)
+//   0x008         software status (read/write, byte strobes honoured). Not
+//                 interpreted by hardware; exported on sw_status so the board
+//                 can display self-test results.
+//   0x00C         number of tiles in the mesh (read-only), so one binary can
+//                 adapt to any mesh size
+//   0x010..0x0FF  reserved CSRs (read 0)
 //   0x100..       local memory
 //   PROGADDR_RESET for tile N must therefore be (N << NOC_OFFSET_BITS) + 0x100.
 
@@ -61,7 +76,8 @@ module ni #(
     parameter integer TIMEOUT_CYCLES = 1024,
     parameter integer RETRY_MAX      = 2,
     parameter integer RSP_Q_DEPTH    = `NOC_NUM_TILES,
-    parameter [31:0]  POISON         = `NOC_POISON_DATA
+    parameter [31:0]  POISON         = `NOC_POISON_DATA,
+    parameter         INIT_FILE      = "none"
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -86,8 +102,9 @@ module ni #(
     input  wire                   out_ready,
     output reg  [`NOC_FLIT_W-1:0] out_flit,
 
-    // ---- status, same bits as CSR 0x004 ----
-    output wire [4:0]             err_flags
+    // ---- status ----
+    output wire [4:0]             err_flags,   // same bits as CSR 0x004
+    output wire [31:0]            sw_status    // CSR 0x008
 );
 
 `include "noc_funcs.vh"
@@ -99,10 +116,13 @@ module ni #(
     localparam TW  = `NOC_TAG_W;
     localparam OB  = `NOC_OFFSET_BITS;
     localparam DW  = `NOC_DATA_W;
-    localparam MEM_WORDS = 1 << (OB - 2);
+    localparam AW  = OB - 2;                     // word address width
+    localparam MEM_WORDS = 1 << AW;
     localparam [OB-1:0] CSR_LIMIT = 'h100;
     localparam [OB-1:0] CSR_ID    = 'h000;
     localparam [OB-1:0] CSR_ERR   = 'h004;
+    localparam [OB-1:0] CSR_SW    = 'h008;
+    localparam [OB-1:0] CSR_NT    = 'h00C;
     localparam [1:0] T_BODY = `NOC_T_BODY, T_HEAD = `NOC_T_HEAD,
                      T_HEADTAIL = `NOC_T_HEADTAIL, T_TAIL = `NOC_T_TAIL;
     localparam [`NOC_LEN_W-1:0] LEN_2FLIT = 1;    // length-1 for HEAD+TAIL
@@ -154,15 +174,24 @@ module ni #(
     );
 
     // ---------------------------------------------------------------
-    // Local memory + CSRs
+    // CSRs
     // ---------------------------------------------------------------
-    reg [31:0] mem [0:MEM_WORDS-1];
-    reg [31:0] loc_rdata;
     reg        err_timeout, err_illegal, err_poison, err_stale, err_chk;
+    reg [31:0] sw_reg;
     wire [4:0] err_vec = {err_chk, err_stale, err_poison, err_illegal, err_timeout};
     assign err_flags = err_vec;
+    assign sw_status = sw_reg;
 
-    wire [OB-3:0] core_widx = ad_off[OB-1:2];
+    // CSR read value for an offset below CSR_LIMIT
+    function [31:0] csr_read;
+        input [OB-1:0] off;
+        begin
+            csr_read = (off == CSR_ID)  ? MY_ID :
+                       (off == CSR_ERR) ? {27'b0, err_vec} :
+                       (off == CSR_SW)  ? sw_reg :
+                       (off == CSR_NT)  ? `NOC_NUM_TILES : 32'b0;
+        end
+    endfunction
 
     // ---------------------------------------------------------------
     // Receive side: capture HEAD then TAIL into one pending packet
@@ -199,6 +228,14 @@ module ni #(
     wire rq_full  = (rq_cnt == RSP_Q_DEPTH);
     reg  rq_push, rq_pop;
 
+    // a remote read accepted last cycle, waiting for the RAM's read data
+    reg          rd_pend;
+    reg          rd_is_mem;
+    reg [IW-1:0] rd_dst;
+    reg [TW-1:0] rd_tag;
+    reg [OB-1:0] rd_off;
+    reg [31:0]   rd_csr;
+
     // ---------------------------------------------------------------
     // Transmit side
     // ---------------------------------------------------------------
@@ -215,46 +252,108 @@ module ni #(
     reg [RW-1:0]  retry_cnt;
     reg [TW-1:0]  cur_tag;      // tag of the attempt currently in flight
     reg [IW-1:0]  req_tgt;      // tile that attempt was sent to
+    reg           loc_from_mem; // C_LOCAL: answer comes from RAM port A
+    reg [31:0]    loc_csr;      // C_LOCAL: answer when it is a CSR
 
     wire tx_take_req = (tx_state == TX_IDLE) && rq_empty && (c_state == C_REQ);
     // the response we are waiting for is in the receive register this cycle
     wire rsp_match   = rx_have && rx_is_resp && (c_state == C_WAIT) &&
                        (rx_src == req_tgt) && (rx_tag == cur_tag);
 
-    integer k;
+    // ---------------------------------------------------------------
+    // Local RAM, true dual port
+    // ---------------------------------------------------------------
+    reg [31:0] mem [0:MEM_WORDS-1];
 
+    generate
+        if (INIT_FILE != "none") begin : g_init
+            initial $readmemh(INIT_FILE, mem);
+        end
+    endgenerate
+
+    wire core_new  = (c_state == C_IDLE) && mem_valid && !mem_ready;
+    wire core_lmem = core_new && !ad_illegal && ad_local && (ad_off >= CSR_LIMIT);
+
+    // port A: core
+    wire          a_en    = core_lmem;
+    wire [3:0]    a_we    = core_lmem ? mem_wstrb : 4'b0;
+    wire [AW-1:0] a_addr  = ad_off[OB-1:2];
+    wire [31:0]   a_wdata = mem_wdata;
+    reg  [31:0]   a_rdata;
+
+    // port B: network (remote write, or remote read accepted this cycle)
+    wire net_req  = rx_have && !rx_is_resp;
+    wire b_wr     = net_req && rx_is_write && (rx_off >= CSR_LIMIT);
+    wire b_rd     = net_req && !rx_is_write && !rq_full && !rd_pend;
+    wire          b_en    = b_wr || b_rd;
+    wire [3:0]    b_we    = b_wr ? rx_wstrb : 4'b0;
+    wire [AW-1:0] b_addr  = rx_off[OB-1:2];
+    wire [31:0]   b_wdata = rx_data;
+    reg  [31:0]   b_rdata;
+
+    always @(posedge clk) begin
+        if (a_en) begin
+            if (a_we[0]) mem[a_addr][ 7: 0] <= a_wdata[ 7: 0];
+            if (a_we[1]) mem[a_addr][15: 8] <= a_wdata[15: 8];
+            if (a_we[2]) mem[a_addr][23:16] <= a_wdata[23:16];
+            if (a_we[3]) mem[a_addr][31:24] <= a_wdata[31:24];
+            a_rdata <= mem[a_addr];
+        end
+    end
+
+    always @(posedge clk) begin
+        if (b_en) begin
+            if (b_we[0]) mem[b_addr][ 7: 0] <= b_wdata[ 7: 0];
+            if (b_we[1]) mem[b_addr][15: 8] <= b_wdata[15: 8];
+            if (b_we[2]) mem[b_addr][23:16] <= b_wdata[23:16];
+            if (b_we[3]) mem[b_addr][31:24] <= b_wdata[31:24];
+            b_rdata <= mem[b_addr];
+        end
+    end
+
+    // ---------------------------------------------------------------
+    // Control
+    // ---------------------------------------------------------------
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            mem_ready   <= 1'b0;
-            mem_rdata   <= 32'b0;
-            loc_rdata   <= 32'b0;
-            out_valid   <= 1'b0;
-            out_flit    <= {FW{1'b0}};
-            rx_have     <= 1'b0;
-            rx_in_pkt   <= 1'b0;
-            rx_src      <= {IW{1'b0}};
-            rx_tag      <= {TW{1'b0}};
-            rx_is_resp  <= 1'b0;
-            rx_is_write <= 1'b0;
-            rx_wstrb    <= 4'b0;
-            rx_off      <= {OB{1'b0}};
-            rx_data     <= 32'b0;
-            rq_wp       <= {QW{1'b0}};
-            rq_rp       <= {QW{1'b0}};
-            rq_cnt      <= {(QW+1){1'b0}};
-            tx_state    <= TX_IDLE;
-            tx_head     <= {FW{1'b0}};
-            tx_tail     <= {FW{1'b0}};
-            c_state     <= C_IDLE;
-            timeout_cnt <= {TOW{1'b0}};
-            retry_cnt   <= {RW{1'b0}};
-            cur_tag     <= {TW{1'b0}};
-            req_tgt     <= {IW{1'b0}};
-            err_timeout <= 1'b0;
-            err_illegal <= 1'b0;
-            err_poison  <= 1'b0;
-            err_stale   <= 1'b0;
-            err_chk     <= 1'b0;
+            mem_ready    <= 1'b0;
+            mem_rdata    <= 32'b0;
+            loc_from_mem <= 1'b0;
+            loc_csr      <= 32'b0;
+            out_valid    <= 1'b0;
+            out_flit     <= {FW{1'b0}};
+            rx_have      <= 1'b0;
+            rx_in_pkt    <= 1'b0;
+            rx_src       <= {IW{1'b0}};
+            rx_tag       <= {TW{1'b0}};
+            rx_is_resp   <= 1'b0;
+            rx_is_write  <= 1'b0;
+            rx_wstrb     <= 4'b0;
+            rx_off       <= {OB{1'b0}};
+            rx_data      <= 32'b0;
+            rq_wp        <= {QW{1'b0}};
+            rq_rp        <= {QW{1'b0}};
+            rq_cnt       <= {(QW+1){1'b0}};
+            rd_pend      <= 1'b0;
+            rd_is_mem    <= 1'b0;
+            rd_dst       <= {IW{1'b0}};
+            rd_tag       <= {TW{1'b0}};
+            rd_off       <= {OB{1'b0}};
+            rd_csr       <= 32'b0;
+            tx_state     <= TX_IDLE;
+            tx_head      <= {FW{1'b0}};
+            tx_tail      <= {FW{1'b0}};
+            c_state      <= C_IDLE;
+            timeout_cnt  <= {TOW{1'b0}};
+            retry_cnt    <= {RW{1'b0}};
+            cur_tag      <= {TW{1'b0}};
+            req_tgt      <= {IW{1'b0}};
+            err_timeout  <= 1'b0;
+            err_illegal  <= 1'b0;
+            err_poison   <= 1'b0;
+            err_stale    <= 1'b0;
+            err_chk      <= 1'b0;
+            sw_reg       <= 32'b0;
         end else begin
             mem_ready <= 1'b0;      // single-cycle ack by default
             rq_push    = 1'b0;
@@ -310,38 +409,48 @@ module ni #(
                     end
                     rx_have <= 1'b0;
                 end else if (rx_is_write) begin
-                    // remote write into our memory (posted: no response owed)
-                    if (rx_off >= CSR_LIMIT) begin
-                        if (rx_wstrb[0]) mem[rx_off[OB-1:2]][ 7: 0] <= rx_data[ 7: 0];
-                        if (rx_wstrb[1]) mem[rx_off[OB-1:2]][15: 8] <= rx_data[15: 8];
-                        if (rx_wstrb[2]) mem[rx_off[OB-1:2]][23:16] <= rx_data[23:16];
-                        if (rx_wstrb[3]) mem[rx_off[OB-1:2]][31:24] <= rx_data[31:24];
-                    end else if (rx_off == CSR_ERR) begin
+                    // remote write (posted: no response owed). RAM offsets go
+                    // through port B (b_wr); CSRs are handled here.
+                    if (rx_off == CSR_ERR) begin
                         if (rx_data[0]) err_timeout <= 1'b0;
                         if (rx_data[1]) err_illegal <= 1'b0;
                         if (rx_data[2]) err_poison  <= 1'b0;
                         if (rx_data[3]) err_stale   <= 1'b0;
                         if (rx_data[4]) err_chk     <= 1'b0;
+                    end else if (rx_off == CSR_SW) begin
+                        if (rx_wstrb[0]) sw_reg[ 7: 0] <= rx_data[ 7: 0];
+                        if (rx_wstrb[1]) sw_reg[15: 8] <= rx_data[15: 8];
+                        if (rx_wstrb[2]) sw_reg[23:16] <= rx_data[23:16];
+                        if (rx_wstrb[3]) sw_reg[31:24] <= rx_data[31:24];
                     end
                     rx_have <= 1'b0;
-                end else if (!rq_full) begin
-                    // remote read: queue the response, keep the receive side free
-                    rq_dst[rq_wp]  <= rx_src;
-                    rq_tag[rq_wp]  <= rx_tag;
-                    rq_off[rq_wp]  <= rx_off;
-                    rq_data[rq_wp] <= (rx_off == CSR_ID)  ? MY_ID :
-                                      (rx_off == CSR_ERR) ? {27'b0, err_vec} :
-                                      (rx_off >= CSR_LIMIT) ? mem[rx_off[OB-1:2]] : 32'b0;
-                    rq_wp   <= (rq_wp == RSP_Q_DEPTH-1) ? {QW{1'b0}} : rq_wp + 1'b1;
-                    rq_push  = 1'b1;
-                    rx_have <= 1'b0;
+                end else if (b_rd) begin
+                    // remote read: RAM read issued on port B this cycle; the
+                    // response is queued next cycle when the data is out
+                    rd_pend   <= 1'b1;
+                    rd_is_mem <= (rx_off >= CSR_LIMIT);
+                    rd_dst    <= rx_src;
+                    rd_tag    <= rx_tag;
+                    rd_off    <= rx_off;
+                    rd_csr    <= csr_read(rx_off);
+                    rx_have   <= 1'b0;
                 end
+            end
+
+            if (rd_pend) begin
+                rq_dst[rq_wp]  <= rd_dst;
+                rq_tag[rq_wp]  <= rd_tag;
+                rq_off[rq_wp]  <= rd_off;
+                rq_data[rq_wp] <= rd_is_mem ? b_rdata : rd_csr;
+                rq_wp   <= (rq_wp == RSP_Q_DEPTH-1) ? {QW{1'b0}} : rq_wp + 1'b1;
+                rq_push  = 1'b1;
+                rd_pend <= 1'b0;
             end
 
             // ---------------- core-facing ----------------
             case (c_state)
                 C_IDLE: begin
-                    if (mem_valid && !mem_ready) begin
+                    if (core_new) begin
                         if (ad_illegal) begin
                             // never hang on a bad address -- poison and flag it
                             mem_rdata   <= POISON;
@@ -349,24 +458,25 @@ module ni #(
                             err_illegal <= 1'b1;
                         end else if (ad_local) begin
                             if (|mem_wstrb) begin
-                                if (ad_off >= CSR_LIMIT) begin
-                                    if (mem_wstrb[0]) mem[core_widx][ 7: 0] <= mem_wdata[ 7: 0];
-                                    if (mem_wstrb[1]) mem[core_widx][15: 8] <= mem_wdata[15: 8];
-                                    if (mem_wstrb[2]) mem[core_widx][23:16] <= mem_wdata[23:16];
-                                    if (mem_wstrb[3]) mem[core_widx][31:24] <= mem_wdata[31:24];
-                                end else if (ad_off == CSR_ERR) begin
+                                // RAM offsets are written through port A
+                                if (ad_off == CSR_ERR) begin
                                     if (mem_wdata[0]) err_timeout <= 1'b0;
                                     if (mem_wdata[1]) err_illegal <= 1'b0;
                                     if (mem_wdata[2]) err_poison  <= 1'b0;
                                     if (mem_wdata[3]) err_stale   <= 1'b0;
                                     if (mem_wdata[4]) err_chk     <= 1'b0;
+                                end else if (ad_off == CSR_SW) begin
+                                    if (mem_wstrb[0]) sw_reg[ 7: 0] <= mem_wdata[ 7: 0];
+                                    if (mem_wstrb[1]) sw_reg[15: 8] <= mem_wdata[15: 8];
+                                    if (mem_wstrb[2]) sw_reg[23:16] <= mem_wdata[23:16];
+                                    if (mem_wstrb[3]) sw_reg[31:24] <= mem_wdata[31:24];
                                 end
                                 mem_ready <= 1'b1;
                             end else begin
-                                loc_rdata <= (ad_off == CSR_ID)  ? MY_ID :
-                                             (ad_off == CSR_ERR) ? {27'b0, err_vec} :
-                                             (ad_off >= CSR_LIMIT) ? mem[core_widx] : 32'b0;
-                                c_state   <= C_LOCAL;
+                                // read: RAM data arrives next cycle on port A
+                                loc_from_mem <= (ad_off >= CSR_LIMIT);
+                                loc_csr      <= csr_read(ad_off);
+                                c_state      <= C_LOCAL;
                             end
                         end else begin
                             // remote: a fresh transaction starts with no retries used
@@ -377,7 +487,7 @@ module ni #(
                 end
 
                 C_LOCAL: begin
-                    mem_rdata <= loc_rdata;
+                    mem_rdata <= loc_from_mem ? a_rdata : loc_csr;
                     mem_ready <= 1'b1;
                     c_state   <= C_IDLE;
                 end
