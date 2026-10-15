@@ -2,9 +2,10 @@
 // Directed table-driven test for address_decoder. Five rows come straight
 // from the design spec's table; the rest cover the address-aliasing cases
 // that only show up once real baremetal software is running.
+// Assumes the default 2x2 mesh knobs in noc_defs.vh.
 
 `timescale 1ns/1ps
-//`include "rtl/network_interface/address_decoder.v"
+`include "noc_defs.vh"
 
 module tb_address_decoder;
 
@@ -18,19 +19,17 @@ module tb_address_decoder;
     wire        loc  [0:3];
     wire        rem  [0:3];
     wire        ill  [0:3];
-    wire signed [3:0] dx [0:3];
-    wire signed [3:0] dy [0:3];
+    wire [`NOC_X_W-1:0] tx [0:3];
+    wire [`NOC_Y_W-1:0] ty [0:3];
     wire [11:0] off [0:3];
 
     genvar t;
     generate
         for (t = 0; t < 4; t = t + 1) begin : tiles
-            address_decoder #(
-                .MESH_X(2), .MESH_Y(2), .MY_TILE_ID(t)
-            ) dut (
+            address_decoder #(.MY_TILE_ID(t)) dut (
                 .addr(addr),
                 .is_local(loc[t]), .is_remote(rem[t]), .is_illegal(ill[t]),
-                .target_tile(), .target_dx(dx[t]), .target_dy(dy[t]),
+                .target_tile(), .target_x(tx[t]), .target_y(ty[t]),
                 .local_offset(off[t])
             );
         end
@@ -39,18 +38,18 @@ module tb_address_decoder;
     task check_remote;
         input [31:0]      a;
         input integer     from;
-        input signed [3:0] exp_dx;
-        input signed [3:0] exp_dy;
+        input integer     exp_x;
+        input integer     exp_y;
         begin
             addr = a; #1; checks = checks + 1;
             if (loc[from] !== 1'b0 || ill[from] !== 1'b0 ||
-                dx[from] !== exp_dx || dy[from] !== exp_dy) begin
-                $display("FAIL addr=%h from=Tile%0d : is_local=%b is_illegal=%b dx=%0d dy=%0d (expected remote dx=%0d dy=%0d)",
-                         a, from, loc[from], ill[from], dx[from], dy[from], exp_dx, exp_dy);
+                tx[from] !== exp_x || ty[from] !== exp_y) begin
+                $display("FAIL addr=%h from=Tile%0d : is_local=%b is_illegal=%b x=%0d y=%0d (expected remote x=%0d y=%0d)",
+                         a, from, loc[from], ill[from], tx[from], ty[from], exp_x, exp_y);
                 errors = errors + 1;
             end else
-                $display("  ok  addr=%h from=Tile%0d -> remote, dx=%0d dy=%0d, offset=%h",
-                         a, from, dx[from], dy[from], off[from]);
+                $display("  ok  addr=%h from=Tile%0d -> remote, target (x=%0d,y=%0d), offset=%h",
+                         a, from, tx[from], ty[from], off[from]);
         end
     endtask
 
@@ -85,16 +84,17 @@ module tb_address_decoder;
     initial begin
         $display("=== spec table ===");
         check_local (32'h0000_0050, 0);
-        check_remote(32'h0000_1050, 0,  1,  0);
-        check_remote(32'h0000_2050, 0,  0,  1);
-        check_remote(32'h0000_3100, 0,  1,  1);
-        check_remote(32'h0000_0050, 3, -1, -1);
+        // expected values are the TARGET's absolute coordinates
+        check_remote(32'h0000_1050, 0, 1, 0);
+        check_remote(32'h0000_2050, 0, 0, 1);
+        check_remote(32'h0000_3100, 0, 1, 1);
+        check_remote(32'h0000_0050, 3, 0, 0);
 
         $display("=== full cross-product: every tile to every tile ===");
-        check_remote(32'h0000_0000, 1, -1,  0);
-        check_remote(32'h0000_0000, 2,  0, -1);
-        check_remote(32'h0000_1000, 2,  1, -1);
-        check_remote(32'h0000_2000, 1, -1,  1);
+        check_remote(32'h0000_0000, 1, 0, 0);
+        check_remote(32'h0000_0000, 2, 0, 0);
+        check_remote(32'h0000_1000, 2, 1, 0);
+        check_remote(32'h0000_2000, 1, 0, 1);
         check_local (32'h0000_1FFF, 1);
         check_local (32'h0000_2000, 2);
         check_local (32'h0000_3000, 3);

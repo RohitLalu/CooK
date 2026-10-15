@@ -5,12 +5,16 @@ import os
 if __name__ == "__main__":
     sim = "icarus"
     proj_dir = os.path.dirname(os.path.abspath(__file__))
+    rtl = os.path.join(proj_dir, "..", "rtl")
 
     runner = get_runner(sim)
     runner.build(
-        verilog_sources=[os.path.join(proj_dir, "..", "rtl", "router", "noc_router.v")],
+        verilog_sources=[os.path.join(rtl, "router", "noc_router.v")],
         hdl_toplevel="noc_router",
-        parameters={"DX_W": 4, "DY_W": 4, "DATA_W": 8},
+        includes=[os.path.join(rtl, "include")],
+        # must match Layout(...) in test_router.py
+        defines={"NOC_MESH_X": 3, "NOC_MESH_Y": 3},
+        parameters={"MY_X": 1, "MY_Y": 1},
         build_dir=os.path.join(proj_dir, "sim_build_router"),
         always=True,
     )

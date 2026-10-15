@@ -3,10 +3,15 @@ pyuvm testbench for noc_router -- actual UVM classes (uvm_driver,
 uvm_monitor, uvm_scoreboard-style component, uvm_sequence, uvm_test),
 running in Python on cocotb, on Icarus Verilog underneath.
 
-Covers the same 20 single-flit routing combinations as the hand-written
-Verilog testbench, as a first example -- multi-flit route-holding and
-contention are natural next additions once this pattern is established,
-same as the Verilog testbench itself was built up incrementally.
+The DUT is compiled with 3x3 mesh knobs and sits at (1,1), so it has a real
+neighbour on every side. Flit layout comes from noc_defs.py, which reads the
+same Verilog header the RTL uses.
+
+Tests:
+  test_router_routing     the 20 single-flit port-pair combinations, checked
+                          against an independent X-Y model
+  test_router_no_interleave  two 2-flit packets from different inputs to one
+                          output must leave as HEAD,TAIL,HEAD,TAIL
 """
 
 import cocotb
@@ -14,84 +19,71 @@ from cocotb.triggers import RisingEdge, Timer, ReadOnly
 from cocotb.clock import Clock
 from pyuvm import *
 
-N, S, E, W, L = 0, 1, 2, 3, 4
-BODY, HEAD, HEADTAIL, TAIL = 0b00, 0b01, 0b10, 0b11
-DX_W, DY_W, DATA_W = 4, 4, 8
-DX_MASK = (1 << DX_W) - 1
-DY_MASK = (1 << DY_W) - 1
-DATA_MASK = (1 << DATA_W) - 1
+from noc_defs import Layout, N, S, E, W, L, HEAD, HEADTAIL, TAIL
+
+LAY = Layout(NOC_MESH_X=3, NOC_MESH_Y=3)   # must match COMPILE_ARGS in Makefile
+MY_X, MY_Y = 1, 1
+FW = LAY.flit_w
+FMASK = (1 << FW) - 1
+
+# destination coordinates that make the DUT at (1,1) pick each output
+DST_FOR = {N: (1, 0), S: (1, 2), E: (2, 1), W: (0, 1), L: (1, 1)}
 
 
-def expected_output(dx, dy):
-    """Independent golden model of the router's X-Y routing rule.
+def expected_output(dst_x, dst_y):
+    """Independent golden model of X-Y routing on absolute coordinates.
     Deliberately re-derived here, not imported from anywhere near the
     RTL, so a shared bug between DUT and model can't hide a failure."""
-    if dx < 0:
+    if dst_x < MY_X:
         return W
-    elif dx > 0:
+    if dst_x > MY_X:
         return E
-    elif dy < 0:
+    if dst_y < MY_Y:
         return N
-    elif dy > 0:
+    if dst_y > MY_Y:
         return S
-    else:
-        return L
+    return L
+
+
+def set_port(bus_value, port, flit):
+    return (bus_value & ~(FMASK << (FW * port))) | ((flit & FMASK) << (FW * port))
 
 
 # ---------------------------------------------------------------------
 # Sequence item
 # ---------------------------------------------------------------------
 class FlitItem(uvm_sequence_item):
-    def __init__(self, name="FlitItem", port=0, ftype=HEADTAIL, dx=0, dy=0, data=0):
+    def __init__(self, name="FlitItem", port=0, dst=(0, 0), data=0):
         super().__init__(name)
         self.port = port
-        self.ftype = ftype
-        self.dx = dx
-        self.dy = dy
+        self.dst = dst
         self.data = data
+        self.flit = LAY.make_flit(HEADTAIL, port, dst[0], dst[1], data)
 
     def __str__(self):
-        return f"port={self.port} type={self.ftype:02b} dx={self.dx} dy={self.dy} data={self.data:#x}"
+        return f"port={self.port} dst={self.dst} data={self.data:#x}"
 
 
-class ExpectedResult:
-    def __init__(self, out_port, data):
+class Result:
+    def __init__(self, out_port, flit):
         self.out_port = out_port
-        self.data = data
-
-
-class ActualResult:
-    def __init__(self, out_port, data):
-        self.out_port = out_port
-        self.data = data
+        self.flit = flit
 
 
 # ---------------------------------------------------------------------
-# Sequence: the same 20 port-pair combinations as the Verilog testbench
+# Sequence: every input to every other output
 # ---------------------------------------------------------------------
 class RoutingSequence(uvm_sequence):
     async def body(self):
-        cases = []
-        # Want N: dx=0,dy=-1, legal sources S,E,W,L
-        for i, src in enumerate([S, E, W, L]):
-            cases.append((src, 0, -1, 0xA0 + i))
-        # Want S: dx=0,dy=+1, legal sources N,E,W,L
-        for i, src in enumerate([N, E, W, L]):
-            cases.append((src, 0, 1, 0xB0 + i))
-        # Want E: dx=+1, legal sources N,S,W,L
-        for i, src in enumerate([N, S, W, L]):
-            cases.append((src, 1, 0, 0xC0 + i))
-        # Want W: dx=-1, legal sources N,S,E,L
-        for i, src in enumerate([N, S, E, L]):
-            cases.append((src, -1, 0, 0xD0 + i))
-        # Want L (destination reached): dx=0,dy=0, legal sources N,S,E,W
-        for i, src in enumerate([N, S, E, W]):
-            cases.append((src, 0, 0, 0xE0 + i))
-
-        for (port, dx, dy, data) in cases:
-            item = FlitItem(port=port, dx=dx, dy=dy, data=data)
-            await self.start_item(item)
-            await self.finish_item(item)
+        n = 0
+        for src in (N, S, E, W, L):
+            for out in (N, S, E, W, L):
+                if src == out:
+                    continue
+                item = FlitItem(port=src, dst=DST_FOR[out], data=0xC0000000 + n)
+                n += 1
+                await self.start_item(item)
+                await self.finish_item(item)
 
 
 # ---------------------------------------------------------------------
@@ -112,36 +104,16 @@ class FlitDriver(uvm_driver):
 
     async def _drive(self, item):
         dut = self.dut
-
+        dut.in_flit.value = set_port(int(dut.in_flit.value), item.port, item.flit)
         dut.in_valid.value = 1 << item.port
-
-        tval = int(dut.in_type.value)
-        tval = (tval & ~(0b11 << (2 * item.port))) | ((item.ftype & 0b11) << (2 * item.port))
-        dut.in_type.value = tval
-
-        dxval = int(dut.in_dx.value)
-        dxval = (dxval & ~(DX_MASK << (DX_W * item.port))) | ((item.dx & DX_MASK) << (DX_W * item.port))
-        dut.in_dx.value = dxval
-
-        dyval = int(dut.in_dy.value)
-        dyval = (dyval & ~(DY_MASK << (DY_W * item.port))) | ((item.dy & DY_MASK) << (DY_W * item.port))
-        dut.in_dy.value = dyval
-
-        dval = int(dut.in_data.value)
-        dval = (dval & ~(DATA_MASK << (DATA_W * item.port))) | ((item.data & DATA_MASK) << (DATA_W * item.port))
-        dut.in_data.value = dval
-
         await Timer(1, unit="ns")
 
-        # Publish the expected result using the INDEPENDENT reference
-        # model -- not anything read back from the DUT.
-        exp_port = expected_output(item.dx, item.dy)
-        self.ap.write(ExpectedResult(exp_port, item.data))
+        # expected result from the INDEPENDENT model, not from the DUT
+        self.ap.write(Result(expected_output(*item.dst), item.flit))
 
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-
-        dut.in_valid.value = int(dut.in_valid.value) & ~(1 << item.port)
+        dut.in_valid.value = 0
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
 
@@ -165,9 +137,8 @@ class FlitMonitor(uvm_monitor):
             orr = int(dut.out_ready.value)
             for k in range(5):
                 if ((ov >> k) & 1) and ((orr >> k) & 1):
-                    data_all = int(dut.out_data.value)
-                    d = (data_all >> (DATA_W * k)) & DATA_MASK
-                    self.ap.write(ActualResult(k, d))
+                    f = (int(dut.out_flit.value) >> (FW * k)) & FMASK
+                    self.ap.write(Result(k, f))
 
 
 # ---------------------------------------------------------------------
@@ -184,21 +155,18 @@ class RouterScoreboard(uvm_component):
         while True:
             exp = await self.expected_fifo.get()
             act = await self.actual_fifo.get()
-            if exp.out_port == act.out_port and exp.data == act.data:
+            if exp.out_port == act.out_port and exp.flit == act.flit and LAY.chk_ok(act.flit):
                 self.match_count += 1
-                self.logger.info(
-                    f"MATCH: out port {exp.out_port}, data {exp.data:#x}"
-                )
+                self.logger.info(f"MATCH: out port {exp.out_port}, data {LAY.data(exp.flit):#x}")
             else:
                 self.mismatch_count += 1
                 self.logger.error(
-                    f"MISMATCH: expected out port {exp.out_port} data {exp.data:#x}, "
-                    f"got out port {act.out_port} data {act.data:#x}"
-                )
+                    f"MISMATCH: expected out {exp.out_port} flit {exp.flit:#x}, "
+                    f"got out {act.out_port} flit {act.flit:#x}")
 
 
 # ---------------------------------------------------------------------
-# Env
+# Env / Test
 # ---------------------------------------------------------------------
 class RouterEnv(uvm_env):
     def build_phase(self):
@@ -213,9 +181,6 @@ class RouterEnv(uvm_env):
         self.monitor.ap.connect(self.scoreboard.actual_fifo.analysis_export)
 
 
-# ---------------------------------------------------------------------
-# Test
-# ---------------------------------------------------------------------
 class RoutingTest(uvm_test):
     def build_phase(self):
         self.env = RouterEnv("env", self)
@@ -226,35 +191,70 @@ class RoutingTest(uvm_test):
         await seq.start(self.env.sequencer)
         await Timer(20, unit="ns")  # drain final scoreboard compares
         sb = self.env.scoreboard
-        self.logger.info(
-            f"RESULT: {sb.match_count} matched, {sb.mismatch_count} mismatched"
-        )
+        self.logger.info(f"RESULT: {sb.match_count} matched, {sb.mismatch_count} mismatched")
         assert sb.mismatch_count == 0, f"{sb.mismatch_count} routing mismatches"
         assert sb.match_count == 20, f"expected 20 checked transactions, got {sb.match_count}"
         self.drop_objection()
 
 
-# ---------------------------------------------------------------------
-# cocotb entry point
-# ---------------------------------------------------------------------
-@cocotb.test()
-async def test_router_routing(dut):
+async def reset(dut):
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
-
+    assert len(dut.in_flit) == 5 * FW, \
+        f"noc_defs.py layout ({FW} bits) does not match the DUT ({len(dut.in_flit) // 5} bits)"
     dut.rst_n.value = 0
     dut.in_valid.value = 0
-    dut.in_type.value = 0
-    dut.in_dx.value = 0
-    dut.in_dy.value = 0
-    dut.in_data.value = 0
-    dut.out_ready.value = 0x1F  # all five outputs always ready
+    dut.in_flit.value = 0
+    dut.out_ready.value = 0x1F
+    dut.out_room.value = 0x1F
+    dut.port_disable.value = 0
+    dut.err_clear.value = 0
     for _ in range(3):
         await RisingEdge(dut.clk)
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
 
+
+# ---------------------------------------------------------------------
+# cocotb entry points
+# ---------------------------------------------------------------------
+@cocotb.test()
+async def test_router_routing(dut):
+    await reset(dut)
     ConfigDB().set(None, "*", "DUT", dut)
     # run_test() clears singletons by default (for test isolation) --
     # ConfigDB is a singleton too, so without keep_set it would wipe out
     # the DUT handle just set above before any component can read it.
     await uvm_root().run_test("RoutingTest", keep_set={ConfigDB})
+
+
+@cocotb.test()
+async def test_router_no_interleave(dut):
+    """Two packets from W and L to E at once must not interleave on E."""
+    await reset(dut)
+    pkts = {
+        W: [LAY.make_flit(HEAD, 1, 2, 1, 0x11110000), LAY.make_flit(TAIL, 1, 2, 1, 0x11110001)],
+        L: [LAY.make_flit(HEAD, 2, 2, 1, 0x22220000), LAY.make_flit(TAIL, 2, 2, 1, 0x22220001)],
+    }
+    idx = {W: 0, L: 0}
+    seen = []
+    for _ in range(10):
+        bus, valid = 0, 0
+        for p, flits in pkts.items():
+            if idx[p] < len(flits):
+                bus = set_port(bus, p, flits[idx[p]])
+                valid |= 1 << p
+        dut.in_flit.value = bus
+        dut.in_valid.value = valid
+        await ReadOnly()
+        ready = int(dut.in_ready.value)
+        if (int(dut.out_valid.value) >> E) & 1:
+            seen.append((int(dut.out_flit.value) >> (FW * E)) & FMASK)
+        await RisingEdge(dut.clk)
+        for p in pkts:
+            if (valid >> p) & 1 and (ready >> p) & 1:
+                idx[p] += 1
+    types = [LAY.ftype(f) for f in seen]
+    srcs = [LAY.src(f) for f in seen]
+    dut._log.info(f"E carried types {types} from sources {srcs}")
+    assert types == [HEAD, TAIL, HEAD, TAIL], f"interleaved or lost flits: {types}"
+    assert srcs[0] == srcs[1] and srcs[2] == srcs[3], f"TAIL did not follow its HEAD: {srcs}"

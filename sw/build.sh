@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")"
 CC=riscv64-unknown-elf-gcc
 OC=riscv64-unknown-elf-objcopy
-for f in tile0 spin; do
+for f in tile0 spin hammer; do
     $CC -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles \
         -Wl,-Ttext=0x100 -Wl,--build-id=none -o $f.elf $f.S
     $OC -O binary $f.elf $f.bin

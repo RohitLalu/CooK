@@ -1,404 +1,379 @@
+// tb_noc_router.v
+// Directed tests for noc_router. Compile with a mesh of at least 3x3
+// (-DNOC_MESH_X=3 -DNOC_MESH_Y=3, the Makefile does this) so the DUT at
+// (1,1) has a real neighbour on all four sides.
+//
+// Each input port has a flit queue driven with valid/ready; each output has
+// a log of every flit that left it. Tests reset the DUT and queues first.
 
-//`include "rtl/router/noc_router.v"
 `timescale 1ns/1ps
+`include "noc_defs.vh"
 
 module tb_noc_router;
 
-    localparam DX_W = 4, DY_W = 4, DATA_W = 8, ROUTER_CODE = 1, TOTAL_ROUTERS = 4;
-    localparam N=0, S=1, E=2, W=3, L=4;
-    localparam [1:0] BODY=2'b00, HEAD=2'b01, HEADTAIL=2'b10, TAIL=2'b11;
+`include "noc_funcs.vh"
+
+    localparam FW = `NOC_FLIT_W;
+    localparam N = 0, S = 1, E = 2, W = 3, L = 4;
+    localparam [1:0] BODY = `NOC_T_BODY, HEAD = `NOC_T_HEAD,
+                     HEADTAIL = `NOC_T_HEADTAIL, TAIL = `NOC_T_TAIL;
+    localparam QD = 32;          // queue depth per input
+    localparam LD = 64;          // log depth per output
+    localparam PRESC_W = 2, LOCK_LIM = 8, STARVE_LIM = 64;
+    localparam LOCK_CYC   = (LOCK_LIM + 2) << PRESC_W;     // comfortably past the limit
+    localparam STARVE_CYC = (STARVE_LIM + 2) << PRESC_W;
 
     reg clk = 0;
     reg rst_n = 0;
-
-    reg [5*($clog2(TOTAL_ROUTERS)+1)-1:0] in_router_code_flit = {5{3'd7}};
-    reg [4:0] in_valid = 5'b0;
-    wire [4:0] in_ready;
-    reg [9:0] in_type = 10'b0;
-    reg [5*DX_W-1:0] in_dx = 0;
-    reg [5*DY_W-1:0] in_dy = 0;
-    reg [5*DATA_W-1:0] in_data = 0;
-
-    wire [4:0] out_valid;
-    reg  [4:0] out_ready = 5'b11111;
-    wire [9:0] out_type;
-    wire [5*DX_W-1:0] out_dx;
-    wire [5*DY_W-1:0] out_dy;
-    wire [5*DATA_W-1:0] out_data;
-    wire [5*($clog2(TOTAL_ROUTERS)+1)-1:0] out_router_code_flit;
-
-    integer errors = 0;
-    integer tests  = 0;
-
-    noc_router #(.DX_W(DX_W), .DY_W(DY_W), .DATA_W(DATA_W),.ROUTER_CODE(ROUTER_CODE), .TOTAL_ROUTERS(TOTAL_ROUTERS)) dut (
-        .clk(clk), .rst_n(rst_n),
-        .in_router_code_flit(in_router_code_flit),
-        .in_valid(in_valid), .in_ready(in_ready), .in_type(in_type),
-        .in_dx(in_dx), .in_dy(in_dy), .in_data(in_data),
-        .out_router_code_flit(out_router_code_flit),
-        .out_valid(out_valid), .out_ready(out_ready), .out_type(out_type),
-        .out_dx(out_dx), .out_dy(out_dy), .out_data(out_data)
-    );
-
     always #5 clk = ~clk;
 
-    // Drives one HEADTAIL flit into `port` aimed at `exp_out`, checks the
-    // COMBINATIONAL result before the clock edge that commits it (this is
-    // the correct way to check "will this be accepted", since the
-    // registered state itself can change ON that edge).
-    task send_and_check;
-        input [2:0] port;
-        input [$clog2(TOTAL_ROUTERS):0] router_code_flit;
-        input signed [DX_W-1:0] dx;
-        input signed [DY_W-1:0] dy;
-        input [DATA_W-1:0] data;
-        input [2:0] exp_out;
-        integer k;
-        begin
-            tests = tests + 1;
-            in_router_code_flit[($clog2(TOTAL_ROUTERS)+1)*port +: ($clog2(TOTAL_ROUTERS)+1)] = router_code_flit;
-            in_valid[port] = 1'b1;
-            in_type[2*port +: 2] = HEADTAIL;
-            in_dx[DX_W*port +: DX_W] = dx;
-            in_dy[DY_W*port +: DY_W] = dy;
-            in_data[DATA_W*port +: DATA_W] = data;
-            #1;
+    // ---------------- DUT ----------------
+    wire [4:0]      in_valid, in_ready;
+    wire [5*FW-1:0] in_flit;
+    wire [4:0]      out_valid;
+    reg  [4:0]      out_ready = 5'b11111;
+    reg  [4:0]      out_room  = 5'b11111;
+    wire [5*FW-1:0] out_flit;
+    reg  [4:0]      port_disable = 5'b0;
+    reg             err_clear = 1'b0;
+    wire [5*`NOC_E_W-1:0] in_err;
+    wire [4:0]      out_dead, out_wd;
+    wire [7:0]      drop_cnt;
+    wire            cap_valid;
+    wire [2:0]      cap_port;
+    wire [FW-1:0]   cap_flit;
 
-            if (!in_ready[port]) begin
-                $display("FAIL test %0d: port %0d dx=%0d dy=%0d not granted", tests, port, dx, dy);
-                errors = errors + 1;
-            end else if (!out_valid[exp_out]) begin
-                $display("FAIL test %0d: port %0d dx=%0d dy=%0d expected out %0d but out_valid[%0d]=0",
-                          tests, port, dx, dy, exp_out, exp_out);
-                errors = errors + 1;
-            end else if (out_data[DATA_W*exp_out +: DATA_W] !== data) begin
-                $display("FAIL test %0d: data mismatch on out %0d: got %0h expected %0h",
-                          tests, exp_out, out_data[DATA_W*exp_out +: DATA_W], data);
-                errors = errors + 1;
-            end else begin
-                for (k = 0; k < 5; k = k + 1) begin
-                    if (k != exp_out && out_valid[k]) begin
-                        $display("FAIL test %0d: unexpected out_valid[%0d] also high", tests, k);
-                        errors = errors + 1;
-                    end
+    noc_router #(
+        .MY_X(1), .MY_Y(1), .PORT_EXISTS(5'b11111),
+        .WD_PRESCALE_W(PRESC_W), .WD_LOCK_LIMIT(LOCK_LIM), .WD_STARVE_LIMIT(STARVE_LIM)
+    ) dut (
+        .clk(clk), .rst_n(rst_n),
+        .in_valid(in_valid), .in_ready(in_ready), .in_flit(in_flit),
+        .out_valid(out_valid), .out_ready(out_ready), .out_room(out_room), .out_flit(out_flit),
+        .port_disable(port_disable), .err_clear(err_clear),
+        .in_err(in_err), .out_dead(out_dead), .out_wd(out_wd), .drop_cnt(drop_cnt),
+        .cap_valid(cap_valid), .cap_port(cap_port), .cap_flit(cap_flit)
+    );
+
+    // ---------------- input queues ----------------
+    reg [FW-1:0] q   [0:5*QD-1];
+    reg [5:0]    qh  [0:4];
+    reg [5:0]    qt  [0:4];
+    reg [4:0]    hold = 5'b0;          // freeze a driver (models an upstream stall)
+
+    genvar g;
+    generate
+        for (g = 0; g < 5; g = g + 1) begin : drv
+            assign in_valid[g]          = (qh[g] != qt[g]) && !hold[g];
+            assign in_flit[g*FW +: FW]  = q[g*QD + qh[g]];
+            always @(posedge clk)
+                if (rst_n && in_valid[g] && in_ready[g]) qh[g] <= qh[g] + 1'b1;
+        end
+    endgenerate
+
+    // ---------------- output logs ----------------
+    reg [FW-1:0] lg [0:5*LD-1];
+    integer      lc [0:4];
+    integer      mo;
+    always @(posedge clk) begin
+        if (rst_n)
+            for (mo = 0; mo < 5; mo = mo + 1)
+                if (out_valid[mo] && out_ready[mo]) begin
+                    lg[mo*LD + lc[mo]] <= out_flit[mo*FW +: FW];
+                    lc[mo] = lc[mo] + 1;
                 end
-                $display("PASS test %0d: port %0d (dx=%0d,dy=%0d) -> out %0d, data=%0h",
-                          tests, port, dx, dy, exp_out, data);
-            end
+    end
 
-            @(posedge clk); #1;
-            in_valid[port] = 1'b0;
-            @(posedge clk); #1;
+    integer errors = 0;
+    integer checks = 0;
+    integer tnum = 0;
+    integer i, j, k;
+
+    task check;
+        input cond;
+        input [8*72-1:0] msg;
+        begin
+            checks = checks + 1;
+            if (!cond) begin
+                errors = errors + 1;
+                $display("FAIL [test %0d]: %0s", tnum, msg);
+            end
         end
     endtask
 
+    integer r;
+    task reset_all;
+        begin
+            @(negedge clk);
+            rst_n = 0;
+            hold = 5'b0; out_ready = 5'b11111; out_room = 5'b11111; port_disable = 5'b0;
+            for (r = 0; r < 5; r = r + 1) begin qh[r] = 0; qt[r] = 0; lc[r] = 0; end
+            repeat (2) @(negedge clk);
+            rst_n = 1;
+        end
+    endtask
+
+    task push;
+        input [2:0]    port;
+        input [FW-1:0] f;
+        begin
+            q[port*QD + qt[port]] = f;
+            qt[port] = qt[port] + 1;
+        end
+    endtask
+
+    task run;
+        input integer cycles;
+        begin
+            repeat (cycles) @(negedge clk);
+        end
+    endtask
+
+    // flit builders. dst given as an output direction from (1,1).
+    function [`NOC_X_W-1:0] dx_of; input [2:0] o;
+        begin dx_of = (o == E) ? 2 : (o == W) ? 0 : 1; end endfunction
+    function [`NOC_Y_W-1:0] dy_of; input [2:0] o;
+        begin dy_of = (o == S) ? 2 : (o == N) ? 0 : 1; end endfunction
+
+    function [FW-1:0] mk;
+        input [1:0]  t;
+        input [3:0]  src;
+        input [2:0]  to;
+        input [31:0] data;
+        begin
+            mk = noc_make_flit(t, 1'b0, src[`NOC_ID_W-1:0], dx_of(to), dy_of(to), data);
+        end
+    endfunction
+
+    function [FW-1:0] poison_of;
+        input [3:0] src;
+        input [2:0] to;
+        begin
+            poison_of = noc_make_flit(TAIL, 1'b1, src[`NOC_ID_W-1:0], dx_of(to), dy_of(to),
+                                      `NOC_POISON_DATA);
+        end
+    endfunction
+
+    function err_bit;
+        input [2:0] port;
+        input integer bitn;
+        begin
+            err_bit = in_err[port*`NOC_E_W + bitn];
+        end
+    endfunction
+
+    reg [FW-1:0] fa, fb;
+
     initial begin
-        rst_n = 0;
-        repeat (3) @(posedge clk);
-        rst_n = 1;
-        @(posedge clk);
-        $dumpfile("sim/waveforms/noc_router.vcd");
-        $dumpvars(0,tb_noc_router);
-        // Want output N: dx=0, dy=-1. Legal sources: S,E,W,L
-        send_and_check(S, 3'd1, 0, -1, 8'hA1, N);
-        send_and_check(E, 3'd1, 0, -1, 8'hA2, N);
-        send_and_check(W, 3'd1, 0, -1, 8'hA3, N);
-        send_and_check(L, 3'd1, 0, -1, 8'hA4, N);
+        for (i = 0; i < 5; i = i + 1) begin qh[i] = 0; qt[i] = 0; lc[i] = 0; end
 
-        // Want output S: dx=0, dy=+1. Legal sources: N,E,W,L
-        send_and_check(N, 3'd1, 0, 1, 8'hB1, S);
-        send_and_check(E, 3'd1, 0, 1, 8'hB2, S);
-        send_and_check(W, 3'd1, 0, 1, 8'hB3, S);
-        send_and_check(L, 3'd1, 0, 1, 8'hB4, S);
-
-        // Want output E: dx=+1. Legal sources: N,S,W,L
-        send_and_check(N, 3'd1, 1, 0, 8'hC1, E);
-        send_and_check(S, 3'd1, 1, 0, 8'hC2, E);
-        send_and_check(W, 3'd1, 1, 0, 8'hC3, E);
-        send_and_check(L, 3'd1, 1, 0, 8'hC4, E);
-
-        // Want output W: dx=-1. Legal sources: N,S,E,L
-        send_and_check(N, 3'd1, -1, 0, 8'hD1, W);
-        send_and_check(S, 3'd1, -1, 0, 8'hD2, W);
-        send_and_check(E, 3'd1, -1, 0, 8'hD3, W);
-        send_and_check(L, 3'd1, -1, 0, 8'hD4, W);
-
-        // Want output L (destination reached): dx=0, dy=0. Legal sources: N,S,E,W
-        send_and_check(N, 3'd1, 0, 0, 8'hE1, L);
-        send_and_check(S, 3'd1, 0, 0, 8'hE2, L);
-        send_and_check(E, 3'd1, 0, 0, 8'hE3, L);
-        send_and_check(W, 3'd1, 0, 0, 8'hE4, L);
-
-        // Multi-flit packet: Head/Body/Tail from S toward N -- checks
-        // wormhole route-holding (Body carries no routing info at all,
-        // yet still follows the route established by Head) and that the
-        // route genuinely releases after Tail, not just "looks released".
-        begin : multi_flit_test
-            tests = tests + 1;
-            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
-            in_valid[S] = 1'b1;
-            in_type[2*S +: 2] = HEAD;
-            in_dx[DX_W*S +: DX_W] = 0;
-            in_dy[DY_W*S +: DY_W] = -1;
-            in_data[DATA_W*S +: DATA_W] = 8'h11;
-            #1;
-            if (!in_ready[S] || !out_valid[N]) begin
-                $display("FAIL multi-flit: Head not accepted/routed to N");
-                errors = errors + 1;
-            end else
-                $display("PASS multi-flit: Head routed to N");
-            @(posedge clk); #1;
-
-            in_type[2*S +: 2] = BODY;
-            in_data[DATA_W*S +: DATA_W] = 8'h22;
-            #1;
-            if (!in_ready[S] || !out_valid[N] || out_data[DATA_W*N +: DATA_W] !== 8'h22) begin
-                $display("FAIL multi-flit: Body not held on route to N");
-                errors = errors + 1;
-            end else
-                $display("PASS multi-flit: Body followed held route to N");
-            @(posedge clk); #1;
-
-            in_type[2*S +: 2] = TAIL;
-            in_data[DATA_W*S +: DATA_W] = 8'h33;
-            #1;
-            if (!in_ready[S] || !out_valid[N] || out_data[DATA_W*N +: DATA_W] !== 8'h33) begin
-                $display("FAIL multi-flit: Tail not routed to N");
-                errors = errors + 1;
-            end else
-                $display("PASS multi-flit: Tail routed to N, route released");
-            @(posedge clk); #1;
-            in_valid[S] = 1'b0;
-
-            // Prove the route is genuinely released: S should now be free
-            // to start a brand new packet toward a DIFFERENT output (E),
-            // not still stuck holding a route to N.
-            tests = tests + 1;
-            in_valid[S] = 1'b1;
-            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
-            in_type[2*S +: 2] = HEADTAIL;
-            in_dx[DX_W*S +: DX_W] = 1;
-            in_dy[DY_W*S +: DY_W] = 0;
-            in_data[DATA_W*S +: DATA_W] = 8'h44;
-            #1;
-            if (!in_ready[S] || !out_valid[E] || out_data[DATA_W*E +: DATA_W] !== 8'h44) begin
-                $display("FAIL: route not released after Tail (S still stuck routing to N)");
-                errors = errors + 1;
-            end else
-                $display("PASS: route correctly released, S free to route elsewhere after Tail");
-            @(posedge clk); #1;
-            in_valid[S] = 1'b0;
-            @(posedge clk); #1;
-        end
-
-        // Genuine contention: two inputs want the SAME output at the SAME
-        // time. This is the one thing the tests above never exercise --
-        // everything so far had exactly one flit active, so a fixed-
-        // priority arbiter would have passed every test above too.
-        //
-        // Note: by this point in the test, output N's round-robin pointer
-        // has already been advanced repeatedly by earlier tests (every
-        // send_and_check aimed at N, plus the multi-flit Head/Body/Tail,
-        // all granted N). So this checks the ROTATION INVARIANT -- whoever
-        // loses round 1 must win round 2 -- rather than assuming a specific
-        // winner, which would be fragile and wrong given that history.
-        begin : contention_test
-            reg first_winner_is_S;
-
-            tests = tests + 1;
-            in_valid[S] = 1'b1;
-            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
-            in_type[2*S +: 2] = HEADTAIL;
-            in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
-            in_data[DATA_W*S +: DATA_W] = 8'h55;
-
-            in_valid[E] = 1'b1;
-            in_type[2*E +: 2] = HEADTAIL;
-            in_dx[DX_W*E +: DX_W] = 0; in_dy[DY_W*E +: DY_W] = -1;
-            in_data[DATA_W*E +: DATA_W] = 8'h66;
-            #1;
-            if (in_ready[S] && !in_ready[E] && out_valid[N] && out_data[DATA_W*N +: DATA_W] === 8'h55) begin
-                first_winner_is_S = 1'b1;
-                $display("PASS contention round 1: S and E both want N; arbiter picks exactly one (S)");
-            end else if (!in_ready[S] && in_ready[E] && out_valid[N] && out_data[DATA_W*N +: DATA_W] === 8'h66) begin
-                first_winner_is_S = 1'b0;
-                $display("PASS contention round 1: S and E both want N; arbiter picks exactly one (E)");
-            end else begin
-                $display("FAIL contention round 1: expected exactly one winner, got in_ready[S]=%b in_ready[E]=%b",
-                          in_ready[S], in_ready[E]);
-                errors = errors + 1;
-                first_winner_is_S = 1'b1;
-            end
-            @(posedge clk); #1;
-
-            // Round 2: the LOSER's original flit is still pending -- it
-            // never got in_ready, so a real sender would keep holding it.
-            // The WINNER asks again with a brand-new flit at the same
-            // moment. A fixed-priority arbiter would let the same input
-            // win again; true round-robin must let the previous loser
-            // through instead.
-            tests = tests + 1;
-            if (first_winner_is_S) begin
-                in_valid[S] = 1'b0;
-                in_valid[S] = 1'b1;
-                in_type[2*S +: 2] = HEADTAIL;
-                in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
-                in_data[DATA_W*S +: DATA_W] = 8'h77;
-                #1;
-                if (in_ready[E] && !in_ready[S])
-                    $display("PASS contention round 2: round-robin rotated to E, no starvation");
-                else begin
-                    $display("FAIL contention round 2: expected E (previous loser) to win, in_ready[S]=%b in_ready[E]=%b",
-                              in_ready[S], in_ready[E]);
-                    errors = errors + 1;
-                end
-            end else begin
-                in_valid[E] = 1'b0;
-                in_valid[E] = 1'b1;
-                in_type[2*E +: 2] = HEADTAIL;
-                in_dx[DX_W*E +: DX_W] = 0; in_dy[DY_W*E +: DY_W] = -1;
-                in_data[DATA_W*E +: DATA_W] = 8'h77;
-                #1;
-                if (in_ready[S] && !in_ready[E])
-                    $display("PASS contention round 2: round-robin rotated to S, no starvation");
-                else begin
-                    $display("FAIL contention round 2: expected S (previous loser) to win, in_ready[S]=%b in_ready[E]=%b",
-                              in_ready[S], in_ready[E]);
-                    errors = errors + 1;
+        // ------------------------------------------------------------
+        tnum = 1;
+        $display("=== 1. X-Y routing on absolute coordinates, all 20 port pairs ===");
+        for (i = 0; i < 5; i = i + 1) begin
+            for (j = 0; j < 5; j = j + 1) begin
+                if (i != j) begin
+                    reset_all;
+                    fa = mk(HEADTAIL, i, j, 32'hC000_0000 + i*16 + j);
+                    push(i, fa);
+                    run(3);
+                    check(lc[j] == 1 && lg[j*LD] == fa, "HEADTAIL left on the X-Y output, unmodified");
+                    for (k = 0; k < 5; k = k + 1)
+                        if (k != j) check(lc[k] == 0, "no other output fired");
                 end
             end
-            @(posedge clk); #1;
-            in_valid[S] = 1'b0;
-            in_valid[E] = 1'b0;
-            @(posedge clk); #1;
         end
 
-        // ---------------------------------------------------------------
-        // Edge case: stray Body/Tail with no preceding Head. Per the
-        // original thesis, this should never be treated as a valid
-        // request. Confirm it's correctly refused (never granted), then
-        // confirm the router recovers cleanly once a proper Head-first
-        // sequence follows on the same input.
-        // ---------------------------------------------------------------
-        begin : stray_flit_test
-            integer c;
-            tests = tests + 1;
-            in_valid[S] = 1'b1;
-            in_type[2*S +: 2] = BODY; // illegal: no Head established a route first
-            in_data[DATA_W*S +: DATA_W] = 8'hFF;
-            #1;
-            if (!in_ready[S])
-                $display("PASS stray-flit: BODY with no Head is correctly refused (in_ready=0)");
-            else begin
-                $display("FAIL stray-flit: BODY with no Head was granted -- should never happen");
-                errors = errors + 1;
-            end
-            // Hold it a few more cycles -- it must never suddenly succeed
-            repeat (3) begin
-                @(posedge clk); #1;
-                if (in_ready[S]) begin
-                    $display("FAIL stray-flit: BODY with no Head eventually got granted -- should stall forever");
-                    errors = errors + 1;
-                end
-            end
-            in_valid[S] = 1'b0;
-            @(posedge clk); #1;
+        // ------------------------------------------------------------
+        tnum = 2;
+        $display("=== 2. output lock: two packets to one output never interleave ===");
+        reset_all;
+        push(W, mk(HEAD, 1, E, 32'h1111_0000)); push(W, mk(TAIL, 1, E, 32'h1111_0001));
+        push(L, mk(HEAD, 2, E, 32'h2222_0000)); push(L, mk(TAIL, 2, E, 32'h2222_0001));
+        run(8);
+        check(lc[E] == 4, "four flits left E");
+        check(lg[E*LD+0][`NOC_F_TYPE_LSB +: 2] == HEAD && lg[E*LD+1][`NOC_F_TYPE_LSB +: 2] == TAIL &&
+              lg[E*LD+2][`NOC_F_TYPE_LSB +: 2] == HEAD && lg[E*LD+3][`NOC_F_TYPE_LSB +: 2] == TAIL,
+              "E carried HEAD,TAIL,HEAD,TAIL");
+        check(lg[E*LD+0][`NOC_F_SRC_LSB +: `NOC_ID_W] == lg[E*LD+1][`NOC_F_SRC_LSB +: `NOC_ID_W] &&
+              lg[E*LD+2][`NOC_F_SRC_LSB +: `NOC_ID_W] == lg[E*LD+3][`NOC_F_SRC_LSB +: `NOC_ID_W],
+              "each TAIL follows its own HEAD");
 
-            // Recovery: a proper HeadTail on the SAME input right after
-            // the illegal attempt must work normally -- the illegal
-            // flit must leave no residual state behind.
-            tests = tests + 1;
-            in_valid[S] = 1'b1;
-            in_router_code_flit[S*($clog2(TOTAL_ROUTERS)+1) +: ($clog2(TOTAL_ROUTERS)+1)] = 3'd1;
-            in_type[2*S +: 2] = HEADTAIL;
-            in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
-            in_data[DATA_W*S +: DATA_W] = 8'h5A;
-            #1;
-            if (in_ready[S] && out_valid[N] && out_data[DATA_W*N +: DATA_W] === 8'h5A)
-                $display("PASS stray-flit: router recovers cleanly, normal traffic unaffected");
-            else begin
-                $display("FAIL stray-flit: router did not recover after the illegal attempt");
-                errors = errors + 1;
-            end
-            @(posedge clk); #1;
-            in_valid[S] = 1'b0;
-            @(posedge clk); #1;
+        $display("=== 2b. four 4-flit packets from four inputs into one output ===");
+        reset_all;
+        for (i = 0; i < 4; i = i + 1) begin
+            k = (i == 0) ? N : (i == 1) ? S : (i == 2) ? W : L;
+            push(k, mk(HEAD, k, E, 32'h0));
+            push(k, mk(BODY, k, E, 32'h1));
+            push(k, mk(BODY, k, E, 32'h2));
+            push(k, mk(TAIL, k, E, 32'h3));
+        end
+        run(30);
+        check(lc[E] == 16, "all 16 flits left E");
+        for (i = 0; i < 4; i = i + 1) begin
+            check(lg[E*LD+4*i][`NOC_F_TYPE_LSB +: 2] == HEAD, "packet starts with HEAD");
+            check(lg[E*LD+4*i+3][`NOC_F_TYPE_LSB +: 2] == TAIL, "packet ends with TAIL");
+            for (j = 1; j < 4; j = j + 1)
+                check(lg[E*LD+4*i+j][`NOC_F_SRC_LSB +: `NOC_ID_W] ==
+                      lg[E*LD+4*i][`NOC_F_SRC_LSB +: `NOC_ID_W], "no foreign flit inside a packet");
         end
 
-        // ---------------------------------------------------------------
-        // Edge case: a Head/HeadTail arrives on an input that ALREADY has
-        // a route held (should be sending Body/Tail instead). This used
-        // to be silently misrouted using the stale held destination --
-        // now it must be refused outright, and the ORIGINAL packet must
-        // still complete correctly afterward once the sender behaves.
-        // ---------------------------------------------------------------
-        begin : illegal_head_test
-            tests = tests + 1;
-            // Establish a real route: S -> N (dx=0,dy=-1)
-            in_valid[S] = 1'b1;
-            in_type[2*S +: 2] = HEAD;
-            in_dx[DX_W*S +: DX_W] = 0; in_dy[DY_W*S +: DY_W] = -1;
-            in_data[DATA_W*S +: DATA_W] = 8'h11;
-            #1;
-            if (!in_ready[S] || !out_valid[N]) begin
-                $display("FAIL illegal-head: setup Head was not accepted");
-                errors = errors + 1;
-            end
-            @(posedge clk); #1; // route_active[S] is now 1, route_dest[S] = N
+        $display("=== 2c. other outputs keep flowing while one is locked ===");
+        reset_all;
+        hold[W] = 1'b0;
+        push(W, mk(HEAD, 1, E, 32'h0));            // TAIL withheld below
+        run(2);
+        hold[W] = 1'b1;
+        push(W, mk(TAIL, 1, E, 32'h1));
+        push(L, mk(HEADTAIL, 2, N, 32'h5));
+        push(S, mk(HEADTAIL, 3, E, 32'h6));        // must wait: E is locked
+        run(4);
+        check(lc[N] == 1, "N served while E is locked");
+        check(lc[E] == 1, "E still holds only the first HEAD");
+        hold[W] = 1'b0;
+        run(4);
+        check(lc[E] == 3 && lg[E*LD+1][`NOC_F_TYPE_LSB +: 2] == TAIL &&
+              lg[E*LD+2][`NOC_F_DATA_LSB +: 32] == 32'h6, "waiting HEADTAIL goes after the TAIL");
 
-            // Illegally send ANOTHER Head instead of Body, aimed at a
-            // DIFFERENT output (E), while the route to N is still held.
-            in_type[2*S +: 2] = HEAD;
-            in_dx[DX_W*S +: DX_W] = 1; in_dy[DY_W*S +: DY_W] = 0; // would want E if accepted
-            in_data[DATA_W*S +: DATA_W] = 8'hDE;
-            #1;
-            if (!in_ready[S] && !out_valid[E])
-                $display("PASS illegal-head: mid-packet Head is refused, NOT misrouted to E");
-            else begin
-                $display("FAIL illegal-head: mid-packet Head was accepted or misrouted (in_ready=%b out_valid[E]=%b)",
-                          in_ready[S], out_valid[E]);
-                errors = errors + 1;
-            end
-            @(posedge clk); #1; // route_active[S] must still be 1, still pointed at N
+        // ------------------------------------------------------------
+        tnum = 3;
+        $display("=== 3. whole-packet admission: no room, no HEAD ===");
+        reset_all;
+        out_room[E] = 1'b0;
+        push(W, mk(HEAD, 1, E, 32'h0)); push(W, mk(TAIL, 1, E, 32'h1));
+        run(5);
+        check(lc[E] == 0, "HEAD held while downstream lacks room");
+        out_room[E] = 1'b1;
+        run(4);
+        check(lc[E] == 2, "packet admitted once room appears");
+        reset_all;
+        push(W, mk(HEAD, 1, E, 32'h0)); push(W, mk(TAIL, 1, E, 32'h1));
+        run(1);
+        out_room[E] = 1'b0;      // room drops after the HEAD: the TAIL must still pass
+        run(4);
+        check(lc[E] == 2, "room only gates HEADs, not the rest of an admitted packet");
 
-            // Sender comes to its senses: sends the REAL Body, then Tail,
-            // for the original packet. Must still go to N, not E, and
-            // must carry the correct (Body's) data, not the rejected
-            // Head's leftover data.
-            tests = tests + 1;
-            in_type[2*S +: 2] = BODY;
-            in_data[DATA_W*S +: DATA_W] = 8'h22;
-            #1;
-            if (in_ready[S] && out_valid[N] && out_data[DATA_W*N +: DATA_W] === 8'h22)
-                $display("PASS illegal-head: original route to N survived the illegal interruption intact");
-            else begin
-                $display("FAIL illegal-head: original route to N did not survive (out_valid[N]=%b data=%0h)",
-                          out_valid[N], out_data[DATA_W*N +: DATA_W]);
-                errors = errors + 1;
-            end
-            @(posedge clk); #1;
+        // ------------------------------------------------------------
+        tnum = 4;
+        $display("=== 4. same-cycle drops: U-turn, orphan, bad check bits ===");
+        reset_all;
+        push(E, mk(HEADTAIL, 1, E, 32'h0));       // came from E, wants E
+        run(3);
+        check(lc[E] == 0 && err_bit(E, `NOC_E_ROUTE), "U-turn dropped, E_ROUTE set on E");
+        reset_all;
+        push(S, mk(TAIL, 1, N, 32'h0));
+        push(S, mk(BODY, 1, N, 32'h0));
+        run(3);
+        check(lc[N] == 0 && err_bit(S, `NOC_E_ORPHAN), "orphan TAIL/BODY dropped, E_ORPHAN set");
+        check(qh[S] == qt[S], "orphans were consumed, not left blocking");
+        reset_all;
+        fa = mk(HEAD, 1, E, 32'h0);
+        fa[3] = ~fa[3];                           // corrupt a data bit
+        push(W, fa); push(W, mk(TAIL, 1, E, 32'h1));
+        push(W, mk(HEADTAIL, 1, E, 32'h77));      // next packet must still get through
+        run(5);
+        check(err_bit(W, `NOC_E_CHK), "corrupted HEAD flagged E_CHK");
+        check(err_bit(W, `NOC_E_ORPHAN), "its TAIL drained as an orphan");
+        check(lc[E] == 1 && lg[E*LD][`NOC_F_DATA_LSB +: 32] == 32'h77, "only the clean packet left E");
+        check(cap_valid && cap_port == W && cap_flit == fa, "capture register holds the bad HEAD");
+        check(drop_cnt == 2, "two drop events counted");
 
-            in_type[2*S +: 2] = TAIL;
-            in_data[DATA_W*S +: DATA_W] = 8'h33;
-            #1;
-            if (in_ready[S] && out_valid[N] && out_data[DATA_W*N +: DATA_W] === 8'h33)
-                $display("PASS illegal-head: Tail correctly completes the original packet, route releases");
-            else begin
-                $display("FAIL illegal-head: Tail did not correctly complete the original packet");
-                errors = errors + 1;
-            end
-            @(posedge clk); #1;
-            in_valid[S] = 1'b0;
-            @(posedge clk); #1;
-        end
+        // ------------------------------------------------------------
+        tnum = 5;
+        $display("=== 5. mid-packet faults become poison TAILs ===");
+        reset_all;
+        fb = mk(TAIL, 1, E, 32'h1);
+        fb[5] = ~fb[5];
+        push(W, mk(HEAD, 1, E, 32'h0)); push(W, fb);
+        push(W, mk(HEADTAIL, 1, E, 32'h88));
+        run(6);
+        check(lc[E] == 3, "HEAD, poison TAIL, next packet");
+        check(lg[E*LD+1] == poison_of(1, E), "bad TAIL replaced by a sealed poison TAIL");
+        check(noc_chk_ok(lg[E*LD+1]), "poison TAIL has valid check bits");
+        check(err_bit(W, `NOC_E_CHK), "E_CHK set");
+        check(lg[E*LD+2][`NOC_F_DATA_LSB +: 32] == 32'h88, "route released after the poison TAIL");
 
-        $display("----------------------------------------");
-        $display("TOTAL: %0d tests, %0d errors", tests, errors);
-        if (errors == 0)
-            $display("ALL TESTS PASSED");
-        else
-            $display("SOME TESTS FAILED");
+        reset_all;
+        push(W, mk(HEAD, 1, E, 32'h0));
+        push(W, mk(BODY, 2, E, 32'h1));           // source tag changed mid-packet
+        push(W, mk(TAIL, 1, E, 32'h2));
+        run(6);
+        check(lc[E] == 2 && lg[E*LD+1] == poison_of(1, E), "source change closed the packet with poison");
+        check(err_bit(W, `NOC_E_PROTO) && err_bit(W, `NOC_E_ORPHAN), "E_PROTO, then the rest drained");
+
+        reset_all;
+        push(W, mk(HEAD, 1, E, 32'h0));
+        push(W, mk(HEAD, 1, N, 32'h10));          // previous TAIL lost
+        push(W, mk(TAIL, 1, N, 32'h11));
+        run(6);
+        check(lc[E] == 2 && lg[E*LD+1] == poison_of(1, E), "old packet closed with poison on E");
+        check(lc[N] == 2 && lg[N*LD][`NOC_F_DATA_LSB +: 32] == 32'h10, "new packet kept and routed to N");
+        check(err_bit(W, `NOC_E_PROTO), "E_PROTO set");
+
+        // ------------------------------------------------------------
+        tnum = 6;
+        $display("=== 6. watchdog: upstream stalls mid-packet -> poison TAIL ===");
+        reset_all;
+        push(W, mk(HEAD, 1, E, 32'h0));
+        run(2);
+        hold[W] = 1'b1;
+        push(W, mk(TAIL, 1, E, 32'h1));
+        run(LOCK_CYC);
+        check(lc[E] == 2 && lg[E*LD+1] == poison_of(1, E), "watchdog emitted a poison TAIL");
+        check(out_wd[E] && !out_dead[E], "out_wd set, output not dead (downstream was fine)");
+        hold[W] = 1'b0;
+        run(3);
+        check(lc[E] == 2 && err_bit(W, `NOC_E_ORPHAN), "late TAIL drained as orphan");
+
+        tnum = 7;
+        $display("=== 7. watchdog: downstream stuck while locked -> output dead ===");
+        reset_all;
+        push(W, mk(HEAD, 1, N, 32'h0)); push(W, mk(TAIL, 1, N, 32'h1));
+        @(posedge clk); #1;
+        out_ready[N] = 1'b0;                      // HEAD went, TAIL now stuck
+        run(LOCK_CYC);
+        check(out_dead[N] && out_wd[N], "N declared dead");
+        out_ready[N] = 1'b1;
+        push(L, mk(HEADTAIL, 2, N, 32'h0));
+        run(3);
+        check(err_bit(L, `NOC_E_ROUTE), "new HEAD to dead N dropped with E_ROUTE");
+
+        tnum = 8;
+        $display("=== 8. watchdog: HEAD never admitted -> output dead ===");
+        reset_all;
+        out_room[S] = 1'b0;
+        push(E, mk(HEAD, 1, S, 32'h0)); push(E, mk(TAIL, 1, S, 32'h1));
+        run(STARVE_CYC);
+        check(out_dead[S], "S declared dead after starvation limit");
+        run(3);
+        check(qh[E] == qt[E] && err_bit(E, `NOC_E_ROUTE) && lc[S] == 0, "waiting packet dropped, nothing sent");
+        reset_all;
+        out_room[S] = 1'b0;
+        push(E, mk(HEAD, 1, S, 32'h0));
+        run(STARVE_CYC / 2);
+        out_room[S] = 1'b1;
+        run(3);
+        check(!out_dead[S] && lc[S] == 1, "shorter congestion is not a fault");
+
+        // ------------------------------------------------------------
+        tnum = 9;
+        $display("=== 9. port_disable and err_clear ===");
+        reset_all;
+        port_disable[E] = 1'b1;
+        push(W, mk(HEADTAIL, 1, E, 32'h0));
+        run(3);
+        check(lc[E] == 0 && err_bit(W, `NOC_E_ROUTE), "disabled port refuses traffic");
+        port_disable[E] = 1'b0;
+        @(negedge clk); err_clear = 1'b1;
+        @(negedge clk); err_clear = 1'b0;
+        check(in_err == 0 && drop_cnt == 0 && !cap_valid, "err_clear wipes sticky state");
+        push(W, mk(HEADTAIL, 1, E, 32'h1));
+        run(3);
+        check(lc[E] == 1, "re-enabled port carries traffic");
+
+        $display("");
+        if (errors == 0) $display("ALL TESTS PASSED (%0d checks)", checks);
+        else             $display("TOTAL: %0d of %0d checks failed", errors, checks);
         $finish;
     end
-
 endmodule
