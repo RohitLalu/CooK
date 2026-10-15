@@ -22,6 +22,16 @@ module tb_mesh_top;
 
     parameter integer TEST = 0;
 
+    // Where the baremetal images live, relative to the simulator's run
+    // directory. Icarus runs from the repo root (Makefile). Vivado's XSim runs
+    // from cook_vivado/cook_vivado.sim/<simset>/behav/xsim, five levels down,
+    // and predefines XILINX_SIMULATOR.
+`ifdef XILINX_SIMULATOR
+    parameter SW_DIR = "../../../../../sw/";
+`else
+    parameter SW_DIR = "sw/";
+`endif
+
     localparam integer NT = `NOC_NUM_TILES;
     localparam [4*NT-1:0] FAULT_MASK = (TEST == 0) ? {4*NT{1'b0}} : ({{(4*NT-1){1'b0}}, 1'b1} << (1*4 + 1));
     localparam integer    FAULT_MODE = (TEST == 2) ? 2 : 1;
@@ -66,11 +76,11 @@ module tb_mesh_top;
                 for (w = 0; w < (1 << (`NOC_OFFSET_BITS - 2)); w = w + 1)
                     dut.g_tile[gt].u_ni.mem[w] = 32'h0;
                 if (gt == 0)
-                    $readmemh("sw/tile0.hex", dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                    $readmemh({SW_DIR, "tile0.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
                 else if ((gt == 1 || gt == 2) && TEST == 0)
-                    $readmemh("sw/hammer.hex", dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                    $readmemh({SW_DIR, "hammer.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
                 else
-                    $readmemh("sw/spin.hex", dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
+                    $readmemh({SW_DIR, "spin.hex"}, dut.g_tile[gt].u_ni.mem, TEXT_BASE, TEXT_BASE+63);
             end
         end
     endgenerate

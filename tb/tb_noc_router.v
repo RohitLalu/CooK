@@ -23,6 +23,15 @@ module tb_noc_router;
     localparam LOCK_CYC   = (LOCK_LIM + 2) << PRESC_W;     // comfortably past the limit
     localparam STARVE_CYC = (STARVE_LIM + 2) << PRESC_W;
 
+    // Stop with a clear message instead of wrong results if the knobs are
+    // the 2x2 defaults (Vivado: use the sim_router simulation set, which
+    // defines NOC_MESH_X=3 and NOC_MESH_Y=3).
+    generate
+        if (`NOC_MESH_X < 3 || `NOC_MESH_Y < 3) begin : tb_check_mesh
+            TB_ERROR_router_tb_needs_NOC_MESH_X_and_Y_of_at_least_3 u_err ();
+        end
+    endgenerate
+
     reg clk = 0;
     reg rst_n = 0;
     always #5 clk = ~clk;

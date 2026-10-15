@@ -63,10 +63,14 @@ latches and logic loops (currently zero of both). `make cocotb` runs the pyuvm b
 > from a tile without rewiring anything; tile 3 loses its core when the DMA/DDR gateway
 > lands, matching the thesis's own gateway routers.
 
-> **Vivado:** the project still lists the legacy `four_router_config` files. Add
-> `rtl/include/noc_defs.vh` and `noc_funcs.vh` (as Verilog headers, or add `rtl/include`
-> to the include directories), add `rtl/integrated/mesh/*.v`, and set `mesh_top` /
-> `tb_mesh_top` as the synthesis and simulation tops.
+> **Vivado:** `cook_vivado/cook_vivado.xpr` lists only the current files. Design sources:
+> the two headers in `rtl/include` (also set as the Verilog include directory), router,
+> link buffer, end terminator, decoder, NI, picorv32, `noc_mesh` and `mesh_top` (synthesis
+> top). Simulation set `sim_1` runs `tb_mesh_top` (default), `tb_link_buffer` or
+> `tb_address_decoder`. Simulation set `sim_router` runs `tb_noc_router` with
+> `NOC_MESH_X=3`, `NOC_MESH_Y=3` defined, which that bench requires. `tb_mesh_top` finds the
+> `sw/*.hex` images from XSim's run directory automatically; run `sh sw/build.sh` first.
+> To run a fault test in XSim, add `-generic_top TEST=1` (or `2`) to the elaborate options.
 
 ### Bugs found and fixed
 
