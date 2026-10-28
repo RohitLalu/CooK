@@ -27,7 +27,8 @@ module tb_board;
 
     nexys4ddr_top #(
         .MEM_PREFIX(PREFIX),
-        .UNIT_CYCLES(8), .HEART_CYCLES(20), .REFRESH_CYCLES(4)
+        .UNIT_CYCLES(8), .HEART_CYCLES(20), .REFRESH_CYCLES(4),
+        .GATEWAY(0)     // the MIG has no simulation model; see tb_gw_dma_ip.v
     ) dut (
         .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .BTNC(BTNC),
         .LED(LED), .SEG(SEG), .DP(DP), .AN(AN)

@@ -12,6 +12,8 @@
 #   7. call a function that lives in T's memory (remote instruction fetch);
 #      it returns the tile its own code is executing from     -> must equal T
 #   = 74 checks per other tile.
+# A gateway tile (tile-kind CSR 0x010 != 0: no core, no RAM; see
+# rtl/dma_ddr/gw_ni.v) gets checks 1 and 2 only. Core tiles read 0 there.
 #
 # Memory use inside every tile's 4KB region:
 #   0x000-0x0FF  CSRs
@@ -62,6 +64,9 @@ outer:
     # 2. remote tile-count register
     lw    t0, 0xC(s6)
     CHECK t0, s2
+    # gateway tile: no RAM to test, no code to call
+    lw    t0, 0x10(s6)
+    bnez  t0, next
 
     # 3. word read-after-write
     slli  t2, s1, 24
@@ -132,6 +137,7 @@ walk:
     jalr  ra, 0(t0)
     CHECK a0, s5
 
+next:
     addi  s4, s4, 1
     j     outer
 

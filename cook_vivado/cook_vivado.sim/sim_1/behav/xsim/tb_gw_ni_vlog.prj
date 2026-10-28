@@ -1,0 +1,29 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" \
+"../../../../../rtl/router/noc_router.v" \
+"../../../../../rtl/router/link_buffer.v" \
+"../../../../../rtl/router/end_buff.v" \
+"../../../../../rtl/network_interface/address_decoder.v" \
+"../../../../../rtl/network_interface/ni.v" \
+"../../../../../rtl/core/picorv32.v" \
+"../../../../../rtl/integrated/mesh/noc_mesh.v" \
+"../../../../../rtl/integrated/mesh/mesh_top.v" \
+"../../../../../rtl/board/reset_sync.v" \
+"../../../../../rtl/board/status_panel.v" \
+"../../../../../rtl/board/seven_seg.v" \
+"../../../../../rtl/board/nexys4ddr/nexys4ddr_top.v" \
+"../../../../../rtl/dma_ddr/gw_ni.v" \
+"../../../../../rtl/integrated/mesh/tb_mesh_top.v" \
+"../../../../../tb/tb_link_buffer.v" \
+"../../../../../tb/tb_ni.v" \
+"../../../../../tb/tb_status_panel.v" \
+"../../../../../tb/tb_board.v" \
+"../../../../../tb/tb_address_decoder.v" \
+"../../../../../tb/tb_gw_ni.v" \
+"../../../../../tb/axi_dma_model.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

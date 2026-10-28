@@ -18,7 +18,7 @@ run       = $(VVP) $(BUILD)/$(1).out > $(BUILD)/$(1).log 2>&1; grep -E "$(2)" $(
 
 RTL_ROUTER = rtl/router/noc_router.v rtl/router/link_buffer.v rtl/router/end_buff.v
 RTL_NI     = rtl/network_interface/address_decoder.v rtl/network_interface/ni.v
-RTL_MESH   = rtl/integrated/mesh/noc_mesh.v rtl/integrated/mesh/mesh_top.v
+RTL_MESH   = rtl/integrated/mesh/noc_mesh.v rtl/integrated/mesh/mesh_top.v rtl/dma_ddr/gw_ni.v
 RTL_CORE   = rtl/core/picorv32.v
 RTL_ALL    = $(RTL_ROUTER) $(RTL_NI) $(RTL_MESH) $(RTL_CORE)
 RTL_BOARD  = rtl/board/reset_sync.v rtl/board/status_panel.v rtl/board/seven_seg.v \
@@ -31,6 +31,7 @@ TB_NI     = tb/tb_ni.v
 TB_PANEL  = tb/tb_status_panel.v
 TB_BOARD  = tb/tb_board.v
 TB_MESH   = rtl/integrated/mesh/tb_mesh_top.v
+TB_GW     = tb/tb_gw_ni.v tb/axi_dma_model.v
 
 # the router unit test needs a neighbour on every side of the DUT
 ROUTER_DEFS = -DNOC_MESH_X=3 -DNOC_MESH_Y=3
@@ -38,11 +39,11 @@ MESH_DEFS   ?=
 
 .PHONY: all test clean sw synth_check cocotb \
         router link_buffer address_decoder ni mesh mesh_faults mesh_3x3 \
-        alltoall alltoall_3x3 status_panel board wv_router
+        alltoall alltoall_3x3 status_panel board gateway wv_router
 
 # Run the whole regression suite.
 test: address_decoder link_buffer router ni mesh mesh_faults mesh_3x3 \
-      alltoall alltoall_3x3 status_panel board
+      alltoall alltoall_3x3 status_panel board gateway
 	@echo ""
 	@echo "=== all suites completed ==="
 
@@ -116,6 +117,16 @@ board: sw | $(BUILD)
 	@echo "=== nexys4ddr_top, programs from tileNN.mem, read back from LEDs ==="
 	@$(call compile,board,-s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
 	@$(call run,board,FAIL|PASSED|TOTAL)
+
+# ---- gateway: gw_ni in a 2x2 mesh against a behavioural axi_dma model ----
+# (the real axi_dma IP is simulated in Vivado: tb/tb_gw_dma_ip.v)
+
+gateway: sw | $(BUILD)
+	@echo "=== gateway (gw_ni + DMA model) ==="
+	@$(call compile,gw,-s tb_gw_ni $(TB_GW) $(RTL_ALL))
+	@$(call run,gw,PASS:|FAIL)
+	@$(call compile,gwa2a,-s tb_gw_alltoall tb/tb_gw_alltoall.v $(RTL_ALL))
+	@$(call run,gwa2a,FAIL|PASSED|TOTAL)
 
 # ---- synthesis sanity: no combinational loops, no latches ----
 

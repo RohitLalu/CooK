@@ -83,18 +83,18 @@ module tb_mesh_top;
         for (gt = 0; gt < NT; gt = gt + 1) begin : load
             initial begin
                 if (TEST == 3)
-                    $readmemh({SW_DIR, "alltoall.mem"}, dut.g_tile[gt].u_ni.mem);
+                    $readmemh({SW_DIR, "alltoall.mem"}, dut.g_tile[gt].g_ni.u_ni.mem);
                 else if (gt == 0)
-                    $readmemh({SW_DIR, "tile0.mem"}, dut.g_tile[gt].u_ni.mem);
+                    $readmemh({SW_DIR, "tile0.mem"}, dut.g_tile[gt].g_ni.u_ni.mem);
                 else if ((gt == 1 || gt == 2) && TEST == 0)
-                    $readmemh({SW_DIR, "hammer.mem"}, dut.g_tile[gt].u_ni.mem);
+                    $readmemh({SW_DIR, "hammer.mem"}, dut.g_tile[gt].g_ni.u_ni.mem);
                 else
-                    $readmemh({SW_DIR, "spin.mem"}, dut.g_tile[gt].u_ni.mem);
+                    $readmemh({SW_DIR, "spin.mem"}, dut.g_tile[gt].g_ni.u_ni.mem);
             end
             // per-tile alltoall.S results, flattened so the checker can loop
-            assign a2a_mark[gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_MARK_IX];
-            assign a2a_err [gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_ERR_IX];
-            assign a2a_chk [gt*32 +: 32] = dut.g_tile[gt].u_ni.mem[A2A_CHECKS_IX];
+            assign a2a_mark[gt*32 +: 32] = dut.g_tile[gt].g_ni.u_ni.mem[A2A_MARK_IX];
+            assign a2a_err [gt*32 +: 32] = dut.g_tile[gt].g_ni.u_ni.mem[A2A_ERR_IX];
+            assign a2a_chk [gt*32 +: 32] = dut.g_tile[gt].g_ni.u_ni.mem[A2A_CHECKS_IX];
         end
     endgenerate
 
@@ -135,10 +135,10 @@ module tb_mesh_top;
         while (!done && cyc < limit) begin
             @(posedge clk);
             cyc = cyc + 1;
-            done = (TEST == 3) ? a2a_done : (dut.g_tile[0].u_ni.mem[MARKER_IX] === 32'h0000C0DE);
+            done = (TEST == 3) ? a2a_done : (dut.g_tile[0].g_ni.u_ni.mem[MARKER_IX] === 32'h0000C0DE);
             if (TEST == 0)
-                done = done && (dut.g_tile[1].u_ni.mem[MARKER_IX] === 32'h0000C0DE)
-                            && (dut.g_tile[2].u_ni.mem[MARKER_IX] === 32'h0000C0DE);
+                done = done && (dut.g_tile[1].g_ni.u_ni.mem[MARKER_IX] === 32'h0000C0DE)
+                            && (dut.g_tile[2].g_ni.u_ni.mem[MARKER_IX] === 32'h0000C0DE);
             if (|tile_trap) begin
                 $display("FAIL: a core trapped (tile_trap=%b) at cycle %0d", tile_trap, cyc);
                 errors = errors + 1;
@@ -149,7 +149,7 @@ module tb_mesh_top;
         check(done, "all programs completed (no hang)");
         $display("      finished after %0d cycles", cyc);
         if (TEST != 3)
-            check(dut.g_tile[0].u_ni.mem[POISON_IX] === `NOC_POISON_DATA,
+            check(dut.g_tile[0].g_ni.u_ni.mem[POISON_IX] === `NOC_POISON_DATA,
                   "out-of-window read returned POISON instead of hanging");
 
         if (TEST == 3) begin
@@ -170,21 +170,21 @@ module tb_mesh_top;
             check(dut.u_mesh.rt_out_dead === {5*NT{1'b0}}, "no output declared dead");
             check(dut.u_mesh.rt_in_err === {5*NT*`NOC_E_W{1'b0}}, "no router error flags");
         end else if (TEST == 0) begin
-            check(dut.g_tile[0].u_ni.mem[RESULT_IX] === 32'd3, "tile0 remote read of tile3 ID returned 3");
-            check(dut.g_tile[0].u_ni.mem[ERRCSR_IX] === 32'd2, "tile0 error CSR: illegal only");
-            check(dut.g_tile[1].u_ni.mem[RESULT_IX] === 32'd48, "tile1 hammer sum = 48");
-            check(dut.g_tile[2].u_ni.mem[RESULT_IX] === 32'd48, "tile2 hammer sum = 48");
-            check(dut.g_tile[3].u_ni.mem[SLOT_IX+1] === 32'd48, "tile1's posted writes landed in tile3");
-            check(dut.g_tile[3].u_ni.mem[SLOT_IX+2] === 32'd48, "tile2's posted writes landed in tile3");
+            check(dut.g_tile[0].g_ni.u_ni.mem[RESULT_IX] === 32'd3, "tile0 remote read of tile3 ID returned 3");
+            check(dut.g_tile[0].g_ni.u_ni.mem[ERRCSR_IX] === 32'd2, "tile0 error CSR: illegal only");
+            check(dut.g_tile[1].g_ni.u_ni.mem[RESULT_IX] === 32'd48, "tile1 hammer sum = 48");
+            check(dut.g_tile[2].g_ni.u_ni.mem[RESULT_IX] === 32'd48, "tile2 hammer sum = 48");
+            check(dut.g_tile[3].g_ni.u_ni.mem[SLOT_IX+1] === 32'd48, "tile1's posted writes landed in tile3");
+            check(dut.g_tile[3].g_ni.u_ni.mem[SLOT_IX+2] === 32'd48, "tile2's posted writes landed in tile3");
             check(tile_err[0*5 +: 5] === 5'b00010, "tile0 NI flags: illegal only");
             check(tile_err[5*NT-1:5] === {5*(NT-1){1'b0}}, "no NI errors on other tiles");
             check(dut.u_mesh.rt_drop_cnt === {8*NT{1'b0}}, "no router dropped anything");
             check(dut.u_mesh.rt_out_dead === {5*NT{1'b0}}, "no output declared dead");
             check(dut.u_mesh.rt_in_err === {5*NT*`NOC_E_W{1'b0}}, "no router error flags");
         end else begin
-            check(dut.g_tile[0].u_ni.mem[RESULT_IX] === `NOC_POISON_DATA,
+            check(dut.g_tile[0].g_ni.u_ni.mem[RESULT_IX] === `NOC_POISON_DATA,
                   "read across the faulted link returned POISON");
-            check(dut.g_tile[0].u_ni.mem[ERRCSR_IX] === 32'd3, "tile0 error CSR: illegal and timeout");
+            check(dut.g_tile[0].g_ni.u_ni.mem[ERRCSR_IX] === 32'd3, "tile0 error CSR: illegal and timeout");
             if (TEST == 1)
                 check(dut.u_mesh.rt_out_dead[1*5 + `NOC_P_S] === 1'b1,
                       "router 1 declared its S output dead");

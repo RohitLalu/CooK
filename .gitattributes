@@ -1,0 +1,2 @@
+# shell scripts must keep LF endings: sh rejects CRLF ("set: Illegal option -")
+*.sh text eol=lf

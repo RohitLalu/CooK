@@ -1,0 +1,29 @@
+Time resolution is 1 ps
+[1] gateway CSRs
+  ok   tile ID reads 3
+  ok   tile count reads NT
+  ok   software status r/w
+[2] MM2S: DDR -> tile 1 RAM
+  ok   8 words landed in tile 1 RAM
+  ok   MM2S_CNT = 8
+  ok   MM2S disarmed after TLAST
+  ok   done cleared by w1c
+[3] S2MM: tile 2 RAM -> DDR
+  ok   6 words landed in DDR model
+  ok   DMA saw 24 bytes
+  ok   S2MM_CNT back to 0
+[4] DMA register access
+  ok   S2MM_DMASR idle
+  ok   no gateway errors so far
+  ok   SLVERR read -> POISON
+  ok   err_illegal set by SLVERR
+  ok   error flags cleared
+[5] illegal use
+  ok   offset 0x400 read -> POISON
+  ok   err_illegal set
+  ok   bad MM2S dst flagged
+  ok   tile 1 software status untouched
+  ok   no words sent to bad dst
+
+PASS: tb_gw_ni
+$finish called at time : 5036 ns : File "C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/tb/tb_gw_ni.v" Line 257
