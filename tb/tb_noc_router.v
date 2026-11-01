@@ -59,7 +59,7 @@ module tb_noc_router;
         .clk(clk), .rst_n(rst_n),
         .in_valid(in_valid), .in_ready(in_ready), .in_flit(in_flit),
         .out_valid(out_valid), .out_ready(out_ready), .out_room(out_room), .out_flit(out_flit),
-        .port_disable(port_disable), .err_clear(err_clear),
+        .port_disable(port_disable), .dead_links({`NOC_LINKS_W{1'b0}}), .err_clear(err_clear),
         .in_err(in_err), .out_dead(out_dead), .out_wd(out_wd), .drop_cnt(drop_cnt),
         .cap_valid(cap_valid), .cap_port(cap_port), .cap_flit(cap_flit)
     );

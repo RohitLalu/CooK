@@ -30,7 +30,7 @@ module tb_link_buffer;
     wire [FW-1:0] out_flit;
 
     link_buffer #(.DEPTH(DEPTH), .ROOM(ROOM), .FAULT(0)) dut (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk), .rst_n(rst_n), .rt_silent(1'b0), .rt_flip(1'b0),
         .in_valid(in_valid), .in_ready(in_ready), .in_room(in_room), .in_flit(in_flit),
         .out_valid(out_valid), .out_ready(out_ready), .out_flit(out_flit)
     );
@@ -39,12 +39,12 @@ module tb_link_buffer;
     wire f1_in_ready, f1_in_room, f1_out_valid; wire [FW-1:0] f1_out_flit;
     wire f2_in_ready, f2_in_room, f2_out_valid; wire [FW-1:0] f2_out_flit;
     link_buffer #(.DEPTH(DEPTH), .ROOM(ROOM), .FAULT(1)) dut_silent (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk), .rst_n(rst_n), .rt_silent(1'b0), .rt_flip(1'b0),
         .in_valid(in_valid), .in_ready(f1_in_ready), .in_room(f1_in_room), .in_flit(in_flit),
         .out_valid(f1_out_valid), .out_ready(out_ready), .out_flit(f1_out_flit)
     );
     link_buffer #(.DEPTH(DEPTH), .ROOM(ROOM), .FAULT(2)) dut_flip (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk), .rst_n(rst_n), .rt_silent(1'b0), .rt_flip(1'b0),
         .in_valid(in_valid), .in_ready(f2_in_ready), .in_room(f2_in_room), .in_flit(in_flit),
         .out_valid(f2_out_valid), .out_ready(out_ready), .out_flit(f2_out_flit)
     );

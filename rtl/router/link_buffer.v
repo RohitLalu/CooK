@@ -29,11 +29,13 @@
 //        flight on this link. A locked output that sees ready low is
 //        therefore a fault, not congestion -- see the router watchdog.
 //
-// FAULT (simulation fault injection; keep 0 for hardware)
+// FAULT (elaboration-time fault injection; keep 0 for hardware)
 //   0  healthy
 //   1  silent link: never accepts, never delivers
 //   2  bit-flip: inverts DATA bit 0 of every flit written, so the check bits
 //      no longer match and the downstream router must catch it
+// rt_silent / rt_flip apply the same two faults at run time (the board's
+// fault-injection switches). Tie both to 0 when unused.
 //
 // One instance covers ONE direction. A bidirectional link needs two.
 
@@ -47,6 +49,8 @@ module link_buffer #(
 ) (
     input  wire                   clk,
     input  wire                   rst_n,
+    input  wire                   rt_silent,
+    input  wire                   rt_flip,
 
     // upstream (sending router) side
     input  wire                   in_valid,
@@ -82,19 +86,21 @@ module link_buffer #(
     wire full    = (count == DEPTH);
     wire empty   = (count == 0);
 
-    wire rdy_int  = (FAULT == 1) ? 1'b0 : !full;
-    wire room_int = (FAULT == 1) ? 1'b0 : ((DEPTH - count) >= ROOM);
+    wire silent   = (FAULT == 1) || rt_silent;
+    wire flip     = (FAULT == 2) || rt_flip;
+    wire rdy_int  = silent ? 1'b0 : !full;
+    wire room_int = silent ? 1'b0 : ((DEPTH - count) >= ROOM);
 
     assign in_ready  = rdy_int;
     assign in_room   = room_int;
-    assign out_valid = (FAULT == 1) ? 1'b0 : !empty;
+    assign out_valid = silent ? 1'b0 : !empty;
     // Drive a defined value when empty so X never leaks into router decode.
     assign out_flit  = empty ? {FW{1'b0}} : mem[rd_ptr];
 
     wire push = in_valid && rdy_int;
     wire pop  = out_valid && out_ready;
 
-    wire [FW-1:0] wr_flit = (FAULT == 2) ? (in_flit ^ {{(FW-1){1'b0}}, 1'b1}) : in_flit;
+    wire [FW-1:0] wr_flit = flip ? (in_flit ^ {{(FW-1){1'b0}}, 1'b1}) : in_flit;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

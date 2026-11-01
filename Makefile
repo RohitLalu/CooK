@@ -16,7 +16,8 @@ compile   = $(IV) -o $(BUILD)/$(1).out $(2) > $(BUILD)/$(1).clog 2>&1 || (cat $(
 # $(call run,<name>,<grep pattern for summary lines>)
 run       = $(VVP) $(BUILD)/$(1).out > $(BUILD)/$(1).log 2>&1; grep -E "$(2)" $(BUILD)/$(1).log; ! grep -q "FAIL" $(BUILD)/$(1).log
 
-RTL_ROUTER = rtl/router/noc_router.v rtl/router/link_buffer.v rtl/router/end_buff.v
+RTL_ROUTER = rtl/router/noc_router.v rtl/router/link_buffer.v rtl/router/end_buff.v \
+             rtl/router/bist_node.v
 RTL_NI     = rtl/network_interface/address_decoder.v rtl/network_interface/ni.v
 RTL_MESH   = rtl/integrated/mesh/noc_mesh.v rtl/integrated/mesh/mesh_top.v rtl/dma_ddr/gw_ni.v
 RTL_CORE   = rtl/core/picorv32.v
@@ -32,6 +33,7 @@ TB_PANEL  = tb/tb_status_panel.v
 TB_BOARD  = tb/tb_board.v
 TB_MESH   = rtl/integrated/mesh/tb_mesh_top.v
 TB_GW     = tb/tb_gw_ni.v tb/axi_dma_model.v
+TB_BIST   = tb/tb_bist.v
 
 # the router unit test needs a neighbour on every side of the DUT
 ROUTER_DEFS = -DNOC_MESH_X=3 -DNOC_MESH_Y=3
@@ -39,11 +41,11 @@ MESH_DEFS   ?=
 
 .PHONY: all test clean sw synth_check cocotb \
         router link_buffer address_decoder ni mesh mesh_faults mesh_3x3 \
-        alltoall alltoall_3x3 status_panel board gateway wv_router
+        alltoall alltoall_3x3 status_panel board gateway bist m3 wv_router
 
 # Run the whole regression suite.
-test: address_decoder link_buffer router ni mesh mesh_faults mesh_3x3 \
-      alltoall alltoall_3x3 status_panel board gateway
+test: address_decoder link_buffer router bist ni mesh mesh_faults mesh_3x3 \
+      alltoall alltoall_3x3 status_panel board gateway m3
 	@echo ""
 	@echo "=== all suites completed ==="
 
@@ -69,6 +71,11 @@ router: | $(BUILD)
 	@$(call compile,noc_router,$(ROUTER_DEFS) $(TB_ROUTER) rtl/router/noc_router.v)
 	@$(call run,noc_router,FAIL|PASSED|TOTAL)
 
+bist: | $(BUILD)
+	@echo "=== link BIST (ping-pong per router, faults localised) ==="
+	@$(call compile,bist,-s tb_bist $(TB_BIST) rtl/integrated/mesh/noc_mesh.v $(RTL_ROUTER))
+	@$(call run,bist,FAIL|PASSED|TOTAL)
+
 ni: | $(BUILD)
 	@echo "=== network interface ==="
 	@$(call compile,ni,$(TB_NI) $(RTL_NI))
@@ -82,12 +89,15 @@ mesh: sw | $(BUILD)
 	@$(call run,mesh0,^mesh|FAIL|PASSED|TOTAL)
 
 mesh_faults: sw | $(BUILD)
-	@echo "=== mesh, silent-link fault ==="
+	@echo "=== mesh, silent-link fault found by BIST, routed around ==="
 	@$(call compile,mesh1,-Ptb_mesh_top.TEST=1 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
 	@$(call run,mesh1,FAIL|PASSED|TOTAL)
 	@echo "=== mesh, bit-flip fault ==="
 	@$(call compile,mesh2,-Ptb_mesh_top.TEST=2 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
 	@$(call run,mesh2,FAIL|PASSED|TOTAL)
+	@echo "=== mesh, link fails after the start-up BIST ==="
+	@$(call compile,mesh4,-Ptb_mesh_top.TEST=4 -s tb_mesh_top $(TB_MESH) $(RTL_ALL))
+	@$(call run,mesh4,FAIL|PASSED|TOTAL)
 
 # Same software, same RTL, bigger mesh: only the knobs change.
 mesh_3x3: sw | $(BUILD)
@@ -117,6 +127,9 @@ board: sw | $(BUILD)
 	@echo "=== nexys4ddr_top, programs from tileNN.mem, read back from LEDs ==="
 	@$(call compile,board,-s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
 	@$(call run,board,FAIL|PASSED|TOTAL)
+	@echo "=== nexys4ddr_top, fault switch SW = 0x8005 (silent link, tile 1 south) ==="
+	@$(call compile,boardf,-Ptb_board.FAULT_SW=16\'h8005 -s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
+	@$(call run,boardf,FAIL|PASSED|TOTAL)
 
 # ---- gateway: gw_ni in a 2x2 mesh against a behavioural axi_dma model ----
 # (the real axi_dma IP is simulated in Vivado: tb/tb_gw_dma_ip.v)
@@ -125,8 +138,19 @@ gateway: sw | $(BUILD)
 	@echo "=== gateway (gw_ni + DMA model) ==="
 	@$(call compile,gw,-s tb_gw_ni $(TB_GW) $(RTL_ALL))
 	@$(call run,gw,PASS:|FAIL)
+	@$(call compile,gwf,-Ptb_gw_ni.FAULT=1 -s tb_gw_ni $(TB_GW) $(RTL_ALL))
+	@$(call run,gwf,PASS:|FAIL)
+	@$(call compile,gwf2,-Ptb_gw_ni.FAULT=2 -s tb_gw_ni $(TB_GW) $(RTL_ALL))
+	@$(call run,gwf2,PASS:|FAIL)
 	@$(call compile,gwa2a,-s tb_gw_alltoall tb/tb_gw_alltoall.v $(RTL_ALL))
 	@$(call run,gwa2a,FAIL|PASSED|TOTAL)
+
+# ---- metric M3: every single link fault, cores still usable (about 2 min) ----
+
+m3: sw | $(BUILD)
+	@echo "=== M3 sweep: gateway system, alltoall.S, every link faulted ==="
+	@$(call compile,m3,-s tb_m3 tb/tb_m3.v $(RTL_ALL))
+	@$(call run,m3,^PASS:|^FAIL:|^M3|PASSED|TOTAL)
 
 # ---- synthesis sanity: no combinational loops, no latches ----
 

@@ -48,10 +48,29 @@ set_property -dict { PACKAGE_PIN T14 IOSTANDARD LVCMOS33 } [get_ports { AN[5] }]
 set_property -dict { PACKAGE_PIN K2  IOSTANDARD LVCMOS33 } [get_ports { AN[6] }]
 set_property -dict { PACKAGE_PIN U13 IOSTANDARD LVCMOS33 } [get_ports { AN[7] }]
 
-## RGB LEDs (green half of LED16, blue half of LED17): DDR2 calibration done,
-## AXI DMA interrupt pending
+## RGB LEDs: LED16 green = DDR2 calibration done, LED17 blue = AXI DMA
+## interrupt pending, LED17 red = link BIST found a faulty link
 set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { LED16_G }]
 set_property -dict { PACKAGE_PIN G14 IOSTANDARD LVCMOS33 } [get_ports { LED17_B }]
+set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { LED17_R }]
+
+## Slide switches: fault injection (SW[15] enable, SW[14] mode, SW[3:0] link)
+set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { SW[0] }]
+set_property -dict { PACKAGE_PIN L16 IOSTANDARD LVCMOS33 } [get_ports { SW[1] }]
+set_property -dict { PACKAGE_PIN M13 IOSTANDARD LVCMOS33 } [get_ports { SW[2] }]
+set_property -dict { PACKAGE_PIN R15 IOSTANDARD LVCMOS33 } [get_ports { SW[3] }]
+set_property -dict { PACKAGE_PIN R17 IOSTANDARD LVCMOS33 } [get_ports { SW[4] }]
+set_property -dict { PACKAGE_PIN T18 IOSTANDARD LVCMOS33 } [get_ports { SW[5] }]
+set_property -dict { PACKAGE_PIN U18 IOSTANDARD LVCMOS33 } [get_ports { SW[6] }]
+set_property -dict { PACKAGE_PIN R13 IOSTANDARD LVCMOS33 } [get_ports { SW[7] }]
+set_property -dict { PACKAGE_PIN T8  IOSTANDARD LVCMOS18 } [get_ports { SW[8] }]
+set_property -dict { PACKAGE_PIN U8  IOSTANDARD LVCMOS18 } [get_ports { SW[9] }]
+set_property -dict { PACKAGE_PIN R16 IOSTANDARD LVCMOS33 } [get_ports { SW[10] }]
+set_property -dict { PACKAGE_PIN T13 IOSTANDARD LVCMOS33 } [get_ports { SW[11] }]
+set_property -dict { PACKAGE_PIN H6  IOSTANDARD LVCMOS33 } [get_ports { SW[12] }]
+set_property -dict { PACKAGE_PIN U12 IOSTANDARD LVCMOS33 } [get_ports { SW[13] }]
+set_property -dict { PACKAGE_PIN U11 IOSTANDARD LVCMOS33 } [get_ports { SW[14] }]
+set_property -dict { PACKAGE_PIN V10 IOSTANDARD LVCMOS33 } [get_ports { SW[15] }]
 
 ## DDR2 SDRAM (MT47H64M16HR-25E), banks 34/35 at 1.8 V. These repeat what the
 ## MIG IP applies from rtl/dma_ddr/mig_nexys4ddr.prj (same pins, same
@@ -106,8 +125,8 @@ set_property -dict { PACKAGE_PIN V2 IOSTANDARD DIFF_SSTL18_II } [get_ports { ddr
 
 ## Buttons are asynchronous and synchronised inside; LEDs and the display are
 ## slow human-facing outputs. None of them need I/O timing.
-set_false_path -from [get_ports { CPU_RESETN BTNC }]
-set_false_path -to   [get_ports { LED[*] SEG[*] DP AN[*] LED16_G LED17_B }]
+set_false_path -from [get_ports { CPU_RESETN BTNC SW[*] }]
+set_false_path -to   [get_ports { LED[*] SEG[*] DP AN[*] LED16_G LED17_B LED17_R }]
 
 ## NoC clock (MMCM CLKOUT0, 50 MHz) and the MIG's ui_clk (81.25 MHz) only meet
 ## inside the SmartConnect's clock converter, which carries its own CDC

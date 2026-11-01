@@ -13,6 +13,16 @@
 //   router buses  router t, port p at index t*5 + p
 //   link faults   bit t*4 + d = the link LEAVING tile t in direction d
 //                 (d: 0=N 1=S 2=E 3=W), see link_buffer FAULT
+//   bist_status   router t at [10t +: 10] = {in[4:0], out[4:0]} (bist_node.v)
+//
+// BIST: one bist_node per router, between the router and its links. All of
+// them run the ping-pong once after reset (they leave reset together), share
+// the dead links they found (gossip over verified links only) and raise
+// bist_done together. From then on a router never sends on an output whose
+// own ping-pong failed or whose link is in the dead-link mask: port_disable
+// to the router is the external port_disable OR the node's port_dead. So a
+// broken link is dropped in both directions, at both ends, and the router
+// routes around it with the mask (noc_router.v, 2x2 only).
 
 `timescale 1ns/1ps
 `include "noc_defs.vh"
@@ -23,7 +33,8 @@ module noc_mesh #(
     parameter integer LB_DEPTH        = `NOC_LB_DEPTH,
     parameter integer WD_PRESCALE_W   = 2,
     parameter integer WD_LOCK_LIMIT   = 8,
-    parameter integer WD_STARVE_LIMIT = 64
+    parameter integer WD_STARVE_LIMIT = 64,
+    parameter integer BIST_PHASE      = 32
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -44,7 +55,16 @@ module noc_mesh #(
     output wire [`NOC_NUM_TILES*5*`NOC_E_W-1:0]  rt_in_err,
     output wire [`NOC_NUM_TILES*5-1:0]           rt_out_dead,
     output wire [`NOC_NUM_TILES*5-1:0]           rt_out_wd,
-    output wire [`NOC_NUM_TILES*8-1:0]           rt_drop_cnt
+    output wire [`NOC_NUM_TILES*8-1:0]           rt_drop_cnt,
+
+    // run-time fault injection (board switches): links selected by the mask
+    // go silent, or flip a bit when fault_rt_flip is 1. Tie the mask to 0.
+    input  wire [4*`NOC_NUM_TILES-1:0]           fault_rt_mask,
+    input  wire                                  fault_rt_flip,
+
+    // link BIST results
+    output wire [`NOC_NUM_TILES*10-1:0]          bist_status,
+    output wire                                  bist_done
 );
 
     localparam integer NT = `NOC_NUM_TILES;
@@ -54,7 +74,16 @@ module noc_mesh #(
     localparam integer PN = `NOC_P_N, PS = `NOC_P_S, PE = `NOC_P_E,
                        PW = `NOC_P_W, PL = `NOC_P_L;
 
-    // all router ports, router t port p at index t*5+p
+    // router-facing side of each bist_node, router t port p at index t*5+p
+    wire [NT*5-1:0]    rr_in_valid,  rr_in_ready;
+    wire [NT*5*FW-1:0] rr_in_flit;
+    wire [NT*5-1:0]    rr_out_valid, rr_out_ready, rr_out_room;
+    wire [NT*5*FW-1:0] rr_out_flit;
+    wire [NT-1:0]      node_done;
+    wire [NT*`NOC_LINKS_W-1:0] dead_links;
+    assign bist_done = &node_done;
+
+    // link-facing side of each bist_node (what the links and NIs see)
     wire [NT*5-1:0]    r_in_valid,  r_in_ready;
     wire [NT*5*FW-1:0] r_in_flit;
     wire [NT*5-1:0]    r_out_valid, r_out_ready, r_out_room;
@@ -68,6 +97,10 @@ module noc_mesh #(
                 // {L, W, E, S, N}
                 localparam [4:0] PORTS = {1'b1, (gx > 0), (gx < MX-1), (gy < MY-1), (gy > 0)};
 
+                // never send on an unverified outlink or onto a dead link
+                wire [4:0] port_dead;
+                wire [4:0] bist_dis = node_done[ID] ? port_dead : 5'b0;
+
                 noc_router #(
                     .MY_X(gx), .MY_Y(gy), .PORT_EXISTS(PORTS),
                     .WD_PRESCALE_W(WD_PRESCALE_W),
@@ -75,20 +108,39 @@ module noc_mesh #(
                     .WD_STARVE_LIMIT(WD_STARVE_LIMIT)
                 ) u_router (
                     .clk(clk), .rst_n(rst_n),
-                    .in_valid (r_in_valid [ID*5 +: 5]),
-                    .in_ready (r_in_ready [ID*5 +: 5]),
-                    .in_flit  (r_in_flit  [ID*5*FW +: 5*FW]),
-                    .out_valid(r_out_valid[ID*5 +: 5]),
-                    .out_ready(r_out_ready[ID*5 +: 5]),
-                    .out_room (r_out_room [ID*5 +: 5]),
-                    .out_flit (r_out_flit [ID*5*FW +: 5*FW]),
-                    .port_disable(port_disable[ID*5 +: 5]),
+                    .in_valid (rr_in_valid [ID*5 +: 5]),
+                    .in_ready (rr_in_ready [ID*5 +: 5]),
+                    .in_flit  (rr_in_flit  [ID*5*FW +: 5*FW]),
+                    .out_valid(rr_out_valid[ID*5 +: 5]),
+                    .out_ready(rr_out_ready[ID*5 +: 5]),
+                    .out_room (rr_out_room [ID*5 +: 5]),
+                    .out_flit (rr_out_flit [ID*5*FW +: 5*FW]),
+                    .port_disable(port_disable[ID*5 +: 5] | bist_dis),
+                    .dead_links(dead_links[ID*`NOC_LINKS_W +: `NOC_LINKS_W]),
                     .err_clear(err_clear),
                     .in_err   (rt_in_err  [ID*5*`NOC_E_W +: 5*`NOC_E_W]),
                     .out_dead (rt_out_dead[ID*5 +: 5]),
                     .out_wd   (rt_out_wd  [ID*5 +: 5]),
                     .drop_cnt (rt_drop_cnt[ID*8 +: 8]),
                     .cap_valid(), .cap_port(), .cap_flit()
+                );
+
+                bist_node #(
+                    .PORT_EXISTS(PORTS), .MY_ID(ID), .PHASE_CYCLES(BIST_PHASE), .NVEC(LB_DEPTH)
+                ) u_bist (
+                    .clk(clk), .rst_n(rst_n),
+                    .r_out_valid(rr_out_valid[ID*5 +: 5]), .r_out_ready(rr_out_ready[ID*5 +: 5]),
+                    .r_out_room (rr_out_room [ID*5 +: 5]), .r_out_flit (rr_out_flit [ID*5*FW +: 5*FW]),
+                    .r_in_valid (rr_in_valid [ID*5 +: 5]), .r_in_ready (rr_in_ready [ID*5 +: 5]),
+                    .r_in_flit  (rr_in_flit  [ID*5*FW +: 5*FW]),
+                    .l_out_valid(r_out_valid[ID*5 +: 5]), .l_out_ready(r_out_ready[ID*5 +: 5]),
+                    .l_out_room (r_out_room [ID*5 +: 5]), .l_out_flit (r_out_flit [ID*5*FW +: 5*FW]),
+                    .l_in_valid (r_in_valid [ID*5 +: 5]), .l_in_ready (r_in_ready [ID*5 +: 5]),
+                    .l_in_flit  (r_in_flit  [ID*5*FW +: 5*FW]),
+                    .status(bist_status[ID*10 +: 10]),
+                    .dead_links(dead_links[ID*`NOC_LINKS_W +: `NOC_LINKS_W]),
+                    .port_dead(port_dead),
+                    .done(node_done[ID])
                 );
 
                 // local port straight to the tile
@@ -113,6 +165,8 @@ module noc_mesh #(
                         // our output gd -> neighbour's input OPP
                         link_buffer #(.DEPTH(LB_DEPTH), .FAULT(FLT)) u_lb (
                             .clk(clk), .rst_n(rst_n),
+                            .rt_silent(fault_rt_mask[ID*4+gd] && !fault_rt_flip),
+                            .rt_flip  (fault_rt_mask[ID*4+gd] &&  fault_rt_flip),
                             .in_valid (r_out_valid[ID*5+gd]),
                             .in_ready (r_out_ready[ID*5+gd]),
                             .in_room  (r_out_room [ID*5+gd]),

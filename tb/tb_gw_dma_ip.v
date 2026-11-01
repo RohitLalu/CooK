@@ -5,10 +5,13 @@
 // place of the MIG -- built by rtl/dma_ddr/create_cook_gw.tcl with
 // gw_variant sim). No cores: tile 0's memory bus is driven by the testbench
 // through force, everything else is the real fabric.
+//   0. start-up link BIST: every tile available; tile 0 claims the DMA lock
 //   1. gateway and DMA register reads through the mesh (DMA reset state)
-//   2. tile 1 RAM -> memory (S2MM, 16 words), DMA reports idle + IOC
-//   3. memory -> tile 2 RAM (MM2S, 16 words): round trip compares equal
-//   4. interrupts, DMA error bits, NI and router error flags all clean
+//   2. tile 0 RAM 0x200 -> memory (S2MM, 16 words), DMA reports idle + IOC
+//   3. memory -> tile 0 RAM 0x300 (MM2S, 16 words): round trip compares equal
+//      (both directions use tile 0's own RAM: the gateway only lets the lock
+//      owner move data to or from its own tile)
+//   4. interrupts, DMA error bits, NI, gateway and router error flags clean
 // Needs a Vivado project that has cook_gw_sim (for the IP simulation models).
 
 `timescale 1ns/1ps
@@ -19,8 +22,7 @@ module tb_gw_dma_ip;
     localparam NT = `NOC_NUM_TILES;
     localparam [31:0] GW  = 32'h0000_3000;
     localparam [31:0] DMA = GW + 32'h200;     // axi_dma register window
-    localparam [31:0] T1  = 32'h0000_1000;
-    localparam [31:0] T2  = 32'h0000_2000;
+    localparam [31:0] T0  = 32'h0000_0000;
     localparam integer NW = 16;               // words per transfer
 
     // axi_dma register offsets and bits (PG021)
@@ -40,6 +42,9 @@ module tb_gw_dma_ip;
     wire [NT*5*`NOC_E_W-1:0] rt_in_err;
     wire [NT*5-1:0]  rt_out_dead, rt_out_wd;
     wire [NT*8-1:0]  rt_drop_cnt;
+    wire             sys_ready;
+    wire [NT-1:0]    avail;
+    wire [2:0]       gw_flags;
 
     wire [9:0]  awaddr, araddr;
     wire        awvalid, awready, wvalid, wready, bvalid, bready;
@@ -61,6 +66,8 @@ module tb_gw_dma_ip;
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
+        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0),
+        .bist_status(), .sys_ready(sys_ready), .avail(avail), .gw_flags(gw_flags), .gw_info(),
         .gw_axil_awaddr(awaddr), .gw_axil_awvalid(awvalid), .gw_axil_awready(awready),
         .gw_axil_wdata(wdata), .gw_axil_wstrb(wstrb), .gw_axil_wvalid(wvalid), .gw_axil_wready(wready),
         .gw_axil_bresp(bresp), .gw_axil_bvalid(bvalid), .gw_axil_bready(bready),
@@ -159,11 +166,17 @@ module tb_gw_dma_ip;
     end
 
     initial begin
-        for (i = 0; i < NW; i = i + 1) dut.g_tile[1].g_ni.u_ni.mem[(32'h200 >> 2) + i] = 32'hC0DE_0000 + i * 32'h0101;
+        for (i = 0; i < NW; i = i + 1) dut.g_tile[0].g_ni.u_ni.mem[(32'h200 >> 2) + i] = 32'hC0DE_0000 + i * 32'h0101;
         repeat (20) @(posedge clk);
         #1 rst_n = 1;
         repeat (60) @(posedge clk);         // proc_sys_reset releases the DMA
+        while (!sys_ready) @(posedge clk);  // link BIST and the gateway's collection
         #1;
+
+        // ---- 0. BIST and the DMA lock ----
+        $display("[0] start-up BIST, DMA lock");
+        check(avail == {NT{1'b1}}, "every tile available after BIST");
+        rdw(GW + 32'h114);         check(rd[31] && rd[7:0] == 0, "tile 0 claims the DMA lock");
 
         // ---- 1. register access through the mesh ----
         $display("[1] gateway + axi_dma registers");
@@ -174,8 +187,8 @@ module tb_gw_dma_ip;
         rdw(DMA + S2MM_DA);        check(rd == 32'h100, "S2MM_DA write/read-back");
 
         // ---- 2. tile 1 -> memory (S2MM) ----
-        $display("[2] S2MM: tile 1 RAM -> memory");
-        wr (GW + 32'h104, T1 + 32'h200);             // gateway source
+        $display("[2] S2MM: tile 0 RAM -> memory");
+        wr (GW + 32'h104, T0 + 32'h200);             // gateway source
         wr (DMA + S2MM_DMACR, CR_RS_IOCEN);
         wr (DMA + S2MM_DA, 32'h0000_0100);
         wr (DMA + S2MM_LENGTH, NW * 4);              // DMA now accepts the stream
@@ -193,8 +206,8 @@ module tb_gw_dma_ip;
         check(s2mm_irq == 1'b0, "s2mm_introut cleared by W1C");
 
         // ---- 3. memory -> tile 2 (MM2S) ----
-        $display("[3] MM2S: memory -> tile 2 RAM");
-        wr (GW + 32'h100, T2 + 32'h300);             // arm gateway destination
+        $display("[3] MM2S: memory -> tile 0 RAM");
+        wr (GW + 32'h100, T0 + 32'h300);             // arm gateway destination
         wr (DMA + MM2S_DMACR, CR_RS_IOCEN);
         wr (DMA + MM2S_SA, 32'h0000_0100);
         wr (DMA + MM2S_LENGTH, NW * 4);
@@ -206,11 +219,13 @@ module tb_gw_dma_ip;
         repeat (100) @(posedge clk); #1;             // last posted writes land
         ok = 1;
         for (i = 0; i < NW; i = i + 1)
-            if (dut.g_tile[2].g_ni.u_ni.mem[(32'h300 >> 2) + i] !== 32'hC0DE_0000 + i * 32'h0101) begin
+            if (dut.g_tile[0].g_ni.u_ni.mem[(32'h300 >> 2) + i] !== 32'hC0DE_0000 + i * 32'h0101) begin
                 ok = 0;
-                $display("    word %0d: got %h", i, dut.g_tile[2].g_ni.u_ni.mem[(32'h300 >> 2) + i]);
+                $display("    word %0d: got %h", i, dut.g_tile[0].g_ni.u_ni.mem[(32'h300 >> 2) + i]);
             end
-        check(ok, "round trip tile1 -> memory -> tile2 matches");
+        check(ok, "round trip tile0 0x200 -> memory -> tile0 0x300 matches");
+        rdw(GW + 32'h118);         check(rd[31] == 1'b0, "no DMA request was refused");
+        wr (GW + 32'h114, 32'h0);                    // release the lock
 
         // ---- 4. nothing flagged anywhere ----
         $display("[4] error state");
@@ -218,6 +233,7 @@ module tb_gw_dma_ip;
         check(rt_in_err == {NT*5*`NOC_E_W{1'b0}}, "no router error flags");
         check(rt_drop_cnt == {NT*8{1'b0}}, "no router dropped anything");
         check(rt_out_dead == {NT*5{1'b0}}, "no output declared dead");
+        check(gw_flags == 3'b0, "no gateway rejected / lease / DMA-error flag");
 
         $display("");
         if (fails == 0) $display("PASS: tb_gw_dma_ip");

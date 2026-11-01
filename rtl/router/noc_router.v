@@ -12,6 +12,18 @@
 //   X-Y forbids every Y-to-X turn, so the channel dependency graph is acyclic
 //   and the mesh is deadlock-free without virtual channels.
 //
+// ROUTING AROUND DEAD LINKS (2x2 mesh only)
+//   dead_links is the start-up BIST's dead-link mask (bist_node.v), the same
+//   in every router. All zero: plain X-Y. Otherwise, on the 2x2 mesh, whose
+//   four links form a ring 0-1-3-2-0, a packet goes the way round the ring
+//   that crosses no dead link (and is dropped as E_ROUTE when neither way is
+//   clean: the destination is cut off). Still deadlock-free: a dead link is
+//   disabled at both ends and no route crosses it, so neither ring direction
+//   can close a cycle, and a route never turns back on itself.
+//   shortcut: larger meshes ignore dead_links and keep X-Y (a dead link there
+//   cuts off whatever X-Y sends across it); upgrade to up*/down* tables
+//   computed from the mask to cover them.
+//
 // WORMHOLE OWNERSHIP (fixes the earlier interleaving bug)
 //   Each input that has forwarded a HEAD holds a route (r_act/r_dst). An
 //   output is LOCKED while any input holds a route to it, and only that owner
@@ -27,8 +39,9 @@
 //   for a maximum-length packet downstream). See link_buffer.v for why this
 //   makes a stalled locked output a definite fault rather than congestion.
 //
-// FAULT HANDLING (no rerouting: X-Y has one path, and detours would break the
-// deadlock argument above; routing around faults is BIST's job)
+// FAULT HANDLING (no adaptive rerouting at run time: X-Y has one path, and
+// detours would break the deadlock argument above; routing around faults
+// found at start-up is the dead-link mask's job, above)
 //   Same-cycle checks on every input:
 //     * check bits fail on an idle input        -> drop flit          (E_CHK)
 //     * BODY/TAIL with no route held (orphan)    -> drop flit          (E_ORPHAN)
@@ -90,6 +103,7 @@ module noc_router #(
     output wire [5*`NOC_FLIT_W-1:0] out_flit,
 
     input  wire [4:0]               port_disable,
+    input  wire [`NOC_LINKS_W-1:0]  dead_links,     // tie to 0 for plain X-Y
     input  wire                     err_clear,
     output wire [5*`NOC_E_W-1:0]    in_err,
     output wire [4:0]               out_dead,
@@ -123,16 +137,50 @@ module noc_router #(
         end
     endgenerate
 
-    // X-Y routing on absolute coordinates.
+    // ring 0-1-3-2-0 of the 2x2 mesh: position of (x, y), and the way out of
+    // each position clockwise (towards position + 1) and anticlockwise
+    localparam RING = (`NOC_MESH_X == 2) && (`NOC_MESH_Y == 2);
+    function integer ring_pos;
+        input integer x, y;
+        begin
+            ring_pos = (y == 0) ? x : 3 - x;
+        end
+    endfunction
+    localparam integer MY_POS = ring_pos(MY_X, MY_Y);
+    localparam [2:0] CW  = (MY_POS == 0) ? E : (MY_POS == 1) ? S : (MY_POS == 2) ? W : N;
+    localparam [2:0] CCW = (MY_POS == 0) ? S : (MY_POS == 1) ? W : (MY_POS == 2) ? N : E;
+
+    // ring link k joins positions k and k+1
+    wire [3:0] ring_dead;
+    generate
+        if (RING) begin : g_ring
+            assign ring_dead = {dead_links[1], dead_links[4], dead_links[3], dead_links[0]};
+        end else begin : g_noring
+            assign ring_dead = 4'b0;
+        end
+    endgenerate
+
+    // X-Y on absolute coordinates, or round the ring when links are dead.
     function [2:0] route_of;
         input [XW-1:0] dx;
         input [YW-1:0] dy;
+        input [3:0]    rdead;
+        integer i, n_cw, n_ccw;
+        reg cw_ok, ccw_ok;
         begin
-            if (dx < MY_X)       route_of = W;
-            else if (dx > MY_X)  route_of = E;
-            else if (dy < MY_Y)  route_of = N;
-            else if (dy > MY_Y)  route_of = S;
-            else                 route_of = L;
+            n_cw  = (ring_pos(dx, dy) - MY_POS + 4) % 4;   // links crossed clockwise
+            n_ccw = (4 - n_cw) % 4;
+            cw_ok = 1'b1; ccw_ok = 1'b1;
+            for (i = 0; i < 4; i = i + 1) begin
+                if (i < n_cw  && rdead[(MY_POS + i) % 4])     cw_ok  = 1'b0;
+                if (i < n_ccw && rdead[(MY_POS + 3 - i) % 4]) ccw_ok = 1'b0;
+            end
+            if (dx == MY_X && dy == MY_Y) route_of = L;
+            else if (rdead != 4'b0)       route_of = (cw_ok || !ccw_ok) ? CW : CCW;
+            else if (dx < MY_X)           route_of = W;
+            else if (dx > MY_X)           route_of = E;
+            else if (dy < MY_Y)           route_of = N;
+            else                          route_of = S;
         end
     endfunction
 
@@ -191,7 +239,7 @@ module noc_router #(
             f_dx[ci]    = fin[ci][`NOC_F_DSTX_LSB +: XW];
             f_dy[ci]    = fin[ci][`NOC_F_DSTY_LSB +: YW];
             f_ok[ci]    = noc_chk_ok(fin[ci]);
-            f_route[ci] = route_of(f_dx[ci], f_dy[ci]);
+            f_route[ci] = route_of(f_dx[ci], f_dy[ci], ring_dead);
 
             a_drop[ci] = 1'b0; a_req[ci] = 1'b0; a_fwd[ci] = 1'b0;
             a_bad[ci]  = 1'b0; a_proto[ci] = 1'b0;

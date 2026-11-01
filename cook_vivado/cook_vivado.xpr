@@ -118,6 +118,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../rtl/router/bist_node.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../rtl/router/end_buff.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -276,6 +283,16 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../tb/tb_link_buffer.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../tb/tb_bist.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../tb/tb_m3.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>

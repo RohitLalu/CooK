@@ -71,6 +71,10 @@
 `define NOC_Y_W           `NOC_CLOG2_1(`NOC_MESH_Y)
 `define NOC_ID_W          `NOC_CLOG2_1(`NOC_NUM_TILES)
 `define NOC_LEN_W         `NOC_CLOG2_1(`NOC_MAX_PKT_FLITS)
+// Dead-link mask from the start-up BIST: bit 2t = link between tile t and its
+// east neighbour, bit 2t+1 = link between tile t and its south neighbour
+// (bits for links off the mesh edge stay 0). See noc_link_bit in noc_funcs.vh.
+`define NOC_LINKS_W       (2 * `NOC_NUM_TILES)
 
 // ---------------------------------------------------------------------------
 // 3. Encodings

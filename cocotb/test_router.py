@@ -207,6 +207,7 @@ async def reset(dut):
     dut.out_ready.value = 0x1F
     dut.out_room.value = 0x1F
     dut.port_disable.value = 0
+    dut.dead_links.value = 0
     dut.err_clear.value = 0
     for _ in range(3):
         await RisingEdge(dut.clk)

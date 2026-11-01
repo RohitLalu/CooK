@@ -6,9 +6,10 @@
 // can sit beside the BIST module (which will read the same signals) without
 // interfering.
 //
-// ERROR CODES, highest priority first. The panel reports the highest-priority
-// code present on any tile, and the lowest tile that has it.
+// ERROR CODES. The panel reports the highest-priority code present on any
+// tile, and the lowest tile that has it. Listed in priority order:
 //    1  core trapped                         (tile_trap)
+//    E  link BIST failed a port that exists  (that tile's router, at start-up)
 //    2  NI timeout: retries exhausted        (NI flag bit 0)
 //    3  NI check-bit error                   (NI flag bit 4)
 //    4  NI poison TAIL received              (NI flag bit 2)
@@ -16,10 +17,17 @@
 //    6  router output declared dead          (that tile's router)
 //    7  router watchdog fired                (that tile's router)
 //    8  router input error: check/orphan/route/protocol
+//    B  DMA engine reported an error         (gateway tile)
 //    9  software reported failure            (status CSR upper half = 0xFA11)
-//   10  NI illegal address                   (NI flag bit 1)
+//    C  DMA request refused by the gateway   (gateway tile)
+//    D  DMA lock lease expired               (gateway tile)
+//   10  NI illegal address  (shown as A)     (NI flag bit 1)
+// Hardware faults come first, software misuse after. BIST (E) sits right
+// after a trap: a faulty link found at start-up is the cause of most of the
+// later symptoms (timeouts, failed self-tests), so it is the one to show.
 // Illegal address is last on purpose: tile0.S triggers it deliberately to
 // prove the decoder poisons instead of hanging.
+// Codes above 9 blink 10-14 times: read the hex digit on the display instead.
 //
 // BLINK CODES (slow, readable by eye)
 //   code_led blinks CODE times, tile_led blinks TILE+1 times, both in the same
@@ -28,9 +36,12 @@
 //   is six blinks on one LED and three on the other, then a 1.5 s pause.
 //
 // DISPLAY VALUE (8 hex digits, left to right)
-//   [31:28] code   [27:20] tile   [19:16] 0   [15:0] that tile's status CSR
-//   low half (tile 0 when nothing is wrong). For alltoall.S a passing tile
-//   shows its check count there.
+//   [31:28] code   [27:20] tile   [19:16] 0   [15:0] detail:
+//     E  {6'b0, inlinks[4:0], outlinks[4:0]} of that router (port order
+//        N, S, E, W, L; 0 = failed or absent)
+//     B  the DMA status error bits      C  {tile refused, 0, reason}
+//     D  {tile that lost the lock, 00}  others: that tile's status CSR low half
+//   (tile 0's status when nothing is wrong: for alltoall.S, its check count)
 //
 // SOFTWARE STATUS CONVENTION (CSR 0x008, upper half)
 //   0x600D pass, 0xFA11 fail, anything else = still running.
@@ -41,7 +52,8 @@
 module status_panel #(
     parameter integer UNIT_CYCLES   = 12_500_000,   // 0.25 s at 50 MHz
     parameter integer GAP_UNITS     = 6,
-    parameter integer HEART_CYCLES  = 25_000_000    // heartbeat half period
+    parameter integer HEART_CYCLES  = 25_000_000,   // heartbeat half period
+    parameter integer GW_TILE       = -1            // gateway tile, -1 = none
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -52,6 +64,10 @@ module status_panel #(
     input  wire [`NOC_NUM_TILES*5*`NOC_E_W-1:0] rt_in_err,
     input  wire [`NOC_NUM_TILES*5-1:0]          rt_out_dead,
     input  wire [`NOC_NUM_TILES*5-1:0]          rt_out_wd,
+    input  wire [`NOC_NUM_TILES*10-1:0]         bist_status,
+    input  wire                                 bist_done,
+    input  wire [2:0]                           gw_flags,    // {DMA error, lease, rejected}
+    input  wire [31:0]                          gw_info,     // layout in gw_ni.v
 
     output reg                                  code_led,
     output reg                                  tile_led,
@@ -60,12 +76,13 @@ module status_panel #(
     output wire [`NOC_NUM_TILES-1:0]            tile_pass,   // software says pass
     output wire [`NOC_NUM_TILES-1:0]            tile_fail,   // software says fail
     output wire [31:0]                          display,
+    output wire                                 bist_fault,  // BIST failed a port somewhere
     output wire [3:0]                           cur_code,
     output wire [7:0]                           cur_tile
 );
 
     localparam integer NT    = `NOC_NUM_TILES;
-    localparam integer NCODE = 10;
+    localparam integer NCODE = 14;
     localparam integer EW    = 5 * `NOC_E_W;
 
     // ---------------------------------------------------------------
@@ -86,13 +103,38 @@ module status_panel #(
             assign ev[7*NT + t] = |rt_in_err[t*EW +: EW];
             assign ev[8*NT + t] = (sw_hi == 16'hFA11);
             assign ev[9*NT + t] = tile_err[t*5 + 1];
+            // gateway DMA-control events belong to the gateway tile
+            assign ev[10*NT + t] = (t == GW_TILE) && gw_flags[2];
+            assign ev[11*NT + t] = (t == GW_TILE) && gw_flags[0];
+            assign ev[12*NT + t] = (t == GW_TILE) && gw_flags[1];
+            // link BIST: a port that exists here did not pass
+            localparam integer TX = t % `NOC_MESH_X, TY = t / `NOC_MESH_X;
+            localparam [4:0] EX = {1'b1, (TX > 0), (TX < `NOC_MESH_X-1), (TY < `NOC_MESH_Y-1), (TY > 0)};
+            assign ev[13*NT + t] = bist_done && (bist_status[t*10 +: 10] & {EX, EX}) != {EX, EX};
 
             assign tile_pass[t] = (sw_hi == 16'h600D);
             assign tile_fail[t] = (sw_hi == 16'hFA11);
             assign tile_bad[t]  = ev[0*NT+t] | ev[1*NT+t] | ev[2*NT+t] | ev[3*NT+t] | ev[4*NT+t] |
-                                  ev[5*NT+t] | ev[6*NT+t] | ev[7*NT+t] | ev[8*NT+t] | ev[9*NT+t];
+                                  ev[5*NT+t] | ev[6*NT+t] | ev[7*NT+t] | ev[8*NT+t] | ev[9*NT+t] |
+                                  ev[10*NT+t] | ev[11*NT+t] | ev[12*NT+t] | ev[13*NT+t];
         end
     endgenerate
+
+    assign bist_fault = |ev[13*NT +: NT];
+
+    // priority rank -> code number (the order of the table above)
+    function [3:0] prio_code;
+        input integer rank;
+        begin
+            case (rank)
+                0: prio_code = 4'd1;   1: prio_code = 4'd14;  2: prio_code = 4'd2;
+                3: prio_code = 4'd3;   4: prio_code = 4'd4;   5: prio_code = 4'd5;
+                6: prio_code = 4'd6;   7: prio_code = 4'd7;   8: prio_code = 4'd8;
+                9: prio_code = 4'd11; 10: prio_code = 4'd9;  11: prio_code = 4'd12;
+               12: prio_code = 4'd13; default: prio_code = 4'd10;
+            endcase
+        end
+    endfunction
 
     // highest-priority code, lowest tile
     reg [3:0] sel_code;
@@ -105,9 +147,9 @@ module status_panel #(
         sel_tile  = 8'd0;
         for (ci = 0; ci < NCODE; ci = ci + 1)
             for (ti = 0; ti < NT; ti = ti + 1)
-                if (!sel_found && ev[ci*NT + ti]) begin
+                if (!sel_found && ev[(prio_code(ci) - 1)*NT + ti]) begin
                     sel_found = 1'b1;
-                    sel_code  = ci + 1;
+                    sel_code  = prio_code(ci);
                     sel_tile  = ti;
                 end
     end
@@ -172,7 +214,11 @@ module status_panel #(
     // display value (live, not frame-latched)
     // ---------------------------------------------------------------
     wire [15:0] sel_sw_lo = tile_sw[sel_tile*32 +: 16];
-    assign display  = {sel_code, sel_tile, 4'h0, sel_sw_lo};
+    wire [15:0] detail = (sel_code == 4'd14) ? {6'b0, bist_status[sel_tile*10 +: 10]} :
+                         (sel_code == 4'd11) ? {13'b0, gw_info[22:20]} :
+                         (sel_code == 4'd12) ? {gw_info[11:4], 4'h0, gw_info[3:0]} :
+                         (sel_code == 4'd13) ? {gw_info[19:12], 8'h00} : sel_sw_lo;
+    assign display  = {sel_code, sel_tile, 4'h0, detail};
     assign cur_code = sel_code;
     assign cur_tile = sel_tile;
 

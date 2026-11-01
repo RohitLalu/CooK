@@ -27,6 +27,14 @@
 //   number of observers (board display, BIST, ILA) -- nothing here consumes
 //   or clears them.
 //
+// BIST AND START-UP
+//   After rst_n the routers run their link ping-pong (bist_node). With a
+//   gateway (GW_EN = 1), the gateway then reads every tile's result and
+//   builds the availability bitmap; without one, start-up ends when the
+//   ping-pong does. Only then do the cores leave reset (sys_ready), so no
+//   program traffic can collide with the test and DMA is never admitted on
+//   an untested fabric. NIs and routers are not held: they serve BIST.
+//
 // MEMORY INIT
 //   MEM_INIT = 1 preloads tile t's RAM from "<MEM_PREFIX>NN.mem" (NN = two
 //   decimal digits of t, e.g. tile00.mem). That is how the FPGA gets its
@@ -60,6 +68,17 @@ module mesh_top #(
     output wire [`NOC_NUM_TILES*5-1:0] rt_out_dead,
     output wire [`NOC_NUM_TILES*5-1:0] rt_out_wd,
     output wire [`NOC_NUM_TILES*8-1:0] rt_drop_cnt,
+
+    // run-time link fault injection (board switches), see noc_mesh.v
+    input  wire [4*`NOC_NUM_TILES-1:0] fault_rt_mask,
+    input  wire                        fault_rt_flip,
+    // BIST results
+    output wire [`NOC_NUM_TILES*10-1:0] bist_status,   // per router, {in, out}
+    output wire                        sys_ready,       // BIST done, cores running
+    output wire [`NOC_NUM_TILES-1:0]   avail,           // gateway's bitmap (0 without a gateway)
+    // gateway DMA-control status (0 without a gateway), see gw_ni.v
+    output wire [2:0]                  gw_flags,
+    output wire [31:0]                 gw_info,
 
     // gateway tile -> axi_dma S_AXI_LITE (AXI4-Lite master)
     output wire [9:0]  gw_axil_awaddr,
@@ -102,6 +121,11 @@ module mesh_top #(
     wire [NT-1:0]    r2ni_valid, r2ni_ready, r2ni_room;
     wire [NT*FW-1:0] r2ni_flit;
 
+    wire mesh_bist_done;
+    wire gw_ready;
+    assign sys_ready = (GW_EN != 0) ? gw_ready : mesh_bist_done;
+    wire core_rst_n = rst_n & sys_ready;
+
     noc_mesh #(
         .LINK_FAULT_MASK(LINK_FAULT_MASK),
         .LINK_FAULT_MODE(LINK_FAULT_MODE)
@@ -113,7 +137,9 @@ module mesh_top #(
         .port_disable(port_disable),
         .err_clear(err_clear),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
-        .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt)
+        .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
+        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(fault_rt_flip),
+        .bist_status(bist_status), .bist_done(mesh_bist_done)
     );
 
     generate
@@ -138,6 +164,10 @@ module mesh_top #(
             assign gw_s2mm_tkeep   = 4'b0;
             assign gw_s2mm_tlast   = 1'b0;
             assign gw_s2mm_tvalid  = 1'b0;
+            assign gw_flags        = 3'b0;
+            assign gw_info         = 32'b0;
+            assign avail           = {NT{1'b0}};
+            assign gw_ready        = 1'b0;
         end
     endgenerate
 
@@ -184,14 +214,19 @@ module mesh_top #(
                     .m_axis_s2mm_tlast(gw_s2mm_tlast), .m_axis_s2mm_tvalid(gw_s2mm_tvalid),
                     .m_axis_s2mm_tready(gw_s2mm_tready),
                     .err_flags(tile_err[t*5 +: 5]),
-                    .sw_status(tile_sw[t*32 +: 32])
+                    .sw_status(tile_sw[t*32 +: 32]),
+                    .gw_flags(gw_flags), .gw_info(gw_info),
+                    .bist_mesh_done(mesh_bist_done),
+                    .bist_own_status(bist_status[t*10 +: 10]),
+                    .sys_ready(gw_ready), .avail(avail)
                 );
             end else begin : g_ni
                 ni #(
                     .MY_ID(t),
                     .TIMEOUT_CYCLES(NI_TIMEOUT),
                     .RETRY_MAX(NI_RETRY_MAX),
-                    .INIT_FILE(MEM_INIT ? {MEM_PREFIX, NUM_STR, ".mem"} : "none")
+                    .INIT_FILE(MEM_INIT ? {MEM_PREFIX, NUM_STR, ".mem"} : "none"),
+                    .GW_ID((GW_EN != 0) ? GW_TILE : -1)
                 ) u_ni (
                     .clk(clk), .rst_n(rst_n),
                     .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
@@ -202,7 +237,8 @@ module mesh_top #(
                     .out_valid(ni2r_valid[t]), .out_ready(ni2r_ready[t]),
                     .out_flit(ni2r_flit[t*FW +: FW]),
                     .err_flags(tile_err[t*5 +: 5]),
-                    .sw_status(tile_sw[t*32 +: 32])
+                    .sw_status(tile_sw[t*32 +: 32]),
+                    .bist_status(bist_status[t*10 +: 10])
                 );
             end
 
@@ -213,7 +249,7 @@ module mesh_top #(
                     .PROGADDR_RESET((t << OB) + 32'h100),
                     .STACKADDR((t + 1) << OB)
                 ) u_core (
-                    .clk(clk), .resetn(rst_n), .trap(tile_trap[t]),
+                    .clk(clk), .resetn(core_rst_n), .trap(tile_trap[t]),
                     .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
                     .mem_addr(mem_addr), .mem_wdata(mem_wdata), .mem_wstrb(mem_wstrb),
                     .mem_rdata(mem_rdata),
