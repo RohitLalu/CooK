@@ -7,11 +7,16 @@
 //           packets from several sources share outputs on the way to and from
 //           tile 3. Works for any mesh with at least 4 tiles.
 // TEST = 1  silent link fault on the link leaving tile 1 southward (2x2 only).
-//           Tile 0's read of tile 3 must come back as POISON after the NI's
-//           retries, with the timeout flag set, and router 1 must declare its
-//           S output dead -- no hang anywhere.
-// TEST = 2  bit-flip fault on the same link (2x2 only). Router 3 must flag a
-//           check-bit error on its N input; tile 0 again gets POISON.
+//           The start-up link BIST must localise it (router 1 outlink S and
+//           router 3 inlink N fail), both ends must drop link 1-3, and tile
+//           0's read of tile 3, whose X-Y path crosses it, must still return
+//           the right value by the detour 0-2-3, with nothing dropped.
+// TEST = 2  bit-flip fault on the same link (2x2 only): same localisation,
+//           because the test vectors arrive corrupted and no pong is sent.
+// TEST = 4  the same silent link, but it fails only AFTER the start-up BIST
+//           (fault_rt_mask set as the cores start), so nothing routes around
+//           it: tile 0's read of tile 3 comes back as POISON after the NI's
+//           retries, with the timeout flag set -- no hang anywhere.
 // TEST = 3  all-to-all self-check: every tile runs alltoall.S at once and
 //           tests every other tile (byte lanes, read-after-write, walking
 //           ones/zeros, remote instruction fetch). Any mesh size.
@@ -43,7 +48,7 @@ module tb_mesh_top;
         if (NT < 4) begin : tb_check_nt
             TB_ERROR_mesh_test_needs_at_least_4_tiles u_err ();
         end
-        if ((TEST == 1 || TEST == 2) && (`NOC_MESH_X != 2 || `NOC_MESH_Y != 2)) begin : tb_check_fault
+        if ((TEST == 1 || TEST == 2 || TEST == 4) && (`NOC_MESH_X != 2 || `NOC_MESH_Y != 2)) begin : tb_check_fault
             TB_ERROR_fault_tests_assume_a_2x2_mesh u_err ();
         end
     endgenerate
@@ -55,6 +60,16 @@ module tb_mesh_top;
     wire [NT-1:0]    tile_trap;
     wire [NT*5-1:0]  tile_err;
     wire [NT*32-1:0] tile_sw;
+    wire [NT*10-1:0] bist_status;
+    wire             sys_ready;
+
+    // TEST 4: link tile1 -> south goes silent the moment the cores start
+    reg [4*NT-1:0] fault_rt_mask = {4*NT{1'b0}};
+    initial if (TEST == 4) begin
+        @(posedge sys_ready);
+        fault_rt_mask = {{(4*NT-1){1'b0}}, 1'b1} << (1*4 + 1);
+    end
+
 
     mesh_top #(
         .LINK_FAULT_MASK(FAULT_MASK),
@@ -63,14 +78,29 @@ module tb_mesh_top;
         .clk(clk), .rst_n(rst_n), .tile_trap(tile_trap), .tile_err(tile_err),
         .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
-        .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt()
+        .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(),
+        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(1'b0),
+        .bist_status(bist_status), .sys_ready(sys_ready), .avail(),
+        .gw_flags(), .gw_info()
     );
+
+    // expected BIST status of a healthy mesh: every existing port passes
+    reg  [NT*10-1:0] bist_healthy;
+    integer bx, by;
+    initial begin
+        for (by = 0; by < `NOC_MESH_Y; by = by + 1)
+            for (bx = 0; bx < `NOC_MESH_X; bx = bx + 1) begin
+                // {L, W, E, S, N}, the same rule noc_mesh uses for PORT_EXISTS
+                bist_healthy[(by*`NOC_MESH_X+bx)*10 +: 10] =
+                    {2{1'b1, (bx > 0), (bx < `NOC_MESH_X-1), (by < `NOC_MESH_Y-1), (by > 0)}};
+            end
+    end
 
     localparam RESULT_IX = 12'h200 >> 2;
     localparam MARKER_IX = 12'h204 >> 2;
     localparam POISON_IX = 12'h208 >> 2;
     localparam ERRCSR_IX = 12'h20C >> 2;
-    localparam SLOT_IX   = 12'h300 >> 2;
+    localparam SLOT_IX   = 12'h800 >> 2;     // hammer.S slots, in the remote write window
     // alltoall.S result block
     localparam A2A_ERR_IX    = 12'hF00 >> 2;
     localparam A2A_MARK_IX   = 12'hF04 >> 2;
@@ -166,6 +196,7 @@ module tb_mesh_top;
             $display("%0s: every tile passed %0d checks against %0d other tiles",
                      (errors == 0) ? "PASS" : "FAIL", A2A_PER_TILE, NT-1);
             check(tile_err === {5*NT{1'b0}}, "no NI error flags on any tile");
+            check(bist_status === bist_healthy, "link BIST passed every existing port");
             check(dut.u_mesh.rt_drop_cnt === {8*NT{1'b0}}, "no router dropped anything");
             check(dut.u_mesh.rt_out_dead === {5*NT{1'b0}}, "no output declared dead");
             check(dut.u_mesh.rt_in_err === {5*NT*`NOC_E_W{1'b0}}, "no router error flags");
@@ -181,17 +212,26 @@ module tb_mesh_top;
             check(dut.u_mesh.rt_drop_cnt === {8*NT{1'b0}}, "no router dropped anything");
             check(dut.u_mesh.rt_out_dead === {5*NT{1'b0}}, "no output declared dead");
             check(dut.u_mesh.rt_in_err === {5*NT*`NOC_E_W{1'b0}}, "no router error flags");
-        end else begin
+            check(bist_status === bist_healthy, "link BIST passed every existing port");
+        end else if (TEST == 4) begin
+            check(bist_status === bist_healthy, "link BIST passed every port (the fault came later)");
             check(dut.g_tile[0].g_ni.u_ni.mem[RESULT_IX] === `NOC_POISON_DATA,
-                  "read across the faulted link returned POISON");
+                  "read across the link that failed after BIST returned POISON");
             check(dut.g_tile[0].g_ni.u_ni.mem[ERRCSR_IX] === 32'd3, "tile0 error CSR: illegal and timeout");
-            if (TEST == 1)
-                check(dut.u_mesh.rt_out_dead[1*5 + `NOC_P_S] === 1'b1,
-                      "router 1 declared its S output dead");
-            else
-                check(dut.u_mesh.rt_in_err[(3*5 + `NOC_P_N)*`NOC_E_W + `NOC_E_CHK] === 1'b1,
-                      "router 3 flagged a check-bit error on its N input");
             check(dut.u_mesh.rt_drop_cnt != {8*NT{1'b0}}, "router drop counter recorded the loss");
+        end else begin
+            check(dut.g_tile[0].g_ni.u_ni.mem[RESULT_IX] === 32'd3,
+                  "read of tile3 whose X-Y path crosses the dead link: rerouted, returned 3");
+            check(dut.g_tile[0].g_ni.u_ni.mem[ERRCSR_IX] === 32'd2, "tile0 error CSR: illegal only (no timeout)");
+            check(bist_status[1*10 + `NOC_P_S] === 1'b0 && bist_status[3*10 + 5 + `NOC_P_N] === 1'b0,
+                  "BIST localised the link: router 1 outlink S and router 3 inlink N failed");
+            check(bist_status[0*10 +: 10] === bist_healthy[0*10 +: 10] &&
+                  bist_status[2*10 +: 10] === bist_healthy[2*10 +: 10],
+                  "routers 0 and 2 (not on that link) passed every port");
+            check(dut.u_mesh.g_row[0].g_col[1].u_router.port_disable[`NOC_P_S] === 1'b1 &&
+                  dut.u_mesh.g_row[1].g_col[1].u_router.port_disable[`NOC_P_N] === 1'b1,
+                  "routers 1 and 3 both refuse to use the dead link");
+            check(dut.u_mesh.rt_drop_cnt === {8*NT{1'b0}}, "nothing dropped: no route crosses the dead link");
         end
 
         $display("----------------------------------------");

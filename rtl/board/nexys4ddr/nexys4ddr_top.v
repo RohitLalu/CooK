@@ -5,21 +5,32 @@
 //                through in simulation; the MMCM is only instantiated when
 //                the synthesis tool defines SYNTHESIS, as Vivado does)
 //   CPU_RESETN (red button) and MMCM lock -> reset_sync -> rst_n
-//   BTNC      clears router error flags (err_clear). BIST will OR its own
-//             clear into this later.
+//   BTNC      clears router error flags (err_clear)
 //
 // LEDs
 //   LED[3:0]    tile 0..3 has any error
 //   LED[7:4]    tile 0..3 software reported pass (status CSR 0x600Dxxxx)
 //   LED[11:8]   tile 0..3 software reported fail (status CSR 0xFA11xxxx)
 //   LED[12]     heartbeat, 1 Hz: the clock is running
-//   LED[13]     out of reset (MMCM locked, reset released)
+//   LED[13]     system ready: reset released, start-up link BIST done, cores running
 //   LED[14]     slow blink code: TILE+1 blinks
 //   LED[15]     slow blink code: error CODE blinks (table in status_panel.v)
 // 7-segment display: code, tile, 0, and the low half of that tile's status CSR.
 // RGB LEDs (GATEWAY = 1)
 //   LED16_G     DDR2 calibration complete (MIG init_calib_complete)
 //   LED17_B     AXI DMA interrupt pending (MM2S or S2MM)
+//   LED17_R     link BIST found a faulty link (code E has the details)
+//
+// FAULT INJECTION SWITCHES (for the availability demo, metric M3)
+//   SW[15] on = break one link, SW[14] = 0 silent / 1 bit-flip,
+//   SW[3:0] = link number: tile*4 + direction (0 N, 1 S, 2 E, 3 W), i.e. the
+//   link LEAVING that tile. On the 2x2 mesh the real links are 1, 2 (tile 0
+//   S, E), 5, 7 (tile 1 S, W), 8, 10 (tile 2 N, E), 12, 15 (tile 3 N, W).
+//   Set the switches, then press CPU_RESET: BIST runs after every total
+//   reset, finds the link, and the routers go around it, so every core still
+//   passes. Changing the switches without a reset injects a run-time fault
+//   that only the watchdogs and NI timeouts will see, and only if traffic
+//   still flows (alltoall.S finishes within a millisecond of reset).
 //
 // GATEWAY = 1: tile 3 is the DMA/DDR gateway (gw_ni in mesh_top, no core) and
 // the cook_gw block design (rtl/dma_ddr/create_cook_gw.tcl: axi_dma +
@@ -31,10 +42,8 @@
 // GATEWAY = 0; the gateway is simulated with the real axi_dma in
 // tb/tb_gw_dma_ip.v.
 //
-// BIST ATTACH POINT: port_disable and err_clear go into mesh_top from here,
-// and every status signal is observed, never consumed. When BIST arrives it
-// is instantiated in this file, drives port_disable, ORs into err_clear, and
-// reads the same status buses.
+// The link BIST lives inside the mesh (bist_node per router, collection in
+// gw_ni); this file only shows its results. port_disable stays a debug hook.
 
 `timescale 1ns/1ps
 `include "noc_defs.vh"
@@ -50,12 +59,14 @@ module nexys4ddr_top #(
     input  wire        CLK100MHZ,
     input  wire        CPU_RESETN,
     input  wire        BTNC,
+    input  wire [15:0] SW,
     output wire [15:0] LED,
     output wire [6:0]  SEG,     // {CG,CF,CE,CD,CC,CB,CA}
     output wire        DP,
     output wire [7:0]  AN,
     output wire        LED16_G,
     output wire        LED17_B,
+    output wire        LED17_R,
 
     // DDR2 SDRAM (MT47H64M16HR-25E), driven by the MIG in cook_gw
     output wire [12:0] ddr2_addr,
@@ -126,6 +137,15 @@ module nexys4ddr_top #(
         else        btnc_sync <= {btnc_sync[0], BTNC};
     wire err_clear = btnc_sync[1];
 
+    // fault-injection switches (slow, human-set: a two-stage synchroniser is enough)
+    (* ASYNC_REG = "TRUE" *) reg [15:0] sw_s1, sw_s2;
+    always @(posedge clk or negedge rst_n)
+        if (!rst_n) begin sw_s1 <= 16'b0; sw_s2 <= 16'b0; end
+        else        begin sw_s1 <= SW;    sw_s2 <= sw_s1; end
+    // SW[3:0] selects the link; links that do not exist are simply never used
+    wire [4*NT-1:0] fault_mask = sw_s2[15] ? ({{(4*NT-1){1'b0}}, 1'b1} << sw_s2[3:0]) : {4*NT{1'b0}};
+    wire            fault_flip = sw_s2[14];
+
     // ---------------------------------------------------------------
     // the system
     // ---------------------------------------------------------------
@@ -135,6 +155,11 @@ module nexys4ddr_top #(
     wire [NT*5*`NOC_E_W-1:0]      rt_in_err;
     wire [NT*5-1:0]               rt_out_dead, rt_out_wd;
     wire [NT*8-1:0]               rt_drop_cnt;
+    wire [NT*10-1:0]              bist_status;
+    wire                          sys_ready;
+    wire [2:0]                    gw_flags;
+    wire [31:0]                   gw_info;
+    wire                          bist_fault;
 
     // gateway <-> block design
     wire [9:0]  gw_awaddr, gw_araddr;
@@ -157,10 +182,13 @@ module nexys4ddr_top #(
     ) u_sys (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
-        .port_disable({NT*5{1'b0}}),     // BIST drives this later
+        .port_disable({NT*5{1'b0}}),     // debug hook, unused on the board
         .err_clear(err_clear),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
+        .fault_rt_mask(fault_mask), .fault_rt_flip(fault_flip),
+        .bist_status(bist_status), .sys_ready(sys_ready), .avail(),
+        .gw_flags(gw_flags), .gw_info(gw_info),
         .gw_axil_awaddr(gw_awaddr), .gw_axil_awvalid(gw_awvalid), .gw_axil_awready(gw_awready),
         .gw_axil_wdata(gw_wdata), .gw_axil_wstrb(gw_wstrb), .gw_axil_wvalid(gw_wvalid),
         .gw_axil_wready(gw_wready),
@@ -222,6 +250,7 @@ module nexys4ddr_top #(
 
     assign LED16_G = ddr_calib_done;
     assign LED17_B = mm2s_irq | s2mm_irq;
+    assign LED17_R = bist_fault;
 
     // ---------------------------------------------------------------
     // status: LEDs and display
@@ -231,11 +260,14 @@ module nexys4ddr_top #(
     wire [31:0]   display;
 
     status_panel #(
-        .UNIT_CYCLES(UNIT_CYCLES), .HEART_CYCLES(HEART_CYCLES)
+        .UNIT_CYCLES(UNIT_CYCLES), .HEART_CYCLES(HEART_CYCLES),
+        .GW_TILE((GATEWAY != 0) ? NT - 1 : -1)
     ) u_panel (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead), .rt_out_wd(rt_out_wd),
+        .bist_status(bist_status), .bist_done(sys_ready), .gw_flags(gw_flags), .gw_info(gw_info),
+        .bist_fault(bist_fault),
         .code_led(code_led), .tile_led(tile_led), .heartbeat(heartbeat),
         .tile_bad(tile_bad), .tile_pass(tile_pass), .tile_fail(tile_fail),
         .display(display), .cur_code(), .cur_tile()
@@ -252,6 +284,6 @@ module nexys4ddr_top #(
     wire [3:0] led_pass = {{(4-NL){1'b0}}, tile_pass[NL-1:0]};
     wire [3:0] led_fail = {{(4-NL){1'b0}}, tile_fail[NL-1:0]};
 
-    assign LED = {code_led, tile_led, rst_n, heartbeat, led_fail, led_pass, led_bad};
+    assign LED = {code_led, tile_led, sys_ready, heartbeat, led_fail, led_pass, led_bad};
 
 endmodule

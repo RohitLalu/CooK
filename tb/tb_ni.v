@@ -44,13 +44,16 @@ module tb_ni;
     wire [4:0]    err_flags;
     wire [31:0]   sw_status;
 
-    ni #(.MY_ID(MY), .TIMEOUT_CYCLES(TMO), .RETRY_MAX(RETRIES), .RSP_Q_DEPTH(QD)) dut (
+    localparam [9:0] BIST_ST = 10'b10110_01101;    // arbitrary pattern for the BIST CSR
+    localparam GW = 2;                               // gateway tile id for the write window
+
+    ni #(.MY_ID(MY), .TIMEOUT_CYCLES(TMO), .RETRY_MAX(RETRIES), .RSP_Q_DEPTH(QD), .GW_ID(GW)) dut (
         .clk(clk), .rst_n(rst_n),
         .mem_valid(mem_valid), .mem_instr(1'b0), .mem_ready(mem_ready),
         .mem_addr(mem_addr), .mem_wdata(mem_wdata), .mem_wstrb(mem_wstrb), .mem_rdata(mem_rdata),
         .in_valid(in_valid), .in_ready(in_ready), .in_room(in_room), .in_flit(in_flit),
         .out_valid(out_valid), .out_ready(out_ready), .out_flit(out_flit),
-        .err_flags(err_flags), .sw_status(sw_status)
+        .err_flags(err_flags), .sw_status(sw_status), .bist_status(BIST_ST)
     );
 
     // core model: like picorv32, hold mem_valid until mem_ready
@@ -271,23 +274,43 @@ module tb_ni;
         tnum = 7;
         $display("=== 7. remote write with byte strobes, remote reads of RAM and CSRs ===");
         reset_all;
-        send_pkt(0, hdr(12'h300, 1, 0, 4'b1111, 0), 32'hA1B2_C3D4, 1'b0);
-        send_pkt(2, hdr(12'h300, 1, 0, 4'b0101, 0), 32'h00EE_00FF, 1'b0);
+        send_pkt(0, hdr(12'h800, 1, 0, 4'b1111, 0), 32'hA1B2_C3D4, 1'b0);
+        send_pkt(3, hdr(12'h800, 1, 0, 4'b0101, 0), 32'h00EE_00FF, 1'b0);
         send_pkt(3, hdr(12'h008, 1, 0, 4'b1111, 0), 32'h0000_0042, 1'b0);   // remote sw status
         run(12);
-        core_rd(32'h0000_1300);
-        check(core_rdata == 32'hA1EE_C3FF, "remote byte-strobed writes merged");
+        core_rd(32'h0000_1800);
+        check(core_rdata == 32'hA1EE_C3FF, "remote byte-strobed writes merged (in the window)");
         check(sw_status == 32'h42, "remote write reached the software status CSR");
+        check(err_flags == 0, "window writes raise no error");
         base = oc;
-        send_pkt(0, hdr(12'h300, 0, 0, 4'b0, 2), 32'h0, 1'b0);
+        send_pkt(0, hdr(12'h800, 0, 0, 4'b0, 2), 32'h0, 1'b0);
         send_pkt(3, hdr(12'h000, 0, 0, 4'b0, 3), 32'h0, 1'b0);
         run(20);
         check(oc == base + 4, "two responses sent");
-        check(f_data(oq[base]) == hdr(12'h300, 0, 1, 4'b0, 2) && f_dx(oq[base]) == 0 && f_dy(oq[base]) == 0,
+        check(f_data(oq[base]) == hdr(12'h800, 0, 1, 4'b0, 2) && f_dx(oq[base]) == 0 && f_dy(oq[base]) == 0,
               "RAM response: to tile 0, is_resp, offset and tag echoed");
         check(f_data(oq[base+1]) == 32'hA1EE_C3FF, "RAM response data");
         check(f_dx(oq[base+2]) == 1 && f_dy(oq[base+2]) == 1 && h_tag(oq[base+2]) == 3 &&
               f_data(oq[base+3]) == MY, "CSR response to tile 3 carries my ID");
+
+        $display("=== 7b. remote write window (option b isolation) and BIST CSR ===");
+        reset_all;
+        core_wr(32'h0000_1300, 32'h1111_1111, 4'hF);
+        core_wr(32'h0000_1F00, 32'h2222_2222, 4'hF);
+        send_pkt(0, hdr(12'h300, 1, 0, 4'hF, 0), 32'hBAD0_0001, 1'b0);   // below the window
+        send_pkt(3, hdr(12'hF00, 1, 0, 4'hF, 0), 32'hBAD0_0002, 1'b0);   // at its upper end
+        run(12);
+        core_rd(32'h0000_1300); check(core_rdata == 32'h1111_1111, "write below the window dropped");
+        core_rd(32'h0000_1F00); check(core_rdata == 32'h2222_2222, "write at 0xF00 (window end) dropped");
+        check(err_flags[1], "out-of-window write flagged as illegal");
+        core_wr(32'h0000_1004, 32'h2, 4'hF);
+        send_pkt(GW, hdr(12'h300, 1, 0, 4'hF, 0), 32'h600D_0003, 1'b0);  // gateway may write anywhere
+        run(8);
+        core_rd(32'h0000_1300); check(core_rdata == 32'h600D_0003, "gateway (DMA) write outside the window lands");
+        check(err_flags == 0, "gateway write raises no error");
+        core_rd(32'h0000_1014);
+        check(core_rdata == {6'b0, ~BIST_ST, 6'b0, BIST_ST}, "BIST CSR: status and its complement");
+        core_rd(32'h0000_1010); check(core_rdata == 0, "tile-kind CSR reads 0 on a core tile");
 
         // ------------------------------------------------------------
         tnum = 8;

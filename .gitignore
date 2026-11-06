@@ -10,3 +10,6 @@ sw/*.hex
 cocotb/sim_build/
 cocotb/__pycache__/
 cocotb/results.xml
+
+# Vivado batch outputs (cook_vivado/build.tcl)
+cook_vivado/out/

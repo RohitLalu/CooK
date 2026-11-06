@@ -25,7 +25,7 @@ contribution.
 
 **Non-goals**, stated up front:
 - No Linux, no MMU, no cache coherence
-- No adaptive or multi-path routing — deterministic X-Y only (Odd-Even considered and declined, §7)
+- No adaptive routing at run time — deterministic X-Y, plus a fixed detour around links the start-up BIST found dead (2×2 only, §4). Odd-Even considered and declined, §7
 - Small mesh scale, not a scaled demonstration
 - No ASIC fabrication — synthesis/PnR numbers only, if pursued at all
 
@@ -52,23 +52,34 @@ bonus milestone, not a requirement.
 | **Nexys4 DDR board top** (MMCM to 50 MHz, reset synchronizer, blink-code and 7-segment status panel, constraints) | `rtl/board/` | **Built, simulated as built** (programs from init files, result read from LEDs). Not yet run through Vivado or on the board |
 | Hand-wired two- and four-router configs | `rtl/integrated/two_router_config/`, `four_router_config/` | **Legacy.** Superseded by the generated mesh; no longer compile against the new port lists |
 | Baremetal images | `sw/*.S`, `sw/build.sh` | **Working.** rv32i, linked at 0x100. `alltoall.S` and `hammer.S` are position and mesh-size independent. `build.sh` writes full-memory `.mem` images, plus `tileNN.mem` for the FPGA |
-| DMA engine, DDR/BRAM model, gateway tile | `rtl/dma_ddr/` | **Not started** |
-| BIST module | — | **Not started** |
+| DMA/DDR gateway (`gw_ni`: NoC to Xilinx AXI DMA, DMA lock with round-robin handoff and lease, checks at the "go" write, DDR zones, own-tile rule, BIST control point) + block design (`create_cook_gw.tcl`: axi_dma, SmartConnect, MIG DDR2) | `rtl/dma_ddr/` | **Built, simulated** against a DMA model (49 checks, healthy and faulted mesh) and with tiles running `alltoall.S`. The real-IP bench `tb_gw_dma_ip` runs only in Vivado |
+| Link BIST: distributed ping-pong per router (`bist_node`), dead-link gossip and routing around dead links, gateway collection, availability bitmap, cores held until done | `rtl/router/bist_node.v`, `rtl/router/noc_router.v`, `rtl/dma_ddr/gw_ni.v` | **Built and verified.** `tb_bist` localises silent, bit-flip and run-time faults and checks every router's mask; mesh, gateway and board benches check the start-up results and the detours |
+| M3 sweep: every single link fault, both modes, plus two double faults, on the gateway system running `alltoall.S` | `tb/tb_m3.v` (`make m3`) | **Built and passing.** 16/16 single faults leave 3/3 cores usable |
 | 3-core single-bus baseline (Step 9) | `rtl/baseline/` | **Not started** |
 | cocotb / pyuvm router testbench | `cocotb/test_router.py`, `cocotb/noc_defs.py` | Working: 20/20 routing + no-interleave |
 
-Run everything with `make test` (12 suites). `make synth_check` runs Yosys on the fabric
+Run everything with `make test` (14 suites). `make synth_check` runs Yosys on the fabric
 and reports latches and logic loops (currently zero of both). `make cocotb` runs the pyuvm
 bench. A Yosys `synth_xilinx` run of the whole board top maps every tile memory to one
-RAMB36 and uses roughly 11.6k LUTs and 6.6k flip-flops; Vivado timing is still to be run.
+RAMB36 and uses roughly 16.8k LUTs and 6.9k flip-flops with `GATEWAY = 0` (26 % of the
+xc7a100t's LUTs); Vivado timing is still to be run.
 
 > **Board status at a glance (Nexys4 DDR):**
 > LED[3:0] tile has an error · LED[7:4] tile software pass · LED[11:8] tile software fail ·
-> LED[12] 1 Hz heartbeat · LED[13] out of reset · LED[14] blinks tile+1 · LED[15] blinks the
-> error code · BTNC clears router error flags · 7-segment shows code, tile, and that tile's
-> status low half. Codes, highest priority first: 1 trap, 2 NI timeout, 3 check-bit error,
-> 4 poison received, 5 stale response, 6 router output dead, 7 watchdog fired, 8 router
-> input error, 9 software failure, 10 illegal address. Details in `rtl/board/status_panel.v`.
+> LED[12] 1 Hz heartbeat · LED[13] system ready (BIST done, cores running) · LED[14] blinks
+> tile+1 · LED[15] blinks the error code · LED17 red: BIST found a faulty link · LED17 blue:
+> DMA interrupt · LED16 green: DDR2 calibrated · BTNC clears router error flags ·
+> 7-segment shows code, tile and a detail word. Codes, highest priority first: 1 trap,
+> E BIST link fault, 2 NI timeout, 3 check-bit error, 4 poison received, 5 stale response,
+> 6 router output dead, 7 watchdog fired, 8 router input error, B DMA engine error,
+> 9 software failure, C DMA request refused (display shows the reason), D DMA lock lease
+> expired, A illegal address. Details in `rtl/board/status_panel.v`.
+>
+> **Fault-injection switches:** SW[15] on breaks one link, SW[14] picks silent (0) or bit-flip
+> (1), SW[3:0] picks the link (tile × 4 + direction 0 N, 1 S, 2 E, 3 W). Set them, press
+> CPU_RESET: BIST runs after every total reset and localises the fault (code E, LED17 red),
+> the routers go around the link, and every core still reaches pass. Expected readings per
+> switch setting: `docs/hardware_test.md`.
 
 > **Note:** `mesh_top` puts a core on every tile by default. `CORE_MASK` removes the core
 > from a tile without rewiring anything; tile 3 loses its core when the DMA/DDR gateway
@@ -78,9 +89,13 @@ RAMB36 and uses roughly 11.6k LUTs and 6.6k flip-flops; Vivado timing is still t
 > lists only the current files. Synthesis top: `nexys4ddr_top`, constraints
 > `rtl/board/nexys4ddr/nexys4ddr.xdc`, block-RAM images `sw/tile00..03.mem` (commit them, or
 > run `sh sw/build.sh`, before synthesis). Include directory: `rtl/include`. Simulation set
-> `sim_1`: `tb_mesh_top` (default; `-generic_top TEST=1|2|3` for the fault and all-to-all
+> `sim_1`: `tb_mesh_top` (default; `-generic_top TEST=1|2|3|4` for the fault and all-to-all
 > modes), `tb_board`, `tb_ni`, `tb_status_panel`, `tb_link_buffer`, `tb_address_decoder`.
 > Simulation set `sim_router`: `tb_noc_router` with `NOC_MESH_X=3`, `NOC_MESH_Y=3`.
+> Batch build and programming: `cook_vivado/build.tcl` (`-tclargs 0|1` for `GATEWAY`:
+> bitstream, reports, and a stop on negative slack) and `cook_vivado/program.tcl`. The
+> bench checklist, with the expected reading for every switch setting, is
+> `docs/hardware_test.md`.
 
 ### Bugs found and fixed
 
@@ -156,7 +171,8 @@ CooK/
 
 **Topology:** plain mesh, 2×2 by default, no toroidal wraparound, deterministic X-Y
 routing. No virtual channels — dimension-order routing on a non-wraparound mesh is
-deadlock-free by construction. The mesh size is two knobs in `noc_defs.vh`
+deadlock-free by construction. On the 2×2 mesh, links the start-up BIST found dead switch
+every router to a fixed detour (item 5 below). The mesh size is two knobs in `noc_defs.vh`
 (`NOC_MESH_X`, `NOC_MESH_Y`); `noc_mesh.v` generates routers, links and edge terminators
 from them, and every width follows. 3×3 and 3×2 run the same software unchanged.
 
@@ -174,8 +190,8 @@ ready. A router admits a HEAD only when the downstream FIFO has room for a whole
 then locks that output until the TAIL, so a blocked packet sits in one FIFO and, in a
 healthy network, ready never drops on a locked output.
 
-**Fault handling, fastest first** (no rerouting: X-Y has one path, and detours would break
-the deadlock argument; routing around faults is BIST's job):
+**Fault handling, fastest first** (no rerouting at run time: X-Y has one path, and
+run-time detours would break the deadlock argument; routing around faults is BIST's job):
 1. Check bits on every flit (even parity per byte by default), generated by the sending NI
    and verified end to end; routers forward flits unmodified.
 2. Same-cycle router checks: bad check bits, orphan BODY/TAIL, HEAD to a missing, disabled
@@ -184,7 +200,23 @@ the deadlock argument; routing around faults is BIST's job):
    no progress emits a poison TAIL (upstream lost) or is marked dead (downstream stuck); an
    output whose waiting HEAD can never be admitted is marked dead.
 4. NI timeout and retry with a new transaction tag; POISON to the core when retries run out.
-5. BIST (not started) localizes the fault and drives `port_disable` / the availability bitmap.
+5. Start-up BIST (after every total reset): each router ping-pongs every link with
+   all-0s / all-1s vectors across the full flit width (stuck-at and broken links), and never
+   sends on an outlink it could not verify. The gateway then reads every tile's status over
+   the network; a tile is available only if that round trip succeeds with a self-checking
+   (complemented) status word. Cores leave reset only after this, and the gateway refuses DMA
+   to or from unavailable tiles. Known limitation, inherited from the thesis: a broken
+   one-way link also hides its healthy reverse, so both directions go out of use.
+   **Routing around dead links:** after the ping-pong, routers gossip a dead-link mask
+   (one bit per physical link) for N rounds over verified links only, so every router
+   ends with the same mask. Both ends stop using a dead link. On the 2×2 mesh the four
+   links form a ring 0-1-3-2-0, and a packet then goes the way round that crosses no dead
+   link. That stays deadlock-free: no route crosses the dead link, so neither ring
+   direction can close a cycle, and no route turns back. One dead link of either kind
+   (silent or bit-flip, either direction) costs no tile. Larger meshes keep X-Y and only
+   drop the link; they would need up\*/down\* tables built from the same mask.
+   A link that fails *after* start-up is not routed around until the next reset; until
+   then the NI timeout and POISON (items 2–4) report it.
 
 A **poison TAIL** is a TAIL with the poison bit set, carrying the cut packet's source and
 destination. Routers treat it as a TAIL, so held routes release; the destination NI
@@ -210,10 +242,18 @@ CSRs: `0x000` tile ID (read-only), `0x004` error flags, write 1 to clear: bit 0 
 (retries exhausted), bit 1 illegal address, bit 2 poison TAIL received, bit 3 stale
 response discarded, bit 4 check-bit error. `0x008` software status (read/write; upper half
 `0x600D` = pass, `0xFA11` = fail, shown on the board). `0x00C` number of tiles (read-only),
-so one binary adapts to any mesh size.
+so one binary adapts to any mesh size. `0x010` tile kind (0 core, 1 gateway). `0x014` this
+tile's link BIST status `{in[4:0], out[4:0]}` with its complement in bits 25:16.
+The gateway's DMA registers (lock `0x114`, refusal reason `0x118`, BIST bitmap `0x120`,
+per-tile status `0x130+4t`) are documented at the top of `rtl/dma_ddr/gw_ni.v`.
 
 Local memory is one true-dual-port block RAM per tile: the core on one port, the network
-on the other. `INIT_FILE` preloads it for the FPGA.
+on the other. `INIT_FILE` preloads it for the FPGA. Other tiles may write only the mailbox
+window `0x800`–`0xEFF` (option-b isolation); the gateway may write anywhere from `0x100`,
+because DMA lands there. Reads are unrestricted.
+
+DDR2 is split into three 40 MB core zones and two 4 MB shared windows (`B0`: tiles 0 and 2,
+`B1`: tiles 0 and 1). The gateway enforces them on every DMA request.
 
 `PROGADDR_RESET` for tile N is `(N<<12) + 0x100`.
 
@@ -293,7 +333,7 @@ genuinely new RTL the plan needs (`rtl/baseline/`).
 |---|---|---|---|---|
 | M1 | Single remote-word read latency | 1–3 cycles | ~30–40 cycles (2 hops each way) | **Bus.** Say so plainly; it is the price of the fabric |
 | M2 | Aggregate cycles for *k* disjoint transfers issued together | serialized, ≈ *k* × latency | disjoint paths overlap | NoC, and the gap widens with *k* |
-| M3 | **Cores still usable after one injected fault** | **0** — one shared resource, no alternative path, no partial availability | ≥2 — BIST localizes it, the bitmap excludes the tile, the rest keep running | **NoC. This is the contribution** |
+| M3 | **Cores still usable after one injected fault** | **0** — one shared resource, no alternative path, no partial availability | **3 of 3 for all 16 single link faults** (8 directed links × silent/bit-flip); 2 of 3 with tile 0 cut off; 1 of 3 when the mesh splits — `tb_m3` | **NoC. This is the contribution** |
 | M4 | Fault localization granularity | none — a fault on a shared wire is global and anonymous | per-link in/out status, 10 bits per router | NoC |
 | M5 | Time from fault until the system *knows* | unbounded — the bus hangs and nothing reports it | bounded by the NI timeout, then a BIST sweep | NoC |
 
@@ -306,10 +346,22 @@ M3, M4 and M5 are the three numbers that demonstrate it.
 
 **Fault injection for M3:** `mesh_top` takes `LINK_FAULT_MASK` (one bit per link, per
 direction) and `LINK_FAULT_MODE` (`1` = silent link, `2` = bit-flip), passed down to the
-chosen `link_buffer`s, so any internal link can be faulted with no extra hardware.
-`make mesh_faults` already runs both modes and checks that the requester gets POISON,
-not a hang. The equivalent on the bus baseline is a stuck arbiter grant or a stuck data
+chosen `link_buffer`s, plus the run-time `fault_rt_mask`/`fault_rt_flip` inputs the board
+switches drive, so any internal link can be faulted with no extra hardware. `make m3`
+sweeps every directed link in both modes and two double faults. In each case it checks
+the gateway's availability bitmap, that every available core passes `alltoall.S` against
+exactly the available tiles, and that single faults drop nothing. `make mesh_faults`
+checks the detour for a fault BIST saw, and POISON (not a hang) for one that appears
+after BIST. The equivalent on the bus baseline is a stuck arbiter grant or a stuck data
 line.
+
+**What M3 does not cover, stated plainly:**
+- The gateway router is a single point of failure for DMA.
+- BIST tests links and FIFOs, not the inside of a router (crossbar, arbiter).
+- A fault that appears after start-up shows only through M5 (NI timeout) until the next
+  reset.
+- Two faults on opposite links split the 2×2 mesh in two.
+- Rerouting is 2×2 only.
 
 ---
 
@@ -364,16 +416,18 @@ line.
 
 - **Odd-Even (adaptive) routing** — better throughput under load, but real turn-restriction complexity for a benefit (load balancing) this project is not optimizing for.
 - **Software-based self-test *of the network*** — its main benefit (no external ATE) is already true of the ping-pong BIST. Software self-test of the *cores* is a different job and is planned (`alltoall.S` is its first piece).
-- **Full distance-vector routing** — per-router tables, a neighbour-exchange protocol, and transient-loop risk during reconvergence. X-Y needs none of that and is loop-free by construction.
+- **Full distance-vector routing** — per-router tables, a neighbour-exchange protocol, and transient-loop risk during reconvergence. X-Y needs none of that and is loop-free by construction. The start-up detour (§4) is computed once from a mask that is final before any traffic flows, so it has no reconvergence.
 
 ---
 
 ## 8. Immediate next steps
 
-- Build the BIST module on the router debug hooks (`port_disable`, error flags, capture register); give debug access a path that does not depend on the fabric under test (serial ring or JTAG via BSCANE2)
-- Run Vivado synthesis and implementation for `nexys4ddr_top`; check timing at 50 MHz on the -1 part, then program the board and read the LEDs
-- Build the 3-core single-bus baseline in `rtl/baseline/` and collect M1–M5
-- Replace tile 3's core with the DMA/DDR gateway
+- Run `cook_vivado/build.tcl` with `0` then `1` (timing at 50 MHz on the -1 part), run `tb_gw_dma_ip` against the real DMA IP, then work through `docs/hardware_test.md` on the board
+- Extend BIST to the routers themselves (crossbar, arbiter), once the board checks pass
+- C runtime and linker script with private, `.mailbox` (0x800–0xEFF) and stack sections, matching the NI's remote write window
+- A debug path that does not depend on the fabric under test (serial ring or JTAG via BSCANE2)
+- Build the 3-core single-bus baseline in `rtl/baseline/` and collect M1–M5 (M3 for the NoC: `make m3`)
+- Rerouting beyond 2×2: up\*/down\* tables from the dead-link mask
 - Add the local-alias window (§6.8) so all tiles share one binary
 
 ---

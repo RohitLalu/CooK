@@ -70,6 +70,23 @@ function [`NOC_Y_W-1:0] noc_id_y;
     end
 endfunction
 
+// ---- dead-link mask -------------------------------------------------------
+
+// Bit of the NOC_LINKS_W dead-link mask for the link leaving tile `id` in
+// direction `dir`. Only valid for a link that exists.
+function integer noc_link_bit;
+    input integer id;
+    input integer dir;
+    begin
+        case (dir)
+            `NOC_P_E: noc_link_bit = 2*id;
+            `NOC_P_S: noc_link_bit = 2*id + 1;
+            `NOC_P_W: noc_link_bit = 2*(id - 1);
+            default:  noc_link_bit = 2*(id - `NOC_MESH_X) + 1;   // N
+        endcase
+    end
+endfunction
+
 // ---- elaboration-time checks ----------------------------------------------
 // Verilog-2001 has no $error at elaboration. An instance of a module that
 // does not exist stops every tool (Icarus, XSIM, Vivado synth, Yosys) with

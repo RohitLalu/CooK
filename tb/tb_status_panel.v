@@ -21,14 +21,21 @@ module tb_status_panel;
     reg [NT*32-1:0]          tile_sw   = 0;
     reg [NT*5*`NOC_E_W-1:0]  rt_in_err = 0;
     reg [NT*5-1:0]           rt_out_dead = 0, rt_out_wd = 0;
+    // healthy 2x2 BIST status: every existing port passes ({L,W,E,S,N} per tile)
+    localparam [NT*10-1:0] BIST_OK = {{2{5'b11001}}, {2{5'b10101}}, {2{5'b11010}}, {2{5'b10110}}};
+    reg [NT*10-1:0]          bist_status = BIST_OK;
+    reg                      bist_done = 1;
+    reg [2:0]                gw_flags = 0;
+    reg [31:0]               gw_info = 0;
     wire code_led, tile_led, heartbeat;
     wire [NT-1:0] tile_bad, tile_pass, tile_fail;
     wire [31:0] display;
 
-    status_panel #(.UNIT_CYCLES(UNIT), .GAP_UNITS(GAP), .HEART_CYCLES(10)) dut (
+    status_panel #(.UNIT_CYCLES(UNIT), .GAP_UNITS(GAP), .HEART_CYCLES(10), .GW_TILE(3)) dut (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead), .rt_out_wd(rt_out_wd),
+        .bist_status(bist_status), .bist_done(bist_done), .gw_flags(gw_flags), .gw_info(gw_info),
         .code_led(code_led), .tile_led(tile_led), .heartbeat(heartbeat),
         .tile_bad(tile_bad), .tile_pass(tile_pass), .tile_fail(tile_fail),
         .display(display), .cur_code(), .cur_tile()
@@ -88,6 +95,7 @@ module tb_status_panel;
     task clear_all;
         begin
             tile_trap = 0; tile_err = 0; tile_sw = 0; rt_in_err = 0; rt_out_dead = 0; rt_out_wd = 0;
+            bist_status = BIST_OK; gw_flags = 0; gw_info = 0;
         end
     endtask
 
@@ -122,6 +130,25 @@ module tb_status_panel;
 
         clear_all; tile_err[0*5 + 1] = 1;
         expect_code(10, 0, "illegal address on tile 0 (lowest priority)");
+
+        $display("--- new codes B-E ---");
+        clear_all; bist_status[1*10 + `NOC_P_S] = 1'b0;          // router 1 outlink S failed
+        tile_err[0*5 + 0] = 1;                                   // ...and the timeout it causes
+        expect_code(14, 1, "BIST fault outranks the timeout it causes");
+        check(display[15:0] == {6'b0, bist_status[1*10 +: 10]}, "display shows router 1's in/out bits");
+        clear_all; bist_status[0*10 + `NOC_P_N] = 1'b0;          // absent port (edge): not a fault
+        expect_code(0, 0, "absent edge port at 0 is not a BIST fault");
+        clear_all; gw_flags = 3'b100; gw_info = 32'h0050_0000;
+        expect_code(11, 3, "DMA engine error on the gateway tile");
+        check(display[15:0] == 16'h0005, "display shows the DMA error bits");
+        clear_all; gw_flags = 3'b001; gw_info = 32'h0000_0012;   // tile 1, reason 2 (zone)
+        expect_code(12, 3, "DMA request refused");
+        check(display[15:0] == 16'h0102, "display shows refused tile 1, reason 2");
+        clear_all; gw_flags = 3'b010; gw_info = 32'h0000_2000;   // tile 2 lost the lock
+        expect_code(13, 3, "lock lease expired");
+        check(display[15:0] == 16'h0200, "display shows the tile that lost the lock");
+        clear_all; gw_flags = 3'b001; tile_sw[0*32 +: 32] = 32'hFA11_0001;
+        expect_code(9, 0, "software failure outranks a refused request");
 
         clear_all; tile_sw = {4{32'h600D_00DE}};
         expect_code(0, 0, "all tiles passing: dark");

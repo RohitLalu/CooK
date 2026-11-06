@@ -43,6 +43,9 @@ module tb_gw_alltoall;
     wire [NT*5*`NOC_E_W-1:0] rt_in_err;
     wire [NT*5-1:0]  rt_out_dead, rt_out_wd;
     wire [NT*8-1:0]  rt_drop_cnt;
+    wire             sys_ready;
+    wire [NT-1:0]    avail;
+    wire [2:0]       gw_flags;
 
     mesh_top #(.GW_EN(1), .GW_TILE(GW)) dut (
         .clk(clk), .rst_n(rst_n),
@@ -50,6 +53,8 @@ module tb_gw_alltoall;
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
+        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0),
+        .bist_status(), .sys_ready(sys_ready), .avail(avail), .gw_flags(gw_flags), .gw_info(),
         // DMA side idle: alltoall only reads the gateway's CSRs
         .gw_axil_awaddr(), .gw_axil_awvalid(), .gw_axil_awready(1'b0),
         .gw_axil_wdata(), .gw_axil_wstrb(), .gw_axil_wvalid(), .gw_axil_wready(1'b0),
@@ -114,6 +119,8 @@ module tb_gw_alltoall;
         check(tile_err === {NT*5{1'b0}}, "no NI or gateway error flags");
         check(rt_in_err === {NT*5*`NOC_E_W{1'b0}}, "no router error flags");
         check(rt_drop_cnt === {NT*8{1'b0}}, "no router dropped anything");
+        check(sys_ready === 1'b1 && avail === {NT{1'b1}}, "start-up BIST: every tile available");
+        check(gw_flags === 3'b0, "no gateway DMA-control flags");
 
         if (fails == 0) $display("ALL TESTS PASSED (%0d checks)", checks);
         else            $display("TESTS FAILED (%0d of %0d)", fails, checks);

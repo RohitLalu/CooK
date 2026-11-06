@@ -7,7 +7,8 @@
 //                   0x30 S2MM_DMACR 0x34 S2MM_DMASR 0x48 S2MM_DA
 //                   0x58 S2MM_LENGTH (write arms; read = bytes received)
 //   anything at 0x5C and above answers SLVERR, like the real IP.
-// mem[] is the DDR: word index = byte address / 4.
+// mem[] is the DDR: word index = (byte address / 4) modulo MEM_WORDS, so the
+// high DDR zones used by the gateway's zone checks alias onto this small array.
 
 `timescale 1ns/1ps
 
@@ -133,7 +134,7 @@ module axi_dma_model #(
             // ---- MM2S: memory -> stream ----
             if (mm2s_busy && (!mm2s_tvalid || mm2s_tready)) begin
                 if (mm2s_idx < mm2s_nw) begin
-                    mm2s_tdata  <= mem[(mm2s_sa >> 2) + mm2s_idx];
+                    mm2s_tdata  <= mem[((mm2s_sa >> 2) + mm2s_idx) % MEM_WORDS];
                     mm2s_tvalid <= 1'b1;
                     mm2s_tlast  <= (mm2s_idx == mm2s_nw - 1);
                     mm2s_idx    <= mm2s_idx + 1;
@@ -146,7 +147,7 @@ module axi_dma_model #(
 
             // ---- S2MM: stream -> memory ----
             if (s2mm_busy && s2mm_tvalid) begin
-                mem[(s2mm_da >> 2) + s2mm_idx] <= s2mm_tdata;
+                mem[((s2mm_da >> 2) + s2mm_idx) % MEM_WORDS] <= s2mm_tdata;
                 s2mm_idx      <= s2mm_idx + 1;
                 s2mm_rx_bytes <= s2mm_rx_bytes + 4;
                 if (s2mm_tlast) s2mm_busy <= 1'b0;

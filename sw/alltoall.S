@@ -15,6 +15,13 @@
 # A gateway tile (tile-kind CSR 0x010 != 0: no core, no RAM; see
 # rtl/dma_ddr/gw_ni.v) gets checks 1 and 2 only. Core tiles read 0 there.
 #
+# Availability: when the last tile is a gateway, the program first reads its
+# start-up BIST bitmap (gateway CSR 0x120) and tests only the tiles marked
+# available, so the cores that survive a fault still finish and pass. Two
+# cases add one failed check: the gateway does not answer (POISON: this tile
+# is cut off, and then it tests nothing), or the bitmap leaves this tile out.
+# With no gateway every tile is tested.
+#
 # Memory use inside every tile's 4KB region:
 #   0x000-0x0FF  CSRs
 #   0x100-0x7FF  this program (must stay below 0x800)
@@ -45,6 +52,25 @@ _start:
     li    t0, 0x52550000
     sw    t0, 8(s0)          # status: running
 
+    li    s9, -1             # s9 = tiles to test (bitmap)
+    addi  t0, s2, -1
+    slli  s10, t0, 12        # s10 = last tile's base
+    lw    t0, 0x10(s10)      # its tile kind
+    beqz  t0, tested         # a core: no gateway, test every tile
+    li    t1, 0xDEADBEEF
+    bne   t0, t1, 2f
+    li    s9, 0              # POISON: cut off from the gateway, test nothing
+    j     self_bad
+2:
+    lw    s9, 0x120(s10)     # gateway BIST bitmap {ready, 15'b0, avail}
+    srl   t0, s9, s1
+    andi  t0, t0, 1
+    bnez  t0, tested
+self_bad:
+    addi  s8, s8, 1          # this tile is not available: one failed check
+    addi  s3, s3, 1
+tested:
+
     li    s4, 1              # k = 1 .. N-1
 outer:
     bge   s4, s2, finish
@@ -52,6 +78,9 @@ outer:
     blt   s5, s2, 1f
     sub   s5, s5, s2
 1:
+    srl   t0, s9, s5
+    andi  t0, t0, 1
+    beqz  t0, next           # not available: skip
     slli  s6, s5, 12         # s6 = target base
     slli  t0, s1, 6
     add   s7, s6, t0

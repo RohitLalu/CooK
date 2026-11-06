@@ -64,8 +64,22 @@
 //                 can display self-test results.
 //   0x00C         number of tiles in the mesh (read-only), so one binary can
 //                 adapt to any mesh size
-//   0x010..0x0FF  reserved CSRs (read 0)
+//   0x010         tile kind (read-only) = 0: core tile (the gateway reads 1)
+//   0x014         link BIST status of this tile's router (read-only):
+//                 [9:0] = {in[4:0], out[4:0]}, [25:16] = the same 10 bits
+//                 inverted. The gateway reads this after BIST and accepts it
+//                 only if the two halves are complements, so a stuck-at fault
+//                 on the way back can never turn a failed link into a pass.
+//   0x018..0x0FF  reserved CSRs (read 0)
 //   0x100..       local memory
+//
+// REMOTE WRITE WINDOW (option b memory isolation)
+//   Another tile may write this tile's RAM only inside [WIN_LO, WIN_HI)
+//   (default 0x800..0xEFF, the mailbox the software lays out). The gateway
+//   (GW_ID) may write anywhere from 0x100 up, because DMA lands there.
+//   Anything else is dropped and sets the illegal-address flag. Reads are not
+//   restricted (remote instruction fetch and status reads need them), and
+//   remote CSR writes (clear errors, software status) stay allowed.
 //   PROGADDR_RESET for tile N must therefore be (N << NOC_OFFSET_BITS) + 0x100.
 
 `timescale 1ns/1ps
@@ -77,7 +91,10 @@ module ni #(
     parameter integer RETRY_MAX      = 2,
     parameter integer RSP_Q_DEPTH    = `NOC_NUM_TILES,
     parameter [31:0]  POISON         = `NOC_POISON_DATA,
-    parameter         INIT_FILE      = "none"
+    parameter         INIT_FILE      = "none",
+    parameter integer GW_ID          = -1,      // gateway tile, -1 = none
+    parameter [11:0]  WIN_LO         = 12'h800,
+    parameter [11:0]  WIN_HI         = 12'hF00
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -104,7 +121,8 @@ module ni #(
 
     // ---- status ----
     output wire [4:0]             err_flags,   // same bits as CSR 0x004
-    output wire [31:0]            sw_status    // CSR 0x008
+    output wire [31:0]            sw_status,   // CSR 0x008
+    input  wire [9:0]             bist_status  // this tile's router, CSR 0x014
 );
 
 `include "noc_funcs.vh"
@@ -123,6 +141,7 @@ module ni #(
     localparam [OB-1:0] CSR_ERR   = 'h004;
     localparam [OB-1:0] CSR_SW    = 'h008;
     localparam [OB-1:0] CSR_NT    = 'h00C;
+    localparam [OB-1:0] CSR_BIST  = 'h014;
     localparam [1:0] T_BODY = `NOC_T_BODY, T_HEAD = `NOC_T_HEAD,
                      T_HEADTAIL = `NOC_T_HEADTAIL, T_TAIL = `NOC_T_TAIL;
     localparam [`NOC_LEN_W-1:0] LEN_2FLIT = 1;    // length-1 for HEAD+TAIL
@@ -189,7 +208,8 @@ module ni #(
             csr_read = (off == CSR_ID)  ? MY_ID :
                        (off == CSR_ERR) ? {27'b0, err_vec} :
                        (off == CSR_SW)  ? sw_reg :
-                       (off == CSR_NT)  ? `NOC_NUM_TILES : 32'b0;
+                       (off == CSR_NT)  ? `NOC_NUM_TILES :
+                       (off == CSR_BIST) ? {6'b0, ~bist_status, 6'b0, bist_status} : 32'b0;
         end
     endfunction
 
@@ -283,7 +303,10 @@ module ni #(
 
     // port B: network (remote write, or remote read accepted this cycle)
     wire net_req  = rx_have && !rx_is_resp;
-    wire b_wr     = net_req && rx_is_write && (rx_off >= CSR_LIMIT);
+    wire rx_from_gw = (GW_ID >= 0) && (rx_src == GW_ID);
+    wire rx_in_win  = (rx_off >= WIN_LO) && (rx_off < WIN_HI);
+    wire b_wr     = net_req && rx_is_write && (rx_off >= CSR_LIMIT) && (rx_from_gw || rx_in_win);
+    wire b_wr_bad = net_req && rx_is_write && (rx_off >= CSR_LIMIT) && !(rx_from_gw || rx_in_win);
     wire b_rd     = net_req && !rx_is_write && !rq_full && !rd_pend;
     wire          b_en    = b_wr || b_rd;
     wire [3:0]    b_we    = b_wr ? rx_wstrb : 4'b0;
@@ -410,8 +433,11 @@ module ni #(
                     rx_have <= 1'b0;
                 end else if (rx_is_write) begin
                     // remote write (posted: no response owed). RAM offsets go
-                    // through port B (b_wr); CSRs are handled here.
-                    if (rx_off == CSR_ERR) begin
+                    // through port B (b_wr) if the window allows; CSRs are
+                    // handled here.
+                    if (b_wr_bad) begin
+                        err_illegal <= 1'b1;     // outside the remote write window
+                    end else if (rx_off == CSR_ERR) begin
                         if (rx_data[0]) err_timeout <= 1'b0;
                         if (rx_data[1]) err_illegal <= 1'b0;
                         if (rx_data[2]) err_poison  <= 1'b0;
