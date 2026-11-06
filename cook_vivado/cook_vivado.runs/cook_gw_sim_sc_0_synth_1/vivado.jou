@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Fri Nov  6 23:29:37 2026
+# Process ID         : 13716
+# Current directory  : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_sc_0_synth_1
+# Command line       : vivado.exe -log cook_gw_sim_sc_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source cook_gw_sim_sc_0.tcl
+# Log file           : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_sc_0_synth_1/cook_gw_sim_sc_0.vds
+# Journal file       : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_sc_0_synth_1\vivado.jou
+# Running On         : LAPTOP-0O737P11
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26300
+# Processor Detail   : 13th Gen Intel(R) Core(TM) i7-13620H
+# CPU Frequency      : 2918 MHz
+# CPU Physical cores : 10
+# CPU Logical cores  : 16
+# Host memory        : 16858 MB
+# Swap memory        : 15569 MB
+# Total Virtual      : 32427 MB
+# Available Virtual  : 12811 MB
+#-----------------------------------------------------------
+source cook_gw_sim_sc_0.tcl -notrace

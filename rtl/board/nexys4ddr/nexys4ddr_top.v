@@ -22,7 +22,8 @@
 //   LED17_R     link BIST found a faulty link (code E has the details)
 //
 // FAULT INJECTION SWITCHES (for the availability demo, metric M3)
-//   SW[15] on = break one link, SW[14] = 0 silent / 1 bit-flip,
+//   SW[12] on = break one link, SW[11] = 0 silent / 1 bit-flip,
+//   (moved from SW[15]/SW[14]: SW13-SW15 are faulty on our board, unused),
 //   SW[3:0] = link number: tile*4 + direction (0 N, 1 S, 2 E, 3 W), i.e. the
 //   link LEAVING that tile. On the 2x2 mesh the real links are 1, 2 (tile 0
 //   S, E), 5, 7 (tile 1 S, W), 8, 10 (tile 2 N, E), 12, 15 (tile 3 N, W).
@@ -143,8 +144,8 @@ module nexys4ddr_top #(
         if (!rst_n) begin sw_s1 <= 16'b0; sw_s2 <= 16'b0; end
         else        begin sw_s1 <= SW;    sw_s2 <= sw_s1; end
     // SW[3:0] selects the link; links that do not exist are simply never used
-    wire [4*NT-1:0] fault_mask = sw_s2[15] ? ({{(4*NT-1){1'b0}}, 1'b1} << sw_s2[3:0]) : {4*NT{1'b0}};
-    wire            fault_flip = sw_s2[14];
+    wire [4*NT-1:0] fault_mask = sw_s2[12] ? ({{(4*NT-1){1'b0}}, 1'b1} << sw_s2[3:0]) : {4*NT{1'b0}};
+    wire            fault_flip = sw_s2[11];
 
     // ---------------------------------------------------------------
     // the system

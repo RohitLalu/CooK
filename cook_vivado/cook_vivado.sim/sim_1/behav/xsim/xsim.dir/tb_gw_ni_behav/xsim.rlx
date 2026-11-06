@@ -1,11 +1,11 @@
 
 { 
-    crc :  6353839346914857892  , 
+    crc :  18255258287675158579  , 
     ccp_crc :  0  , 
-    cmdline : " --incr --debug typical --relax --mt 2 -L xil_defaultlib -L unisims_ver -L unimacro_ver -L secureip --snapshot tb_gw_ni_behav xil_defaultlib.tb_gw_ni xil_defaultlib.glbl" , 
+    cmdline : " --incr --debug typical --relax --mt 2 -L xil_defaultlib -L axi_datamover_v5_1_37 -L axi_sg_v4_1_21 -L axi_dma_v7_1_37 -L proc_sys_reset_v5_0_17 -L smartconnect_v1_0 -L axi_infrastructure_v1_1_0 -L axi_register_slice_v2_1_36 -L axi_vip_v1_1_22 -L axi_bram_ctrl_v4_1_13 -L blk_mem_gen_v8_4_12 -L uvm -L xilinx_vip -L unisims_ver -L unimacro_ver -L secureip -L xpm --snapshot tb_gw_ni_behav xil_defaultlib.tb_gw_ni xil_defaultlib.glbl" , 
     buildDate : "Nov 14 2025" , 
     buildTime : "19:37:27" , 
-    linkCmd : "E:\\AMDDesignTools\\2025.2\\Vivado\\data\\..\\tps\\mingw\\6.2.0\\win64.o\\nt\\bin\\gcc.exe -Wa,-W  -O -Wl,--stack,104857600 -o \"xsim.dir/tb_gw_ni_behav/xsimk.exe\"   \"xsim.dir/tb_gw_ni_behav/obj/xsim_0.win64.obj\" \"xsim.dir/tb_gw_ni_behav/obj/xsim_1.win64.obj\" \"xsim.dir/tb_gw_ni_behav/obj/xsim_2.win64.obj\" -L\"E:\\AMDDesignTools\\2025.2\\Vivado\\lib\\win64.o\" -lxv_simulator_kernel   -lxv_simbridge_kernel" , 
+    linkCmd : "E:\\AMDDesignTools\\2025.2\\Vivado\\data\\..\\tps\\mingw\\6.2.0\\win64.o\\nt\\bin\\gcc.exe -Wa,-W  -O -Wl,--stack,104857600 -o \"xsim.dir/tb_gw_ni_behav/xsimk.exe\"   \"xsim.dir/tb_gw_ni_behav/obj/xsim_0.win64.obj\" \"xsim.dir/tb_gw_ni_behav/obj/xsim_1.win64.obj\" \"xsim.dir/tb_gw_ni_behav/obj/xsim_2.win64.obj\" \"xsim.dir/tb_gw_ni_behav/obj/xsim_3.win64.obj\" -L\"E:\\AMDDesignTools\\2025.2\\Vivado\\lib\\win64.o\" -lxv_simulator_kernel   -lxv_simbridge_kernel" , 
     aggregate_nets : 
     [ 
     ] 

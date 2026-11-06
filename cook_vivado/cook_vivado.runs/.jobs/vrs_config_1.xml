@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Runs Version="1" Minor="0">
+	<Run Id="cook_gw_dma_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_dma_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_mig_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_mig_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_rst50_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_rst50_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_rstui_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_rstui_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_sc_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sc_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_sim_bram_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_bram_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_sim_bram_ctrl_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_bram_ctrl_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Run Id="cook_gw_sim_dma_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_dma_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado" IsOrderedIPRun="true">
+		<Parent Id="cook_gw_dma_0_synth_1"/>
+	</Run>
+	<Run Id="cook_gw_sim_rst50_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_rst50_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado" IsOrderedIPRun="true">
+		<Parent Id="cook_gw_rst50_0_synth_1"/>
+	</Run>
+	<Run Id="cook_gw_sim_sc_0_synth_1" LaunchDir="C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/cook_gw_sim_sc_0_synth_1" FlowId="Vivado_Synthesis" FromStepId="vivado" ToStepId="vivado"/>
+	<Parameters>
+		<Parameter Name="runs.monitorLSFJobs" Val="true" Type="bool"/>
+		<Parameter Name="runs.enableClusterConf" Val="true" Type="bool"/>
+		<Parameter Name="general.shortenLongPath" Val="true" Type="bool"/>
+		<Parameter Name="general.usePosixSpawnForFork" Val="true" Type="bool"/>
+	</Parameters>
+	<ProductInfo Name="vivado"/>
+</Runs>
+

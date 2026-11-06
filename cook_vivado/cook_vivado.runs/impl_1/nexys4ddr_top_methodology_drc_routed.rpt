@@ -1,0 +1,231 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Sat Nov  7 00:44:12 2026
+| Host         : LAPTOP-0O737P11 running 64-bit major release  (build 9200)
+| Command      : report_methodology -file nexys4ddr_top_methodology_drc_routed.rpt -pb nexys4ddr_top_methodology_drc_routed.pb -rpx nexys4ddr_top_methodology_drc_routed.rpx
+| Design       : nexys4ddr_top
+| Device       : xc7a100tcsg324-1
+| Speed File   : -1
+| Design State : Fully Routed
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 35
++-----------+----------+-------------------------------------------------+--------+
+| Rule      | Severity | Description                                     | Checks |
++-----------+----------+-------------------------------------------------+--------+
+| LUTAR-1   | Warning  | LUT drives async reset alert                    | 2      |
+| PDRC-190  | Warning  | Suboptimally placed synchronized register chain | 12     |
+| SYNTH-6   | Warning  | Timing of a RAM block might be sub-optimal      | 3      |
+| TIMING-10 | Warning  | Missing property on synchronizer                | 1      |
+| XDCB-5    | Warning  | Runtime inefficient way to find pin objects     | 1      |
+| REQP-1959 | Advisory | connects_SERDES_RST_driver_not_FF               | 16     |
++-----------+----------+-------------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+LUTAR-1#1 Warning
+LUT drives async reset alert  
+LUT cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_iodelay_ctrl/rstdiv2_sync_r[11]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r1_reg_rep__7/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r1_reg_rep__8/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r1_reg_rep__9/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[0]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[10]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[11]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[1]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[2]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[3]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[4]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[5]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[6]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[7]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[8]/PRE,
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_ddr2_infrastructure/rstdiv0_sync_r_reg[9]/PRE
+ (the first 15 of 29 listed). The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+LUTAR-1#2 Warning
+LUT drives async reset alert  
+LUT cell u_rst/sync[2]_i_1, with 2 or more inputs, drives asynchronous preset/clear pin(s) u_rst/sync_reg[0]/CLR, u_rst/sync_reg[1]/CLR, u_rst/sync_reg[2]/CLR. The LUT may glitch and trigger an unexpected reset, even if it is a properly timed path.
+Related violations: <none>
+
+PDRC-190#1 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[0] in site SLICE_X30Y121 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[0] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#2 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[10] in site SLICE_X31Y121 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[10] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#3 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[11] in site SLICE_X29Y122 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[11] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#4 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[1] in site SLICE_X30Y123 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[1] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#5 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[2] in site SLICE_X32Y122 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[2] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#6 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[3] in site SLICE_X28Y119 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[3] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#7 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[4] in site SLICE_X28Y125 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[4] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#8 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[5] in site SLICE_X28Y121 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[5] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#9 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[6] in site SLICE_X29Y124 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[6] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#10 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[7] in site SLICE_X33Y121 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[7] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#11 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[8] in site SLICE_X28Y123 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[8] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+PDRC-190#12 Warning
+Suboptimally placed synchronized register chain  
+The FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_sync_r5_reg[9] in site SLICE_X31Y123 is part of a synchronized register chain that is suboptimally placed as the load FDRE cell g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/temp_mon_enabled.u_tempmon/device_temp_r_reg[9] is not placed in the same (SLICE) site.
+Related violations: <none>
+
+SYNTH-6#1 Warning
+Timing of a RAM block might be sub-optimal  
+The timing for the instance u_sys/g_tile[0].g_ni.u_ni/mem_reg, implemented as a RAM block, might be sub-optimal as no output register was merged into the block.
+Related violations: <none>
+
+SYNTH-6#2 Warning
+Timing of a RAM block might be sub-optimal  
+The timing for the instance u_sys/g_tile[1].g_ni.u_ni/mem_reg, implemented as a RAM block, might be sub-optimal as no output register was merged into the block.
+Related violations: <none>
+
+SYNTH-6#3 Warning
+Timing of a RAM block might be sub-optimal  
+The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg, implemented as a RAM block, might be sub-optimal as no output register was merged into the block.
+Related violations: <none>
+
+TIMING-10#1 Warning
+Missing property on synchronizer  
+One or more logic synchronizer has been detected between 2 clock domains but the synchronizer does not have the property ASYNC_REG defined on one or both registers. It is recommended to run report_cdc for a complete and detailed CDC coverage
+Related violations: <none>
+
+XDCB-5#1 Warning
+Runtime inefficient way to find pin objects  
+The option '-to : [get_pins -hier -include_replicated_objects -filter {NAME =~ *temp_mon_enabled.u_tempmon/device_temp_sync_r1_reg[*]/D}]' of constraint 'set_max_delay' uses inefficient query to find pin objects (see constraint position '6' in the Timing Constraint window in Vivado IDE). To reduce runtime, it is recommended to get the pins through the cell objects. Please refer to Using Constraints Guide (Constraints Efficiency). An example of optimal query is: get_pins -filter {REF_PIN_NAME=~yy*} -of_objects [get_cells -hierarchical xx*].
+Current XDC: c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/constraints/cook_gw_mig_0.xdc (Line: 344)
+Related violations: <none>
+
+REQP-1959#1 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[1].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#2 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[3].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#3 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[4].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#4 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[5].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#5 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[6].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#6 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[7].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#7 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[8].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#8 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_A.ddr_byte_lane_A/ddr_byte_group_io/input_[9].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#9 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[0].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#10 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[1].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#11 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[2].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#12 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[4].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#13 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[5].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#14 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[6].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#15 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[7].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+REQP-1959#16 Advisory
+connects_SERDES_RST_driver_not_FF  
+g_gw.u_bd/cook_gw_i/mig/u_cook_gw_mig_0_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_mc_phy_wrapper/u_ddr_mc_phy/ddr_phy_4lanes_0.u_ddr_phy_4lanes/ddr_byte_lane_C.ddr_byte_lane_C/ddr_byte_group_io/input_[8].iserdes_dq_.iserdesdq: The RST pin should only be driven by a Flip-flop.
+Related violations: <none>
+
+

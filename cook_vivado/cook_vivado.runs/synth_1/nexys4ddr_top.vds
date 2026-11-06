@@ -1,0 +1,1348 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Sat Nov  7 00:26:27 2026
+# Process ID         : 28852
+# Current directory  : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1
+# Command line       : vivado.exe -log nexys4ddr_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source nexys4ddr_top.tcl
+# Log file           : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/nexys4ddr_top.vds
+# Journal file       : C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1\vivado.jou
+# Running On         : LAPTOP-0O737P11
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26300
+# Processor Detail   : 13th Gen Intel(R) Core(TM) i7-13620H
+# CPU Frequency      : 2918 MHz
+# CPU Physical cores : 10
+# CPU Logical cores  : 16
+# Host memory        : 16858 MB
+# Swap memory        : 15569 MB
+# Total Virtual      : 32427 MB
+# Available Virtual  : 5153 MB
+#-----------------------------------------------------------
+source nexys4ddr_top.tcl -notrace
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'E:/AMDDesignTools/2025.2/Vivado/data/ip'.
+Command: read_checkpoint -auto_incremental -incremental C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.srcs/utils_1/imports/synth_1/nexys4ddr_top.dcp
+INFO: [Vivado 12-5825] Read reference checkpoint from C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.srcs/utils_1/imports/synth_1/nexys4ddr_top.dcp for incremental synthesis
+INFO: [Vivado 12-7989] Please ensure there are no constraint changes
+Command: synth_design -top nexys4ddr_top -part xc7a100tcsg324-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 28212
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 1344.988 ; gain = 540.805
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'nexys4ddr_top' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:52]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_wrapper' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v:13]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:13]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_dma_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_dma_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'mm2s_prmry_reset_out_n' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
+WARNING: [Synth 8-7071] port 's2mm_prmry_reset_out_n' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
+WARNING: [Synth 8-7071] port 'axi_dma_tstvec' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
+WARNING: [Synth 8-7023] instance 'dma' of module 'cook_gw_dma_0' has 64 connections declared, but only 61 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_mig_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_mig_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'ui_clk_sync_rst' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7071] port 'app_sr_active' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7071] port 'app_ref_ack' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7071] port 'app_zq_ack' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7071] port 's_axi_bid' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7071] port 's_axi_rid' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+WARNING: [Synth 8-7023] instance 'mig' of module 'cook_gw_mig_0' has 61 connections declared, but only 55 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_rst50_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rst50_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'mb_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
+WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
+WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
+WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
+WARNING: [Synth 8-7023] instance 'rst50' of module 'cook_gw_rst50_0' has 10 connections declared, but only 6 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_rstui_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rstui_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'mb_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
+WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
+WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
+WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
+WARNING: [Synth 8-7023] instance 'rstui' of module 'cook_gw_rstui_0' has 10 connections declared, but only 6 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_sc_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_sc_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw' (0#1) [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:13]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_wrapper' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v:13]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:284]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:285]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:286]
+INFO: [Synth 8-6157] synthesizing module 'MMCME2_BASE' [E:/AMDDesignTools/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95964]
+	Parameter CLKFBOUT_MULT_F bound to: 1.000000e+01 - type: double 
+	Parameter CLKIN1_PERIOD bound to: 1.000000e+01 - type: double 
+	Parameter CLKOUT0_DIVIDE_F bound to: 2.000000e+01 - type: double 
+	Parameter CLKOUT1_DIVIDE bound to: 5 - type: integer 
+	Parameter DIVCLK_DIVIDE bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'MMCME2_BASE' (0#1) [E:/AMDDesignTools/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95964]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [E:/AMDDesignTools/2025.2/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [E:/AMDDesignTools/2025.2/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6157] synthesizing module 'reset_sync' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/reset_sync.v:13]
+	Parameter STAGES bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'reset_sync' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/reset_sync.v:13]
+INFO: [Synth 8-6157] synthesizing module 'mesh_top' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:46]
+	Parameter MEM_INIT bound to: 1 - type: integer 
+	Parameter MEM_PREFIX bound to: tile - type: string 
+	Parameter GW_EN bound to: 1 - type: integer 
+	Parameter GW_TILE bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'ni' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+	Parameter MY_ID bound to: 0 - type: integer 
+	Parameter TIMEOUT_CYCLES bound to: 1024 - type: integer 
+	Parameter RETRY_MAX bound to: 2 - type: integer 
+	Parameter INIT_FILE bound to: 80'b01110100011010010110110001100101001100000011000000101110011011010110010101101101 
+	Parameter GW_ID bound to: 3 - type: integer 
+INFO: [Synth 8-3876] $readmem data file 'tile00.mem' is read successfully [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:290]
+INFO: [Synth 8-6157] synthesizing module 'address_decoder' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+	Parameter MY_TILE_ID bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'address_decoder' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+INFO: [Synth 8-226] default block is never used [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:477]
+INFO: [Synth 8-6155] done synthesizing module 'ni' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+INFO: [Synth 8-6157] synthesizing module 'picorv32' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+	Parameter ENABLE_COUNTERS bound to: 1'b0 
+	Parameter BARREL_SHIFTER bound to: 1'b0 
+	Parameter COMPRESSED_ISA bound to: 1'b0 
+	Parameter ENABLE_MUL bound to: 1'b0 
+	Parameter ENABLE_DIV bound to: 1'b0 
+	Parameter ENABLE_IRQ bound to: 1'b0 
+	Parameter PROGADDR_RESET bound to: 32'b00000000000000000000000100000000 
+	Parameter STACKADDR bound to: 32'b00000000000000000001000000000000 
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1268]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+INFO: [Synth 8-6155] done synthesizing module 'picorv32' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+WARNING: [Synth 8-7071] port 'mem_la_read' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_write' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_addr' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wdata' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wstrb' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_insn' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs1' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs2' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'eoi' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_data' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7023] instance 'u_core' of module 'picorv32' has 27 connections declared, but only 15 given [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+INFO: [Synth 8-6157] synthesizing module 'ni__parameterized0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+	Parameter MY_ID bound to: 1 - type: integer 
+	Parameter TIMEOUT_CYCLES bound to: 1024 - type: integer 
+	Parameter RETRY_MAX bound to: 2 - type: integer 
+	Parameter INIT_FILE bound to: 80'b01110100011010010110110001100101001100000011000100101110011011010110010101101101 
+	Parameter GW_ID bound to: 3 - type: integer 
+INFO: [Synth 8-3876] $readmem data file 'tile01.mem' is read successfully [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:290]
+INFO: [Synth 8-6157] synthesizing module 'address_decoder__parameterized0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+	Parameter MY_TILE_ID bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'address_decoder__parameterized0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+INFO: [Synth 8-226] default block is never used [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:477]
+INFO: [Synth 8-6155] done synthesizing module 'ni__parameterized0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+INFO: [Synth 8-6157] synthesizing module 'picorv32__parameterized0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+	Parameter ENABLE_COUNTERS bound to: 1'b0 
+	Parameter BARREL_SHIFTER bound to: 1'b0 
+	Parameter COMPRESSED_ISA bound to: 1'b0 
+	Parameter ENABLE_MUL bound to: 1'b0 
+	Parameter ENABLE_DIV bound to: 1'b0 
+	Parameter ENABLE_IRQ bound to: 1'b0 
+	Parameter PROGADDR_RESET bound to: 32'b00000000000000000001000100000000 
+	Parameter STACKADDR bound to: 32'b00000000000000000010000000000000 
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1268]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+INFO: [Synth 8-6155] done synthesizing module 'picorv32__parameterized0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+WARNING: [Synth 8-7071] port 'mem_la_read' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_write' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_addr' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wdata' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wstrb' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_insn' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs1' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs2' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'eoi' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_data' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7023] instance 'u_core' of module 'picorv32' has 27 connections declared, but only 15 given [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+INFO: [Synth 8-6157] synthesizing module 'ni__parameterized1' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+	Parameter MY_ID bound to: 2 - type: integer 
+	Parameter TIMEOUT_CYCLES bound to: 1024 - type: integer 
+	Parameter RETRY_MAX bound to: 2 - type: integer 
+	Parameter INIT_FILE bound to: 80'b01110100011010010110110001100101001100000011001000101110011011010110010101101101 
+	Parameter GW_ID bound to: 3 - type: integer 
+INFO: [Synth 8-3876] $readmem data file 'tile02.mem' is read successfully [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:290]
+INFO: [Synth 8-6157] synthesizing module 'address_decoder__parameterized1' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+	Parameter MY_TILE_ID bound to: 2 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'address_decoder__parameterized1' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+INFO: [Synth 8-226] default block is never used [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:477]
+INFO: [Synth 8-6155] done synthesizing module 'ni__parameterized1' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:88]
+INFO: [Synth 8-6157] synthesizing module 'picorv32__parameterized1' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+	Parameter ENABLE_COUNTERS bound to: 1'b0 
+	Parameter BARREL_SHIFTER bound to: 1'b0 
+	Parameter COMPRESSED_ISA bound to: 1'b0 
+	Parameter ENABLE_MUL bound to: 1'b0 
+	Parameter ENABLE_DIV bound to: 1'b0 
+	Parameter ENABLE_IRQ bound to: 1'b0 
+	Parameter PROGADDR_RESET bound to: 32'b00000000000000000010000100000000 
+	Parameter STACKADDR bound to: 32'b00000000000000000011000000000000 
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1268]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1314]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1497]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+WARNING: [Synth 8-151] case item 1'b0 is unreachable [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1583]
+INFO: [Synth 8-6155] done synthesizing module 'picorv32__parameterized1' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:62]
+WARNING: [Synth 8-7071] port 'mem_la_read' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_write' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_addr' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wdata' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'mem_la_wstrb' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_insn' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs1' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'pcpi_rs2' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'eoi' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_valid' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7071] port 'trace_data' of module 'picorv32' is unconnected for instance 'u_core' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+WARNING: [Synth 8-7023] instance 'u_core' of module 'picorv32' has 27 connections declared, but only 15 given [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:251]
+INFO: [Synth 8-6157] synthesizing module 'gw_ni' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:111]
+	Parameter MY_ID bound to: 3 - type: integer 
+	Parameter TIMEOUT_CYCLES bound to: 1024 - type: integer 
+	Parameter RETRY_MAX bound to: 2 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'address_decoder__parameterized2' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+	Parameter MY_TILE_ID bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'address_decoder__parameterized2' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v:32]
+INFO: [Synth 8-6155] done synthesizing module 'gw_ni' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:111]
+INFO: [Synth 8-6157] synthesizing module 'noc_mesh' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/noc_mesh.v:30]
+	Parameter LINK_FAULT_MASK bound to: 16'b0000000000000000 
+	Parameter LINK_FAULT_MODE bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'end_buff' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/end_buff.v:28]
+	Parameter MODE bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'end_buff' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/end_buff.v:28]
+INFO: [Synth 8-6157] synthesizing module 'link_buffer' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/link_buffer.v:45]
+	Parameter DEPTH bound to: 6 - type: integer 
+	Parameter FAULT bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'link_buffer' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/link_buffer.v:45]
+INFO: [Synth 8-6157] synthesizing module 'noc_router' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+	Parameter MY_X bound to: 0 - type: integer 
+	Parameter MY_Y bound to: 0 - type: integer 
+	Parameter PORT_EXISTS bound to: 5'b10110 
+	Parameter WD_PRESCALE_W bound to: 2 - type: integer 
+	Parameter WD_LOCK_LIMIT bound to: 8 - type: integer 
+	Parameter WD_STARVE_LIMIT bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'noc_router' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+INFO: [Synth 8-6157] synthesizing module 'bist_node' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+	Parameter PORT_EXISTS bound to: 5'b10110 
+	Parameter MY_ID bound to: 0 - type: integer 
+	Parameter PHASE_CYCLES bound to: 32 - type: integer 
+	Parameter NVEC bound to: 6 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'bist_node' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+INFO: [Synth 8-6157] synthesizing module 'noc_router__parameterized0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+	Parameter MY_X bound to: 1 - type: integer 
+	Parameter MY_Y bound to: 0 - type: integer 
+	Parameter PORT_EXISTS bound to: 5'b11010 
+	Parameter WD_PRESCALE_W bound to: 2 - type: integer 
+	Parameter WD_LOCK_LIMIT bound to: 8 - type: integer 
+	Parameter WD_STARVE_LIMIT bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'noc_router__parameterized0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+INFO: [Synth 8-6157] synthesizing module 'bist_node__parameterized0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+	Parameter PORT_EXISTS bound to: 5'b11010 
+	Parameter MY_ID bound to: 1 - type: integer 
+	Parameter PHASE_CYCLES bound to: 32 - type: integer 
+	Parameter NVEC bound to: 6 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'bist_node__parameterized0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+INFO: [Synth 8-6157] synthesizing module 'noc_router__parameterized1' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+	Parameter MY_X bound to: 0 - type: integer 
+	Parameter MY_Y bound to: 1 - type: integer 
+	Parameter PORT_EXISTS bound to: 5'b10101 
+	Parameter WD_PRESCALE_W bound to: 2 - type: integer 
+	Parameter WD_LOCK_LIMIT bound to: 8 - type: integer 
+	Parameter WD_STARVE_LIMIT bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'noc_router__parameterized1' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+INFO: [Synth 8-6157] synthesizing module 'bist_node__parameterized1' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+	Parameter PORT_EXISTS bound to: 5'b10101 
+	Parameter MY_ID bound to: 2 - type: integer 
+	Parameter PHASE_CYCLES bound to: 32 - type: integer 
+	Parameter NVEC bound to: 6 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'bist_node__parameterized1' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+INFO: [Synth 8-6157] synthesizing module 'noc_router__parameterized2' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+	Parameter MY_X bound to: 1 - type: integer 
+	Parameter MY_Y bound to: 1 - type: integer 
+	Parameter PORT_EXISTS bound to: 5'b11001 
+	Parameter WD_PRESCALE_W bound to: 2 - type: integer 
+	Parameter WD_LOCK_LIMIT bound to: 8 - type: integer 
+	Parameter WD_STARVE_LIMIT bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'noc_router__parameterized2' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v:82]
+INFO: [Synth 8-6157] synthesizing module 'bist_node__parameterized2' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+	Parameter PORT_EXISTS bound to: 5'b11001 
+	Parameter MY_ID bound to: 3 - type: integer 
+	Parameter PHASE_CYCLES bound to: 32 - type: integer 
+	Parameter NVEC bound to: 6 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'bist_node__parameterized2' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v:56]
+INFO: [Synth 8-6155] done synthesizing module 'noc_mesh' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/noc_mesh.v:30]
+INFO: [Synth 8-6155] done synthesizing module 'mesh_top' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v:46]
+INFO: [Synth 8-6157] synthesizing module 'status_panel' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/status_panel.v:52]
+	Parameter UNIT_CYCLES bound to: 12500000 - type: integer 
+	Parameter HEART_CYCLES bound to: 25000000 - type: integer 
+	Parameter GW_TILE bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'status_panel' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/status_panel.v:52]
+INFO: [Synth 8-6157] synthesizing module 'seven_seg' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v:9]
+	Parameter REFRESH_CYCLES bound to: 50000 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'seven_seg' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v:9]
+INFO: [Synth 8-6155] done synthesizing module 'nexys4ddr_top' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:52]
+WARNING: [Synth 8-6014] Unused sequential element rq_push_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:382]
+WARNING: [Synth 8-6014] Unused sequential element rq_pop_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:383]
+WARNING: [Synth 8-7137] Register rq_dst_reg in module ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_tag_reg in module ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_off_reg in module ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_data_reg in module ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_dst_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:561]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_tag_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_off_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_data_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:565]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-6014] Unused sequential element mem_la_firstword_reg_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:392]
+WARNING: [Synth 8-6014] Unused sequential element last_mem_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:393]
+WARNING: [Synth 8-6014] Unused sequential element next_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:433]
+WARNING: [Synth 8-6014] Unused sequential element mem_la_secondword_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:571]
+WARNING: [Synth 8-6014] Unused sequential element prefetched_high_word_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:572]
+WARNING: [Synth 8-6014] Unused sequential element q_ascii_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:779]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_imm_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:780]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:781]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rs1_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:782]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rs2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:783]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rd_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:784]
+WARNING: [Synth 8-6014] Unused sequential element dbg_next_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:785]
+WARNING: [Synth 8-6014] Unused sequential element dbg_valid_insn_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:788]
+WARNING: [Synth 8-6014] Unused sequential element cached_ascii_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:793]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_imm_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:794]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:796]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rs1_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:799]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rs2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:800]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rd_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:801]
+WARNING: [Synth 8-6014] Unused sequential element dbg_insn_addr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:805]
+WARNING: [Synth 8-6014] Unused sequential element clear_prefetched_high_word_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1293]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_rinst_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1406]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_rdata_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1407]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_wdata_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1408]
+WARNING: [Synth 8-6014] Unused sequential element alu_out_0_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1410]
+WARNING: [Synth 8-6014] Unused sequential element alu_wait_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1413]
+WARNING: [Synth 8-6014] Unused sequential element alu_wait_2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1414]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs1val_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1417]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs2val_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1418]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs1val_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1419]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs2val_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1420]
+WARNING: [Synth 8-6014] Unused sequential element next_irq_pending_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1440]
+WARNING: [Synth 8-6014] Unused sequential element decoder_trigger_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1447]
+WARNING: [Synth 8-6014] Unused sequential element decoder_pseudo_trigger_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1449]
+WARNING: [Synth 8-6014] Unused sequential element latched_trace_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1465]
+WARNING: [Synth 8-6014] Unused sequential element irq_active_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1471]
+WARNING: [Synth 8-6014] Unused sequential element irq_delay_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1472]
+WARNING: [Synth 8-6014] Unused sequential element irq_mask_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1473]
+WARNING: [Synth 8-6014] Unused sequential element irq_state_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1475]
+WARNING: [Synth 8-6014] Unused sequential element timer_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1477]
+WARNING: [Synth 8-6014] Unused sequential element current_pc_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1495]
+WARNING: [Synth 8-6014] Unused sequential element irq_pending_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1963]
+WARNING: [Synth 8-6014] Unused sequential element count_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1437]
+WARNING: [Synth 8-6014] Unused sequential element trace_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1452]
+WARNING: [Synth 8-6014] Unused sequential element instr_ecall_ebreak_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1086]
+WARNING: [Synth 8-6014] Unused sequential element count_cycle_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1436]
+WARNING: [Synth 8-6014] Unused sequential element pcpi_timeout_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1470]
+WARNING: [Synth 8-6014] Unused sequential element rq_push_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:382]
+WARNING: [Synth 8-6014] Unused sequential element rq_pop_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:383]
+WARNING: [Synth 8-7137] Register rq_dst_reg in module ni__parameterized0 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_tag_reg in module ni__parameterized0 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_off_reg in module ni__parameterized0 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_data_reg in module ni__parameterized0 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_dst_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:561]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_tag_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_off_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_data_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:565]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-6014] Unused sequential element mem_la_firstword_reg_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:392]
+WARNING: [Synth 8-6014] Unused sequential element last_mem_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:393]
+WARNING: [Synth 8-6014] Unused sequential element next_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:433]
+WARNING: [Synth 8-6014] Unused sequential element mem_la_secondword_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:571]
+WARNING: [Synth 8-6014] Unused sequential element prefetched_high_word_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:572]
+WARNING: [Synth 8-6014] Unused sequential element q_ascii_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:779]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_imm_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:780]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:781]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rs1_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:782]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rs2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:783]
+WARNING: [Synth 8-6014] Unused sequential element q_insn_rd_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:784]
+WARNING: [Synth 8-6014] Unused sequential element dbg_next_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:785]
+WARNING: [Synth 8-6014] Unused sequential element dbg_valid_insn_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:788]
+WARNING: [Synth 8-6014] Unused sequential element cached_ascii_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:793]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_imm_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:794]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_opcode_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:796]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rs1_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:799]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rs2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:800]
+WARNING: [Synth 8-6014] Unused sequential element cached_insn_rd_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:801]
+WARNING: [Synth 8-6014] Unused sequential element dbg_insn_addr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:805]
+WARNING: [Synth 8-6014] Unused sequential element clear_prefetched_high_word_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1293]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_rinst_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1406]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_rdata_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1407]
+WARNING: [Synth 8-6014] Unused sequential element set_mem_do_wdata_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1408]
+WARNING: [Synth 8-6014] Unused sequential element alu_out_0_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1410]
+WARNING: [Synth 8-6014] Unused sequential element alu_wait_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1413]
+WARNING: [Synth 8-6014] Unused sequential element alu_wait_2_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1414]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs1val_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1417]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs2val_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1418]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs1val_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1419]
+WARNING: [Synth 8-6014] Unused sequential element dbg_rs2val_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1420]
+WARNING: [Synth 8-6014] Unused sequential element next_irq_pending_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1440]
+WARNING: [Synth 8-6014] Unused sequential element decoder_trigger_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1447]
+WARNING: [Synth 8-6014] Unused sequential element decoder_pseudo_trigger_q_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1449]
+WARNING: [Synth 8-6014] Unused sequential element latched_trace_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1465]
+WARNING: [Synth 8-6014] Unused sequential element irq_active_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1471]
+WARNING: [Synth 8-6014] Unused sequential element irq_delay_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1472]
+WARNING: [Synth 8-6014] Unused sequential element irq_mask_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1473]
+WARNING: [Synth 8-6014] Unused sequential element irq_state_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1475]
+WARNING: [Synth 8-6014] Unused sequential element timer_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1477]
+WARNING: [Synth 8-6014] Unused sequential element current_pc_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1495]
+WARNING: [Synth 8-6014] Unused sequential element irq_pending_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1963]
+WARNING: [Synth 8-6014] Unused sequential element count_instr_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1437]
+WARNING: [Synth 8-6014] Unused sequential element trace_valid_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1452]
+WARNING: [Synth 8-6014] Unused sequential element instr_ecall_ebreak_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1086]
+WARNING: [Synth 8-6014] Unused sequential element count_cycle_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1436]
+WARNING: [Synth 8-6014] Unused sequential element pcpi_timeout_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v:1470]
+WARNING: [Synth 8-6014] Unused sequential element rq_push_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:382]
+WARNING: [Synth 8-6014] Unused sequential element rq_pop_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:383]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7137] Register rq_dst_reg in module ni__parameterized1 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_tag_reg in module ni__parameterized1 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_off_reg in module ni__parameterized1 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-7137] Register rq_data_reg in module ni__parameterized1 has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_dst_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:561]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_tag_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_off_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:562]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-4767] Trying to implement RAM 'rq_data_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:565]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-7137] Register rq_dst_reg[0] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:408]
+WARNING: [Synth 8-7137] Register rq_dst_reg[1] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:408]
+WARNING: [Synth 8-7137] Register rq_dst_reg[2] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:408]
+WARNING: [Synth 8-7137] Register rq_dst_reg[3] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:408]
+WARNING: [Synth 8-7137] Register rq_tag_reg[0] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:409]
+WARNING: [Synth 8-7137] Register rq_tag_reg[1] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:409]
+WARNING: [Synth 8-7137] Register rq_tag_reg[2] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:409]
+WARNING: [Synth 8-7137] Register rq_tag_reg[3] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:409]
+WARNING: [Synth 8-7137] Register rq_off_reg[0] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:410]
+WARNING: [Synth 8-7137] Register rq_off_reg[1] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:410]
+WARNING: [Synth 8-7137] Register rq_off_reg[2] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:410]
+WARNING: [Synth 8-7137] Register rq_off_reg[3] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:410]
+WARNING: [Synth 8-7137] Register rq_data_reg[0] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:411]
+WARNING: [Synth 8-7137] Register rq_data_reg[1] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:411]
+WARNING: [Synth 8-7137] Register rq_data_reg[2] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:411]
+WARNING: [Synth 8-7137] Register rq_data_reg[3] in module gw_ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v:411]
+WARNING: [Synth 8-7137] Register mem_reg in module link_buffer has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
+WARNING: [Synth 8-4767] Trying to implement RAM 'mem_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons. [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/link_buffer.v:112]
+Reason is one or more of the following :
+	1: RAM is sensitive to asynchronous reset signal. this RTL style is not supported. 
+WARNING: [Synth 8-3917] design nexys4ddr_top has port DP driven by constant 1
+WARNING: [Synth 8-7129] Port gw_info[31] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[30] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[29] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[28] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[27] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[26] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[25] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[24] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port gw_info[23] in module status_panel is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[2] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[1] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[2] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[7] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[6] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[5] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[2] in module noc_router__parameterized2 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[3] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[1] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[3] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[7] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[6] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[5] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[2] in module noc_router__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[2] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[0] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[2] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[0] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[7] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[6] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[5] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[2] in module noc_router__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[3] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_valid[0] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[3] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port out_room[0] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[7] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[6] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[5] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dead_links[2] in module noc_router is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[14] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[13] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[11] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[9] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[6] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[4] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[3] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port fault_rt_mask[0] in module noc_mesh is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_wr in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[31] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[30] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[29] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[28] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[27] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[26] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[25] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[24] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[23] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[22] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[21] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[20] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[19] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[18] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[17] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[16] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[15] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[14] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[13] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[12] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[11] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[10] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[9] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[8] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[7] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[6] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[5] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[4] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[3] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[2] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[1] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_rd[0] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_wait in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port pcpi_ready in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[31] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[30] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[29] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[28] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[27] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[26] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[25] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[24] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[23] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[22] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[21] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[20] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[19] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[18] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[17] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[16] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[15] in module picorv32__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port irq[14] in module picorv32__parameterized1 is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.288 . Memory (MB): peak = 1754.180 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 1 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_dma_0/cook_gw_dma_0/cook_gw_dma_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/dma'
+Finished Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_dma_0/cook_gw_dma_0/cook_gw_dma_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/dma'
+Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_sc_0/cook_gw_sc_0/cook_gw_sc_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/sc'
+Finished Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_sc_0/cook_gw_sc_0/cook_gw_sc_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/sc'
+Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_rst50_0/cook_gw_rst50_0/cook_gw_rst50_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/rst50'
+Finished Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_rst50_0/cook_gw_rst50_0/cook_gw_rst50_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/rst50'
+Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/cook_gw_mig_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/mig'
+Finished Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/cook_gw_mig_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/mig'
+Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_rstui_0/cook_gw_rstui_0/cook_gw_rstui_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/rstui'
+Finished Parsing XDC File [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_rstui_0/cook_gw_rstui_0/cook_gw_rstui_0_in_context.xdc] for cell 'g_gw.u_bd/cook_gw_i/rstui'
+Parsing XDC File [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr.xdc]
+Finished Parsing XDC File [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/nexys4ddr_top_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/nexys4ddr_top_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Parsing XDC File [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/dont_touch.xdc]
+Finished Parsing XDC File [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/dont_touch.xdc]
+INFO: [Timing 38-2] Deriving generated clocks
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.009 . Memory (MB): peak = 1851.586 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1 instances were transformed.
+  MMCME2_BASE => MMCME2_ADV: 1 instance 
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.241 . Memory (MB): peak = 1851.586 ; gain = 0.000
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Preparing Guide Design
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-6702] IncrSynth : Design change found in an area of the design that prevents previous synthesis information being used, Reverting to default synthesis
+---------------------------------------------------------------------------------
+Finished Doing Graph Differ : Time (s): cpu = 00:00:30 ; elapsed = 00:00:34 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Preparing Guide Design : Time (s): cpu = 00:00:30 ; elapsed = 00:00:34 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'ni'
+INFO: [Synth 8-802] inferred FSM for state register 'mem_state_reg' in module 'picorv32'
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'ni__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'mem_state_reg' in module 'picorv32__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'ni__parameterized1'
+INFO: [Synth 8-802] inferred FSM for state register 'mem_state_reg' in module 'picorv32__parameterized1'
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'gw_ni'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'bist_node'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'bist_node__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'bist_node__parameterized1'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'bist_node__parameterized2'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                              001 |                               00
+                 TX_HEAD |                              010 |                               01
+                 TX_TAIL |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'one-hot' in module 'ni'
+INFO: [Synth 8-3971] The signal "ni:/mem_reg" was recognized as a true dual port RAM template.
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 iSTATE2 |                               00 |                               00
+                 iSTATE0 |                               01 |                               10
+                  iSTATE |                               10 |                               01
+                 iSTATE1 |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'mem_state_reg' using encoding 'sequential' in module 'picorv32'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                              001 |                               00
+                 TX_HEAD |                              010 |                               01
+                 TX_TAIL |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'one-hot' in module 'ni__parameterized0'
+INFO: [Synth 8-3971] The signal "ni__parameterized0:/mem_reg" was recognized as a true dual port RAM template.
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 iSTATE2 |                               00 |                               00
+                 iSTATE0 |                               01 |                               10
+                  iSTATE |                               10 |                               01
+                 iSTATE1 |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'mem_state_reg' using encoding 'sequential' in module 'picorv32__parameterized0'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                              001 |                               00
+                 TX_HEAD |                              010 |                               01
+                 TX_TAIL |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'one-hot' in module 'ni__parameterized1'
+INFO: [Synth 8-3971] The signal "ni__parameterized1:/mem_reg" was recognized as a true dual port RAM template.
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 iSTATE2 |                               00 |                               00
+                 iSTATE0 |                               01 |                               10
+                  iSTATE |                               10 |                               01
+                 iSTATE1 |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'mem_state_reg' using encoding 'sequential' in module 'picorv32__parameterized1'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 TX_IDLE |                              001 |                               00
+                 TX_HEAD |                              010 |                               01
+                 TX_TAIL |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_reg' using encoding 'one-hot' in module 'gw_ni'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 ST_WAIT |                              001 |                               00
+                  ST_RUN |                              010 |                               01
+                  iSTATE |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'bist_node'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 ST_WAIT |                              001 |                               00
+                  ST_RUN |                              010 |                               01
+                  iSTATE |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'bist_node__parameterized0'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 ST_WAIT |                              001 |                               00
+                  ST_RUN |                              010 |                               01
+                  iSTATE |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'bist_node__parameterized1'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 ST_WAIT |                              001 |                               00
+                  ST_RUN |                              010 |                               01
+                  iSTATE |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'bist_node__parameterized2'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:40 ; elapsed = 00:00:45 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+---------------------------------------------------------------------------------
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[3].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[0].g_col[1].g_dir[0].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[0].g_col[1].g_dir[2].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[1].g_col[0].g_dir[1].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[1].g_col[0].g_dir[3].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[1].g_col[1].g_dir[1].g_edge.u_eb'
+INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[1].g_col[1].g_dir[2].g_edge.u_eb'
+
+
+Incremental Synthesis Report Summary:
+
+1. Incremental synthesis run: no
+
+   Reason for not running incremental synthesis : Design change found in an area of the design that prevents previous synthesis information being used
+
+
+INFO: [Synth 8-7130] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   33 Bit       Adders := 4     
+	   3 Input   32 Bit       Adders := 18    
+	   2 Input   32 Bit       Adders := 75    
+	   2 Input   25 Bit       Adders := 1     
+	   2 Input   24 Bit       Adders := 1     
+	   2 Input   16 Bit       Adders := 2     
+	   2 Input   15 Bit       Adders := 1     
+	   2 Input   12 Bit       Adders := 1     
+	   2 Input   11 Bit       Adders := 5     
+	   3 Input   10 Bit       Adders := 1     
+	   2 Input    9 Bit       Adders := 2     
+	   2 Input    8 Bit       Adders := 5     
+	   2 Input    7 Bit       Adders := 20    
+	   2 Input    6 Bit       Adders := 4     
+	   2 Input    5 Bit       Adders := 3     
+	   2 Input    4 Bit       Adders := 72    
+	   3 Input    4 Bit       Adders := 5     
+	   2 Input    3 Bit       Adders := 132   
+	   2 Input    2 Bit       Adders := 25    
++---XORs : 
+	   2 Input     44 Bit         XORs := 8     
+	   2 Input     32 Bit         XORs := 3     
+	   8 Input      1 Bit         XORs := 111   
+	   9 Input      1 Bit         XORs := 168   
++---Registers : 
+	               44 Bit    Registers := 68    
+	               36 Bit    Registers := 3     
+	               32 Bit    Registers := 85    
+	               25 Bit    Registers := 1     
+	               24 Bit    Registers := 1     
+	               20 Bit    Registers := 4     
+	               16 Bit    Registers := 5     
+	               15 Bit    Registers := 1     
+	               12 Bit    Registers := 23    
+	               11 Bit    Registers := 5     
+	               10 Bit    Registers := 6     
+	                8 Bit    Registers := 17    
+	                7 Bit    Registers := 21    
+	                6 Bit    Registers := 4     
+	                5 Bit    Registers := 34    
+	                4 Bit    Registers := 24    
+	                3 Bit    Registers := 80    
+	                2 Bit    Registers := 103   
+	                1 Bit    Registers := 365   
++---RAMs : 
+	              32K Bit	(1024 X 32 bit)          RAMs := 3     
+	             1024 Bit	(32 X 32 bit)          RAMs := 3     
++---Muxes : 
+	   2 Input  220 Bit        Muxes := 16    
+	   2 Input   44 Bit        Muxes := 158   
+	   3 Input   32 Bit        Muxes := 23    
+	   2 Input   32 Bit        Muxes := 240   
+	   4 Input   32 Bit        Muxes := 29    
+	   6 Input   32 Bit        Muxes := 3     
+	   2 Input   20 Bit        Muxes := 8     
+	   2 Input   16 Bit        Muxes := 8     
+	   4 Input   16 Bit        Muxes := 1     
+	   2 Input   15 Bit        Muxes := 2     
+	   4 Input   12 Bit        Muxes := 5     
+	   2 Input   12 Bit        Muxes := 33    
+	   4 Input   11 Bit        Muxes := 3     
+	   2 Input   11 Bit        Muxes := 6     
+	   3 Input   11 Bit        Muxes := 2     
+	   5 Input   10 Bit        Muxes := 1     
+	   2 Input   10 Bit        Muxes := 1     
+	   4 Input   10 Bit        Muxes := 2     
+	   2 Input    9 Bit        Muxes := 1     
+	   2 Input    8 Bit        Muxes := 54    
+	   4 Input    8 Bit        Muxes := 3     
+	   6 Input    8 Bit        Muxes := 3     
+	   2 Input    7 Bit        Muxes := 20    
+	   2 Input    5 Bit        Muxes := 72    
+	   3 Input    5 Bit        Muxes := 16    
+	   5 Input    4 Bit        Muxes := 3     
+	   2 Input    4 Bit        Muxes := 32    
+	   4 Input    4 Bit        Muxes := 4     
+	   3 Input    4 Bit        Muxes := 4     
+	   8 Input    4 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 201   
+	   4 Input    3 Bit        Muxes := 11    
+	   3 Input    3 Bit        Muxes := 3     
+	   5 Input    3 Bit        Muxes := 5     
+	   6 Input    3 Bit        Muxes := 2     
+	   2 Input    2 Bit        Muxes := 237   
+	   5 Input    2 Bit        Muxes := 21    
+	   3 Input    2 Bit        Muxes := 14    
+	   4 Input    2 Bit        Muxes := 24    
+	   2 Input    1 Bit        Muxes := 2410  
+	   3 Input    1 Bit        Muxes := 147   
+	   5 Input    1 Bit        Muxes := 174   
+	   4 Input    1 Bit        Muxes := 87    
+	   7 Input    1 Bit        Muxes := 3     
+	   6 Input    1 Bit        Muxes := 3     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3917] design nexys4ddr_top has port DP driven by constant 1
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[4]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[5]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[5]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[6]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[6]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[7]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[8]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[8]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[9]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[9]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[10]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/err_q_reg[10]' (FDCE) to 'g_row[1].g_col[1].u_router/err_q_reg[11]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\err_q_reg[11] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[43]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[42]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[42]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[41]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[41]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[40]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[40]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[39]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[39]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[38]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[38]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[37]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[37]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[36]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[36]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[35]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[35]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[34]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[34]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[33]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[33]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[32]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[32]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[31]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[31]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[30]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[30]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[29]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[29]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[28]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[28]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[27]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[27]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[26]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[26]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[25]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[25]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[24]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[24]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[23]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[23]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[22]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[22]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[21]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[21]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[20]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[20]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[19]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[19]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[18]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[18]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[17]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[17]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[16]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[16]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[15]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[15]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[14]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[14]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[13]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[13]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[12]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[12]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[11]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[11]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[10]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[10]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[9]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[9]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[8]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[8]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[7]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[7]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[6]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[6]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[5]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[5]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[4]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[4]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[3]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[3]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[2]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[2]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[1]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_bist/refl_f_reg[1]' (FDC) to 'g_row[1].g_col[1].u_bist/refl_f_reg[0]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/wd_cnt_reg[2][4]' (FDCE) to 'g_row[1].g_col[1].u_router/wd_cnt_reg[2][6]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/wd_cnt_reg[2][6]' (FDCE) to 'g_row[1].g_col[1].u_router/wd_cnt_reg[2][5]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\wd_cnt_reg[2][5] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/wd_cnt_reg[1][6]' (FDCE) to 'g_row[1].g_col[1].u_router/wd_cnt_reg[1][5]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/wd_cnt_reg[1][5]' (FDCE) to 'g_row[1].g_col[1].u_router/wd_cnt_reg[1][4]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\wd_cnt_reg[1][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\rr_ptr_reg[0][1] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/rr_ptr_reg[3][1]' (FDCE) to 'g_row[1].g_col[1].u_router/rr_ptr_reg[3][2]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\rr_ptr_reg[3][2] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dx_reg[1][0]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dx_reg[2][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_dx_reg[2][0] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dy_reg[1][0]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dy_reg[2][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_dy_reg[2][0] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_src_reg[1][1]' (FDCE) to 'g_row[1].g_col[1].u_router/r_src_reg[2][1]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_src_reg[2][1] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_src_reg[1][0]' (FDCE) to 'g_row[1].g_col[1].u_router/r_src_reg[2][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_src_reg[2][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\rr_ptr_reg[4][1] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[2][2]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[2][1]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[2][0]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[2][1]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[2][1]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[1][0]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[3][1]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[3][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_dst_reg[3][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_dst_reg[4][2] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[1][2]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[1][0]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[1].u_router/r_dst_reg[1][0]' (FDCE) to 'g_row[1].g_col[1].u_router/r_dst_reg[1][1]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[1].u_router /\r_dst_reg[1][1] )
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O3[0] driven by constant 1
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O4[0] driven by constant 1
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O5[1] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[87] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[86] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[85] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[84] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[83] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[82] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[81] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[80] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[79] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[78] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[77] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[76] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[75] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[74] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[73] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[72] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[71] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[70] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[69] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[68] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[67] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[66] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[65] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[64] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[63] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[62] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[61] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[60] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[59] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[58] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[57] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[56] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[55] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[54] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[53] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[52] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[51] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[50] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[49] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[48] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[47] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[46] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[45] driven by constant 0
+WARNING: [Synth 8-3917] design noc_mesh__GB1 has port O6[44] driven by constant 0
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[4]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[5]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[5]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[6]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[6]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[7]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[12]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[12]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[13]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[13]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[14]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_router/err_q_reg[14]' (FDCE) to 'g_row[1].g_col[0].u_router/err_q_reg[15]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\err_q_reg[15] )
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[43]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[42]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[42]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[41]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[41]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[40]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[40]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[39]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[39]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[38]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[38]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[37]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[37]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[36]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[36]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[35]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[35]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[34]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[34]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[33]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[33]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[32]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[32]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[31]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[31]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[30]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[30]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[29]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[29]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[28]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[28]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[27]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[27]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[26]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[26]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[25]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[25]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[24]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[24]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[23]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[23]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[22]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[22]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[21]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[21]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[20]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[20]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[19]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[19]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[18]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[18]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[17]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[17]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[16]'
+INFO: [Synth 8-3886] merging instance 'g_row[1].g_col[0].u_bist/refl_f_reg[16]' (FDC) to 'g_row[1].g_col[0].u_bist/refl_f_reg[15]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_src_reg[3][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_src_reg[1][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\wd_cnt_reg[1][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\wd_cnt_reg[3][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\rr_ptr_reg[2][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\rr_ptr_reg[0][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_dst_reg[2][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_dst_reg[4][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_dst_reg[1][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\r_dst_reg[0][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\rr_ptr_reg[4][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\wd_cnt_reg[3][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[1].g_col[0].u_router /\dead_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\err_q_reg[15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\wd_cnt_reg[0][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\wd_cnt_reg[3][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\rr_ptr_reg[1][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\rr_ptr_reg[2][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_src_reg[0][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dx_reg[0][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_src_reg[0][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dy_reg[0][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dst_reg[1][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dst_reg[4][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dst_reg[2][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\r_dst_reg[0][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[0].u_router /\rr_ptr_reg[4][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\err_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\wd_cnt_reg[0][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\wd_cnt_reg[2][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\rr_ptr_reg[1][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_src_reg[2][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_dy_reg[2][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_src_reg[0][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_dx_reg[2][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\rr_ptr_reg[3][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_dst_reg[4][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_dst_reg[2][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_row[0].g_col[1].u_router /\r_dst_reg[3][1] )
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3971] The signal "\g_tile[0].g_ni.u_ni/mem_reg " was recognized as a true dual port RAM template.
+INFO: [Synth 8-3971] The signal "\g_tile[1].g_ni.u_ni/mem_reg " was recognized as a true dual port RAM template.
+INFO: [Synth 8-3971] The signal "\g_tile[2].g_ni.u_ni/mem_reg " was recognized as a true dual port RAM template.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /\decoded_imm_j_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /do_waitirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /\decoded_imm_j_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /do_waitirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /\decoded_imm_j_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /do_waitirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /instr_retirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /instr_rdcycle_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /\cpu_state_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /instr_retirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /instr_rdcycle_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /\cpu_state_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /instr_retirq_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /instr_rdcycle_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /\cpu_state_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /\mem_addr_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /\mem_addr_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /\mem_addr_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_ni.u_ni /\tx_head_reg[42] )
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_ni.u_ni /\tx_head_reg[42] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_ni.u_ni /\tx_head_reg[42] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\tx_head_reg[42] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\rej_tile_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\lease_tile_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\m_axil_araddr_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\m_axil_awaddr_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_core.u_core /latched_compr_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_core.u_core /latched_compr_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_core.u_core /latched_compr_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[0].g_ni.u_ni /\out_flit_reg[38] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1].g_ni.u_ni /\out_flit_reg[38] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_ni.u_ni /\out_flit_reg[38] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\out_flit_reg[38] )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:02:03 ; elapsed = 00:02:12 . Memory (MB): peak = 1949.953 ; gain = 1145.770
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Preliminary Mapping Report (see note below)
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|Module Name           | RTL Object | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | 
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|\g_tile[0].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
+|\g_tile[1].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
+|\g_tile[2].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+
+Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
+
+Distributed RAM: Preliminary Mapping Report (see note below)
++--------------------------+-------------+-----------+----------------------+--------------+
+|Module Name               | RTL Object  | Inference | Size (Depth x Width) | Primitives   | 
++--------------------------+-------------+-----------+----------------------+--------------+
+|\g_tile[0].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
+|\g_tile[1].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
+|\g_tile[2].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
++--------------------------+-------------+-----------+----------------------+--------------+
+
+Note: The table above is a preliminary report that shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:02:09 ; elapsed = 00:02:19 . Memory (MB): peak = 1978.324 ; gain = 1174.141
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+info: optimization accepted worst group hill climbing move (10375.0/oG.CP 1574.0ps)
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:05:19 ; elapsed = 00:05:50 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Final Mapping Report
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|Module Name           | RTL Object | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | 
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|\g_tile[0].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
+|\g_tile[1].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
+|\g_tile[2].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
++----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+
+
+Distributed RAM: Final Mapping Report
++--------------------------+-------------+-----------+----------------------+--------------+
+|Module Name               | RTL Object  | Inference | Size (Depth x Width) | Primitives   | 
++--------------------------+-------------+-----------+----------------------+--------------+
+|\g_tile[0].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
+|\g_tile[1].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
+|\g_tile[2].g_core.u_core  | cpuregs_reg | Implied   | 32 x 32              | RAM32M x 12  | 
++--------------------------+-------------+-----------+----------------------+--------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:05:25 ; elapsed = 00:06:15 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:05:34 ; elapsed = 00:06:25 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:05:34 ; elapsed = 00:06:25 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+----------------+----------+
+|      |BlackBox name   |Instances |
++------+----------------+----------+
+|1     |cook_gw_dma_0   |         1|
+|2     |cook_gw_mig_0   |         1|
+|3     |cook_gw_rst50_0 |         1|
+|4     |cook_gw_rstui_0 |         1|
+|5     |cook_gw_sc_0    |         1|
++------+----------------+----------+
+
+Report Cell Usage: 
++------+--------------+------+
+|      |Cell          |Count |
++------+--------------+------+
+|1     |cook_gw_dma   |     1|
+|2     |cook_gw_mig   |     1|
+|3     |cook_gw_rst50 |     1|
+|4     |cook_gw_rstui |     1|
+|5     |cook_gw_sc    |     1|
+|6     |BUFG          |     2|
+|7     |CARRY4        |   260|
+|8     |LUT1          |    50|
+|9     |LUT2          |  1180|
+|10    |LUT3          |  1138|
+|11    |LUT4          |  1681|
+|12    |LUT5          |  1551|
+|13    |LUT6          |  4621|
+|14    |MMCME2_BASE   |     1|
+|15    |MUXF7         |    16|
+|16    |RAM32M        |    30|
+|17    |RAM32X1D      |    12|
+|18    |RAMB36E1      |     3|
+|19    |FDCE          |  2333|
+|20    |FDPE          |    25|
+|21    |FDRE          |  4150|
+|22    |FDSE          |    56|
+|23    |IBUF          |    19|
+|24    |OBUF          |    35|
++------+--------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 171 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:05:14 ; elapsed = 00:06:20 . Memory (MB): peak = 3733.473 ; gain = 2831.883
+Synthesis Optimization Complete : Time (s): cpu = 00:05:35 ; elapsed = 00:06:28 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.154 . Memory (MB): peak = 3733.473 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 322 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 3733.473 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 43 instances were transformed.
+  MMCME2_BASE => MMCME2_ADV: 1 instance 
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 30 instances
+  RAM32X1D => RAM32X1D (RAMD32(x2)): 12 instances
+
+Synth Design complete | Checksum: 23f4baf4
+INFO: [Common 17-83] Releasing license: Synthesis
+347 Infos, 382 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:05:42 ; elapsed = 00:06:38 . Memory (MB): peak = 3733.473 ; gain = 3127.090
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.023 . Memory (MB): peak = 3733.473 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/nexys4ddr_top.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file nexys4ddr_top_utilization_synth.rpt -pb nexys4ddr_top_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sat Nov  7 00:33:22 2026...

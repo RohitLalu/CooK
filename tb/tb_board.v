@@ -11,7 +11,7 @@
 module tb_board;
 
     // FAULT_SW = 0: healthy. Otherwise the value on the slide switches, e.g.
-    // 16'h8005 = SW[15] on, silent, link 5 (tile 1 south).
+    // 16'h1005 = SW[12] on, silent, link 5 (tile 1 south).
     parameter [15:0] FAULT_SW = 16'h0000;
 
     reg  CLK100MHZ = 0;
@@ -106,7 +106,7 @@ module tb_board;
         while (LED[7:4] != 4'hF && cyc < 300000) begin @(posedge CLK100MHZ); cyc = cyc + 1; end
         check(LED[7:4] == 4'hF, "every tile still passes: traffic routed around the link");
         check(LED[11:8] == 4'h0, "no tile reports failure");
-        if (FAULT_SW == 16'h8005)
+        if (FAULT_SW == 16'h1005)
             check(dut.u_panel.display == 32'hE010_0358, "display E0100358 (docs/hardware_test.md stage B)");
         end
 

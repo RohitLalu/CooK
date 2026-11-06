@@ -1,7 +1,177 @@
 # compile verilog/system verilog design source files
-verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" \
+sv xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_4/sim/bd_63bc_arsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_5/sim/bd_63bc_rsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_6/sim/bd_63bc_awsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_7/sim/bd_63bc_wsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_8/sim/bd_63bc_bsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_9/sim/bd_63bc_s00mmu_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_10/sim/bd_63bc_s00tr_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_11/sim/bd_63bc_s00sic_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_12/sim/bd_63bc_s00a2s_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_13/sim/bd_63bc_sarn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_14/sim/bd_63bc_srn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_15/sim/bd_63bc_s01mmu_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_16/sim/bd_63bc_s01tr_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_17/sim/bd_63bc_s01sic_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_18/sim/bd_63bc_s01a2s_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_19/sim/bd_63bc_sawn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_20/sim/bd_63bc_swn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_21/sim/bd_63bc_sbn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_22/sim/bd_63bc_m00s2a_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_23/sim/bd_63bc_m00arn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_24/sim/bd_63bc_m00rn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_25/sim/bd_63bc_m00awn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_26/sim/bd_63bc_m00wn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_27/sim/bd_63bc_m00bn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/ip/ip_28/sim/bd_63bc_m00e_0.sv" \
+
+verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/bd_0/sim/bd_63bc.v" \
+
+sv xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_sc_0/sim/cook_gw_sc_0.sv" \
+
+verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_addr_decode.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_read.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_reg.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_reg_bank.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_top.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_ctrl_write.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_ar_channel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_aw_channel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_b_channel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_cmd_arbiter.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_cmd_fsm.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_cmd_translator.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_fifo.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_incr_cmd.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_r_channel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_simple_fifo.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_wrap_cmd.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_wr_cmd_fsm.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_axi_mc_w_channel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_axic_register_slice.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_axi_register_slice.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_axi_upsizer.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_a_upsizer.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_carry_and.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_carry_latch_and.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_carry_latch_or.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_carry_or.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_command_fifo.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_comparator.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_comparator_sel.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_comparator_sel_static.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_r_upsizer.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/axi/mig_7series_v4_2_ddr_w_upsizer.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/clocking/mig_7series_v4_2_clk_ibuf.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/clocking/mig_7series_v4_2_infrastructure.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/clocking/mig_7series_v4_2_iodelay_ctrl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/clocking/mig_7series_v4_2_tempmon.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_arb_mux.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_arb_row_col.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_arb_select.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_cntrl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_common.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_compare.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_mach.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_queue.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_bank_state.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_col_mach.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_mc.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_rank_cntrl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_rank_common.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_rank_mach.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/controller/mig_7series_v4_2_round_robin_arb.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ecc/mig_7series_v4_2_ecc_buf.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ecc/mig_7series_v4_2_ecc_dec_fix.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ecc/mig_7series_v4_2_ecc_gen.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ecc/mig_7series_v4_2_ecc_merge_enc.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ecc/mig_7series_v4_2_fi_xor.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ip_top/mig_7series_v4_2_memc_ui_top_axi.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ip_top/mig_7series_v4_2_mem_intfc.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_byte_group_io.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_byte_lane.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_calib_top.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_if_post_fifo.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_mc_phy.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_mc_phy_wrapper.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_of_pre_fifo.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_4lanes.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ck_addr_cmd_delay.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_dqs_found_cal.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_dqs_found_cal_hr.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_init.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_cntlr.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_data.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_edge.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_lim.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_mux.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_po_cntlr.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_ocd_samp.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_oclkdelay_cal.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_prbs_rdlvl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_rdlvl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_tempmon.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_top.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_wrcal.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_wrlvl.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_phy_wrlvl_off_delay.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_ddr_prbs_gen.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_cc.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_edge_store.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_meta.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_pd.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_tap_base.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/phy/mig_7series_v4_2_poc_top.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ui/mig_7series_v4_2_ui_cmd.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ui/mig_7series_v4_2_ui_rd_data.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ui/mig_7series_v4_2_ui_top.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/ui/mig_7series_v4_2_ui_wr_data.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/cook_gw_mig_0_mig_sim.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0/user_design/rtl/cook_gw_mig_0.v" \
+
+sv xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_2/sim/bd_eb7c_arsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_3/sim/bd_eb7c_rsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_4/sim/bd_eb7c_awsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_5/sim/bd_eb7c_wsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_6/sim/bd_eb7c_bsw_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_7/sim/bd_eb7c_s00mmu_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_8/sim/bd_eb7c_s00tr_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_9/sim/bd_eb7c_s00sic_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_10/sim/bd_eb7c_s00a2s_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_11/sim/bd_eb7c_sarn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_12/sim/bd_eb7c_srn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_13/sim/bd_eb7c_s01mmu_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_14/sim/bd_eb7c_s01tr_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_15/sim/bd_eb7c_s01sic_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_16/sim/bd_eb7c_s01a2s_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_17/sim/bd_eb7c_sawn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_18/sim/bd_eb7c_swn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_19/sim/bd_eb7c_sbn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_20/sim/bd_eb7c_m00s2a_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_21/sim/bd_eb7c_m00arn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_22/sim/bd_eb7c_m00rn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_23/sim/bd_eb7c_m00awn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_24/sim/bd_eb7c_m00wn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_25/sim/bd_eb7c_m00bn_0.sv" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/ip/ip_26/sim/bd_eb7c_m00e_0.sv" \
+
+verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/bd_0/sim/bd_eb7c.v" \
+
+sv xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_sc_0/sim/cook_gw_sim_sc_0.sv" \
+
+verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignTools/2025.2/Vivado/data/rsb/busdef" --include "../../../../../rtl/include" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw/ipshared/ec67/hdl" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/f0b6/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/00fe/hdl/verilog" --include "../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/ipshared/ec67/hdl" --include "E:/AMDDesignTools/2025.2/Vivado/data/xilinx_vip/include" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/ip/cook_gw_sim_bram_0/sim/cook_gw_sim_bram_0.v" \
 "../../../../../rtl/router/noc_router.v" \
 "../../../../../rtl/router/link_buffer.v" \
+"../../../../../rtl/router/bist_node.v" \
 "../../../../../rtl/router/end_buff.v" \
 "../../../../../rtl/network_interface/address_decoder.v" \
 "../../../../../rtl/network_interface/ni.v" \
@@ -13,14 +183,21 @@ verilog xil_defaultlib  -i "../../../../../rtl/include" --include "E:/AMDDesignT
 "../../../../../rtl/board/seven_seg.v" \
 "../../../../../rtl/board/nexys4ddr/nexys4ddr_top.v" \
 "../../../../../rtl/dma_ddr/gw_ni.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw/sim/cook_gw.v" \
+"../../../../cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v" \
+"../../../../cook_vivado.ip_user_files/bd/cook_gw_sim/sim/cook_gw_sim.v" \
+"../../../../cook_vivado.gen/sources_1/bd/cook_gw_sim/hdl/cook_gw_sim_wrapper.v" \
 "../../../../../rtl/integrated/mesh/tb_mesh_top.v" \
 "../../../../../tb/tb_link_buffer.v" \
+"../../../../../tb/tb_bist.v" \
+"../../../../../tb/tb_m3.v" \
 "../../../../../tb/tb_ni.v" \
 "../../../../../tb/tb_status_panel.v" \
 "../../../../../tb/tb_board.v" \
 "../../../../../tb/tb_address_decoder.v" \
 "../../../../../tb/tb_gw_ni.v" \
 "../../../../../tb/axi_dma_model.v" \
+"../../../../../tb/tb_gw_dma_ip.v" \
 
 # compile glbl module
 verilog xil_defaultlib "glbl.v"
