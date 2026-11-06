@@ -226,12 +226,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../rtl/dma_ddr/mig_nexys4ddr.prj">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="ScopedToCell" Val="cook_gw_mig_0"/>
-        </FileInfo>
-      </File>
       <File Path="$PGENDIR/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
