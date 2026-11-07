@@ -22,14 +22,27 @@
 //   LED17_R     link BIST found a faulty link (code E has the details)
 //
 // FAULT INJECTION SWITCHES (for the availability demo, metric M3)
-//   SW[12] on = break one link, SW[11] = 0 silent / 1 bit-flip,
+//   SW[12] on = inject a fault, SW[11] = 0 silent / 1 bit-flip,
 //   (moved from SW[15]/SW[14]: SW13-SW15 are faulty on our board, unused),
-//   SW[3:0] = link number: tile*4 + direction (0 N, 1 S, 2 E, 3 W), i.e. the
-//   link LEAVING that tile. On the 2x2 mesh the real links are 1, 2 (tile 0
-//   S, E), 5, 7 (tile 1 S, W), 8, 10 (tile 2 N, E), 12, 15 (tile 3 N, W).
+//   SW[3:0] = fault code (fault_pattern below).
+//   Single link: tile*4 + direction (0 N, 1 S, 2 E, 3 W), i.e. the one
+//   direction LEAVING that tile. On the 2x2 mesh the real links are 1, 2
+//   (tile 0 S, E), 5, 7 (tile 1 S, W), 8, 10 (tile 2 N, E), 12, 15 (tile 3
+//   N, W). A single break: BIST finds the link and the routers go around it,
+//   so every core still passes.
+//   Multi link (the numbers that are not a real link; both directions of
+//   each physical link are broken):
+//     3  both horizontal links, 0-1 and 2-3     ({0,2} and {1,3} split)
+//     4  both vertical links, 0-2 and 1-3       ({0,1} and {2,3} split)
+//     6  three adjacent: 0-1, 1-3, 2-3          (only 0-2 left)
+//     9  three adjacent: 0-2, 0-1, 1-3          (only 2-3 left)
+//    11  all four links                          (every tile isolated)
+//     0, 13, 14 unused (no fault).
+//   A multi break cuts the mesh apart: BIST still finds every dead link
+//   (code E), but packets to a cut-off tile are dropped as E_ROUTE, so the
+//   cores that need them time out and fail.
 //   Set the switches, then press CPU_RESET: BIST runs after every total
-//   reset, finds the link, and the routers go around it, so every core still
-//   passes. Changing the switches without a reset injects a run-time fault
+//   reset. Changing the switches without a reset injects a run-time fault
 //   that only the watchdogs and NI timeouts will see, and only if traffic
 //   still flows (alltoall.S finishes within a millisecond of reset).
 //
@@ -143,8 +156,26 @@ module nexys4ddr_top #(
     always @(posedge clk or negedge rst_n)
         if (!rst_n) begin sw_s1 <= 16'b0; sw_s2 <= 16'b0; end
         else        begin sw_s1 <= SW;    sw_s2 <= sw_s1; end
-    // SW[3:0] selects the link; links that do not exist are simply never used
-    wire [4*NT-1:0] fault_mask = sw_s2[12] ? ({{(4*NT-1){1'b0}}, 1'b1} << sw_s2[3:0]) : {4*NT{1'b0}};
+       
+    // SW[3:0]: 1,2,5,7,8,10,12,15 = one directional link, as before.
+    // Numbers that are not a real link on the 2x2 mesh select multi-link
+    // breaks (both directions of each link): 3 both horizontal, 4 both
+    // vertical, 6 all but 0-2, 9 all but 2-3, 11 all four. 0, 13, 14 unused.
+    function [15:0] fault_pattern;
+        input [3:0] sel;
+        begin
+            case (sel)
+                4'd3:    fault_pattern = 16'h8484;  // 0-1 + 2-3
+                4'd4:    fault_pattern = 16'h1122;  // 0-2 + 1-3
+                4'd6:    fault_pattern = 16'h94A4;  // 0-1, 1-3, 2-3 (0-2 kept)
+                4'd9:    fault_pattern = 16'h11A6;  // 0-2, 0-1, 1-3 (2-3 kept)
+                4'd11:   fault_pattern = 16'h95A6;  // all links
+                default: fault_pattern = 16'h0001 << sel;
+            endcase
+        end
+    endfunction
+    wire [4*NT-1:0] fault_mask = sw_s2[12] ? fault_pattern(sw_s2[3:0]) : {4*NT{1'b0}};
+
     wire            fault_flip = sw_s2[11];
 
     // ---------------------------------------------------------------

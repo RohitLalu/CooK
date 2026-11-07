@@ -54,7 +54,9 @@ set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { LED16_G 
 set_property -dict { PACKAGE_PIN G14 IOSTANDARD LVCMOS33 } [get_ports { LED17_B }]
 set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { LED17_R }]
 
-## Slide switches: fault injection (SW[12] enable, SW[11] mode, SW[3:0] link)
+## Slide switches: fault injection (SW[12] enable, SW[11] mode, SW[3:0] fault
+## code: single links 1,2,5,7,8,10,12,15; multi-link 3,4,6,9,11, see
+## nexys4ddr_top.v)
 ## SW[15:13] are faulty on our board and are not used by the design.
 set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { SW[0] }]
 set_property -dict { PACKAGE_PIN L16 IOSTANDARD LVCMOS33 } [get_ports { SW[1] }]

@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-| Date             : Sat Nov  7 00:44:42 2026
+| Date             : Sat Nov  7 23:48:15 2026
 | Host             : LAPTOP-0O737P11 running 64-bit major release  (build 9200)
 | Command          : report_power -file nexys4ddr_top_power_routed.rpt -pb nexys4ddr_top_power_summary_routed.pb -rpx nexys4ddr_top_power_routed.rpx
 | Design           : nexys4ddr_top
@@ -30,10 +30,10 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 1.164        |
+| Total On-Chip Power (W)  | 1.162        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 1.056        |
+| Dynamic (W)              | 1.054        |
 | Device Static (W)        | 0.108        |
 | Effective TJA (C/W)      | 4.6          |
 | Max Ambient (C)          | 79.7         |
@@ -52,16 +52,16 @@ Table of Contents
 +--------------------------+-----------+----------+-----------+-----------------+
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
-| Clocks                   |     0.044 |       24 |       --- |             --- |
-| Slice Logic              |     0.014 |    38931 |       --- |             --- |
-|   LUT as Logic           |     0.012 |    15489 |     63400 |           24.43 |
+| Clocks                   |     0.042 |       24 |       --- |             --- |
+| Slice Logic              |     0.014 |    39415 |       --- |             --- |
+|   LUT as Logic           |     0.012 |    16067 |     63400 |           25.34 |
 |   LUT as Distributed RAM |    <0.001 |     1002 |     19000 |            5.27 |
 |   CARRY4                 |    <0.001 |      462 |     15850 |            2.91 |
-|   Register               |    <0.001 |    16204 |    126800 |           12.78 |
+|   Register               |    <0.001 |    16207 |    126800 |           12.78 |
 |   LUT as Shift Register  |    <0.001 |      310 |     19000 |            1.63 |
-|   F7/F8 Muxes            |    <0.001 |       41 |     63400 |            0.06 |
+|   F7/F8 Muxes            |    <0.001 |       37 |     63400 |            0.06 |
 |   Others                 |    <0.001 |      783 |       --- |             --- |
-| Signals                  |     0.017 |    29942 |       --- |             --- |
+| Signals                  |     0.017 |    30427 |       --- |             --- |
 | Block RAM                |    <0.001 |        5 |       135 |            3.70 |
 | MMCM                     |     0.219 |        2 |         6 |           33.33 |
 | PLL                      |     0.115 |        1 |         6 |           16.67 |
@@ -69,7 +69,7 @@ Table of Contents
 | PHASER                   |     0.110 |       14 |       --- |             --- |
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | Static Power             |     0.108 |          |           |                 |
-| Total                    |     1.164 |          |           |                 |
+| Total                    |     1.162 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -79,7 +79,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     0.131 |       0.113 |      0.018 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     0.129 |       0.111 |      0.018 |       NA    | Unspecified | NA         |
 | Vccaux    |       1.800 |     0.301 |       0.283 |      0.018 |       NA    | Unspecified | NA         |
 | Vcco33    |       3.300 |     0.005 |       0.001 |      0.004 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -166,25 +166,24 @@ Table of Contents
 3.1 By Hierarchy
 ----------------
 
-+----------------------------------------------+-----------+
-| Name                                         | Power (W) |
-+----------------------------------------------+-----------+
-| nexys4ddr_top                                |     1.056 |
-|   g_gw.u_bd                                  |     0.919 |
-|     cook_gw_i                                |     0.919 |
-|       dma                                    |     0.003 |
-|       mig                                    |     0.902 |
-|       sc                                     |     0.013 |
-|   u_sys                                      |     0.024 |
-|     g_tile[0].g_core.u_core                  |     0.003 |
-|     g_tile[0].g_ni.u_ni                      |     0.001 |
-|     g_tile[1].g_core.u_core                  |     0.003 |
-|     g_tile[1].g_ni.u_ni                      |     0.001 |
-|     g_tile[2].g_core.u_core                  |     0.003 |
-|     g_tile[2].g_ni.u_ni                      |     0.002 |
-|     g_tile[3].g_gw.u_gw                      |     0.002 |
-|     u_mesh                                   |     0.010 |
-|       g_row[1].g_col[1].g_dir[0].g_link.u_lb |     0.001 |
-+----------------------------------------------+-----------+
++-----------------------------+-----------+
+| Name                        | Power (W) |
++-----------------------------+-----------+
+| nexys4ddr_top               |     1.054 |
+|   g_gw.u_bd                 |     0.918 |
+|     cook_gw_i               |     0.918 |
+|       dma                   |     0.003 |
+|       mig                   |     0.902 |
+|       sc                    |     0.013 |
+|   u_sys                     |     0.024 |
+|     g_tile[0].g_core.u_core |     0.002 |
+|     g_tile[0].g_ni.u_ni     |     0.001 |
+|     g_tile[1].g_core.u_core |     0.002 |
+|     g_tile[1].g_ni.u_ni     |     0.001 |
+|     g_tile[2].g_core.u_core |     0.002 |
+|     g_tile[2].g_ni.u_ni     |     0.001 |
+|     g_tile[3].g_gw.u_gw     |     0.003 |
+|     u_mesh                  |     0.010 |
++-----------------------------+-----------+
 
 

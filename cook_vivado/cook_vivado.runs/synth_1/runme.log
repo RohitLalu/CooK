@@ -8,7 +8,7 @@
   **** SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
   **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
   **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
-  **** Start of session at: Sat Nov  7 00:26:27 2026
+  **** Start of session at: Sat Nov  7 23:41:01 2026
     ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
     ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 
@@ -26,21 +26,21 @@ INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100
 INFO: [Device 21-403] Loading part xc7a100tcsg324-1
 INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
 INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
-INFO: [Synth 8-7075] Helper process launched with PID 28212
+INFO: [Synth 8-7075] Helper process launched with PID 6132
 ---------------------------------------------------------------------------------
-Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 1344.988 ; gain = 540.805
+Starting RTL Elaboration : Time (s): cpu = 00:00:03 ; elapsed = 00:00:04 . Memory (MB): peak = 1343.285 ; gain = 540.508
 ---------------------------------------------------------------------------------
-INFO: [Synth 8-6157] synthesizing module 'nexys4ddr_top' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:52]
+INFO: [Synth 8-6157] synthesizing module 'nexys4ddr_top' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:65]
 INFO: [Synth 8-6157] synthesizing module 'cook_gw_wrapper' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v:13]
 INFO: [Synth 8-6157] synthesizing module 'cook_gw' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:13]
-INFO: [Synth 8-6157] synthesizing module 'cook_gw_dma_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'cook_gw_dma_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_dma_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_dma_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_dma_0_stub.v:6]
 WARNING: [Synth 8-7071] port 'mm2s_prmry_reset_out_n' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
 WARNING: [Synth 8-7071] port 's2mm_prmry_reset_out_n' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
 WARNING: [Synth 8-7071] port 'axi_dma_tstvec' of module 'cook_gw_dma_0' is unconnected for instance 'dma' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
 WARNING: [Synth 8-7023] instance 'dma' of module 'cook_gw_dma_0' has 64 connections declared, but only 61 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:221]
-INFO: [Synth 8-6157] synthesizing module 'cook_gw_mig_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'cook_gw_mig_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_mig_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_mig_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_mig_0_stub.v:6]
 WARNING: [Synth 8-7071] port 'ui_clk_sync_rst' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
 WARNING: [Synth 8-7071] port 'app_sr_active' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
 WARNING: [Synth 8-7071] port 'app_ref_ack' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
@@ -48,27 +48,27 @@ WARNING: [Synth 8-7071] port 'app_zq_ack' of module 'cook_gw_mig_0' is unconnect
 WARNING: [Synth 8-7071] port 's_axi_bid' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
 WARNING: [Synth 8-7071] port 's_axi_rid' of module 'cook_gw_mig_0' is unconnected for instance 'mig' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
 WARNING: [Synth 8-7023] instance 'mig' of module 'cook_gw_mig_0' has 61 connections declared, but only 55 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:283]
-INFO: [Synth 8-6157] synthesizing module 'cook_gw_rst50_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rst50_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_rst50_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rst50_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_rst50_0_stub.v:6]
 WARNING: [Synth 8-7071] port 'mb_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
 WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
 WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
 WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'cook_gw_rst50_0' is unconnected for instance 'rst50' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
 WARNING: [Synth 8-7023] instance 'rst50' of module 'cook_gw_rst50_0' has 10 connections declared, but only 6 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:339]
-INFO: [Synth 8-6157] synthesizing module 'cook_gw_rstui_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rstui_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_rstui_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_rstui_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_rstui_0_stub.v:6]
 WARNING: [Synth 8-7071] port 'mb_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
 WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
 WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
 WARNING: [Synth 8-7071] port 'interconnect_aresetn' of module 'cook_gw_rstui_0' is unconnected for instance 'rstui' [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
 WARNING: [Synth 8-7023] instance 'rstui' of module 'cook_gw_rstui_0' has 10 connections declared, but only 6 given [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:346]
-INFO: [Synth 8-6157] synthesizing module 'cook_gw_sc_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
-INFO: [Synth 8-6155] done synthesizing module 'cook_gw_sc_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-28852-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'cook_gw_sc_0' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'cook_gw_sc_0' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/.Xil/Vivado-11896-LAPTOP-0O737P11/realtime/cook_gw_sc_0_stub.v:6]
 INFO: [Synth 8-6155] done synthesizing module 'cook_gw' (0#1) [c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/synth/cook_gw.v:13]
 INFO: [Synth 8-6155] done synthesizing module 'cook_gw_wrapper' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v:13]
-WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:284]
-WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:285]
-WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:286]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:315]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:316]
+WARNING: [Synth 8-693] zero replication count - replication ignored [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:317]
 INFO: [Synth 8-6157] synthesizing module 'MMCME2_BASE' [E:/AMDDesignTools/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95964]
 	Parameter CLKFBOUT_MULT_F bound to: 1.000000e+01 - type: double 
 	Parameter CLKIN1_PERIOD bound to: 1.000000e+01 - type: double 
@@ -308,7 +308,7 @@ INFO: [Synth 8-6155] done synthesizing module 'status_panel' (0#1) [C:/Users/pik
 INFO: [Synth 8-6157] synthesizing module 'seven_seg' [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v:9]
 	Parameter REFRESH_CYCLES bound to: 50000 - type: integer 
 INFO: [Synth 8-6155] done synthesizing module 'seven_seg' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v:9]
-INFO: [Synth 8-6155] done synthesizing module 'nexys4ddr_top' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:52]
+INFO: [Synth 8-6155] done synthesizing module 'nexys4ddr_top' (0#1) [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v:65]
 WARNING: [Synth 8-6014] Unused sequential element rq_push_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:382]
 WARNING: [Synth 8-6014] Unused sequential element rq_pop_reg was removed.  [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v:383]
 WARNING: [Synth 8-7137] Register rq_dst_reg in module ni has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code 
@@ -581,18 +581,18 @@ WARNING: [Synth 8-7129] Port irq[15] in module picorv32__parameterized1 is eithe
 WARNING: [Synth 8-7129] Port irq[14] in module picorv32__parameterized1 is either unconnected or has no load
 INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
 ---------------------------------------------------------------------------------
-Finished RTL Elaboration : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+Finished RTL Elaboration : Time (s): cpu = 00:00:12 ; elapsed = 00:00:13 . Memory (MB): peak = 1752.258 ; gain = 949.480
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:12 ; elapsed = 00:00:14 . Memory (MB): peak = 1752.258 ; gain = 949.480
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 1754.180 ; gain = 949.996
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:14 . Memory (MB): peak = 1752.258 ; gain = 949.480
 ---------------------------------------------------------------------------------
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.288 . Memory (MB): peak = 1754.180 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.279 . Memory (MB): peak = 1752.258 ; gain = 0.000
 INFO: [Netlist 29-17] Analyzing 1 Unisim elements for replacement
 INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
@@ -618,36 +618,36 @@ Finished Parsing XDC File [C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/Coo
 INFO: [Timing 38-2] Deriving generated clocks
 Completed Processing XDC Constraints
 
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.009 . Memory (MB): peak = 1851.586 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.009 . Memory (MB): peak = 1856.617 ; gain = 0.000
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 1 instances were transformed.
   MMCME2_BASE => MMCME2_ADV: 1 instance 
 
 ---------------------------------------------------------------------------------
-Finished Constraint Validation : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished Constraint Validation : Time (s): cpu = 00:00:24 ; elapsed = 00:00:26 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Loading Part and Timing Information
 ---------------------------------------------------------------------------------
 Loading part: xc7a100tcsg324-1
 ---------------------------------------------------------------------------------
-Finished Loading Part and Timing Information : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:24 ; elapsed = 00:00:26 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Applying 'set_property' XDC Constraints
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:27 ; elapsed = 00:00:31 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:24 ; elapsed = 00:00:26 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Preparing Guide Design
 ---------------------------------------------------------------------------------
 WARNING: [Synth 8-6702] IncrSynth : Design change found in an area of the design that prevents previous synthesis information being used, Reverting to default synthesis
 ---------------------------------------------------------------------------------
-Finished Doing Graph Differ : Time (s): cpu = 00:00:30 ; elapsed = 00:00:34 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished Doing Graph Differ : Time (s): cpu = 00:00:27 ; elapsed = 00:00:29 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Preparing Guide Design : Time (s): cpu = 00:00:30 ; elapsed = 00:00:34 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished Preparing Guide Design : Time (s): cpu = 00:00:27 ; elapsed = 00:00:29 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-802] inferred FSM for state register 'tx_state_reg' in module 'ni'
 INFO: [Synth 8-802] inferred FSM for state register 'mem_state_reg' in module 'picorv32'
@@ -755,7 +755,7 @@ INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 
 ---------------------------------------------------------------------------------------------------
 INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'one-hot' in module 'bist_node__parameterized2'
 ---------------------------------------------------------------------------------
-Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:40 ; elapsed = 00:00:45 . Memory (MB): peak = 1851.586 ; gain = 1047.402
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:35 ; elapsed = 00:00:39 . Memory (MB): peak = 1856.617 ; gain = 1053.840
 ---------------------------------------------------------------------------------
 INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[3].g_edge.u_eb'
 INFO: [Synth 8-223] decloning instance 'u_sys/u_mesh/g_row[0].g_col[0].g_dir[0].g_edge.u_eb' (end_buff) to 'u_sys/u_mesh/g_row[0].g_col[1].g_dir[0].g_edge.u_eb'
@@ -836,6 +836,7 @@ Detailed RTL Component Info :
 	   2 Input   20 Bit        Muxes := 8     
 	   2 Input   16 Bit        Muxes := 8     
 	   4 Input   16 Bit        Muxes := 1     
+	   6 Input   16 Bit        Muxes := 1     
 	   2 Input   15 Bit        Muxes := 2     
 	   4 Input   12 Bit        Muxes := 5     
 	   2 Input   12 Bit        Muxes := 33    
@@ -1129,7 +1130,7 @@ INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[1
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[2].g_ni.u_ni /\out_flit_reg[38] )
 INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_tile[3].g_gw.u_gw /\out_flit_reg[38] )
 ---------------------------------------------------------------------------------
-Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:02:03 ; elapsed = 00:02:12 . Memory (MB): peak = 1949.953 ; gain = 1145.770
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:01:53 ; elapsed = 00:01:58 . Memory (MB): peak = 1955.777 ; gain = 1153.000
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -1163,14 +1164,15 @@ Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
 Start Applying XDC Timing Constraints
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Applying XDC Timing Constraints : Time (s): cpu = 00:02:09 ; elapsed = 00:02:19 . Memory (MB): peak = 1978.324 ; gain = 1174.141
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:01:59 ; elapsed = 00:02:04 . Memory (MB): peak = 1985.637 ; gain = 1182.859
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Timing Optimization
 ---------------------------------------------------------------------------------
-info: optimization accepted worst group hill climbing move (10375.0/oG.CP 1574.0ps)
+info: optimization accepted worst group hill climbing move (9346.0/oG.CP 610.0ps)
+info: optimization accepted worst group hill climbing move (9310.0/ToG.CPUNL 36.0ps)
 ---------------------------------------------------------------------------------
-Finished Timing Optimization : Time (s): cpu = 00:05:19 ; elapsed = 00:05:50 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Timing Optimization : Time (s): cpu = 00:02:39 ; elapsed = 00:02:46 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start ROM, RAM, DSP, Shift Register and Retiming Reporting
@@ -1180,9 +1182,9 @@ Block RAM: Final Mapping Report
 +----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
 |Module Name           | RTL Object | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | 
 +----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
+|\g_tile[2].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
 |\g_tile[0].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
 |\g_tile[1].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
-|\g_tile[2].g_ni.u_ni  | mem_reg    | 1 K x 32(READ_FIRST)   | W | R | 1 K x 32(READ_FIRST)   | W | R | Port A and B     | 0      | 1      | 
 +----------------------+------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+
 
 
@@ -1201,14 +1203,14 @@ Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
 ---------------------------------------------------------------------------------
 Start Technology Mapping
 ---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
-INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
-INFO: [Synth 8-7052] The timing for the instance i_0/u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 ---------------------------------------------------------------------------------
-Finished Technology Mapping : Time (s): cpu = 00:05:25 ; elapsed = 00:06:15 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Technology Mapping : Time (s): cpu = 00:02:39 ; elapsed = 00:02:59 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start IO Insertion
@@ -1222,47 +1224,47 @@ Finished Flattening Before IO Insertion
 ---------------------------------------------------------------------------------
 Start Final Netlist Cleanup
 ---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[0].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[1].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
-INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
-INFO: [Synth 8-7052] The timing for the instance u_sys/g_tile[2].g_ni.u_ni/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
 ---------------------------------------------------------------------------------
 Finished Final Netlist Cleanup
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished IO Insertion : Time (s): cpu = 00:05:34 ; elapsed = 00:06:25 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished IO Insertion : Time (s): cpu = 00:02:43 ; elapsed = 00:03:03 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Instances
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Instances : Time (s): cpu = 00:05:34 ; elapsed = 00:06:25 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Renaming Generated Instances : Time (s): cpu = 00:02:43 ; elapsed = 00:03:03 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Rebuilding User Hierarchy
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Rebuilding User Hierarchy : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:02:45 ; elapsed = 00:03:05 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Ports
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Ports : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Renaming Generated Ports : Time (s): cpu = 00:02:45 ; elapsed = 00:03:05 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Handling Custom Attributes
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Handling Custom Attributes : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Handling Custom Attributes : Time (s): cpu = 00:02:45 ; elapsed = 00:03:05 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Renaming Generated Nets
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
-Finished Renaming Generated Nets : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Renaming Generated Nets : Time (s): cpu = 00:02:45 ; elapsed = 00:03:05 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 Start Writing Synthesis Report
@@ -1291,17 +1293,17 @@ Report Cell Usage:
 |6     |BUFG          |     2|
 |7     |CARRY4        |   260|
 |8     |LUT1          |    50|
-|9     |LUT2          |  1180|
-|10    |LUT3          |  1138|
-|11    |LUT4          |  1681|
-|12    |LUT5          |  1551|
-|13    |LUT6          |  4621|
+|9     |LUT2          |  1022|
+|10    |LUT3          |  1194|
+|11    |LUT4          |  1622|
+|12    |LUT5          |  1806|
+|13    |LUT6          |  5032|
 |14    |MMCME2_BASE   |     1|
-|15    |MUXF7         |    16|
+|15    |MUXF7         |    12|
 |16    |RAM32M        |    30|
 |17    |RAM32X1D      |    12|
 |18    |RAMB36E1      |     3|
-|19    |FDCE          |  2333|
+|19    |FDCE          |  2336|
 |20    |FDPE          |    25|
 |21    |FDRE          |  4150|
 |22    |FDSE          |    56|
@@ -1309,30 +1311,30 @@ Report Cell Usage:
 |24    |OBUF          |    35|
 +------+--------------+------+
 ---------------------------------------------------------------------------------
-Finished Writing Synthesis Report : Time (s): cpu = 00:05:35 ; elapsed = 00:06:26 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Finished Writing Synthesis Report : Time (s): cpu = 00:02:45 ; elapsed = 00:03:05 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 ---------------------------------------------------------------------------------
 Synthesis finished with 0 errors, 0 critical warnings and 171 warnings.
-Synthesis Optimization Runtime : Time (s): cpu = 00:05:14 ; elapsed = 00:06:20 . Memory (MB): peak = 3733.473 ; gain = 2831.883
-Synthesis Optimization Complete : Time (s): cpu = 00:05:35 ; elapsed = 00:06:28 . Memory (MB): peak = 3733.473 ; gain = 2929.289
+Synthesis Optimization Runtime : Time (s): cpu = 00:02:27 ; elapsed = 00:03:00 . Memory (MB): peak = 2432.934 ; gain = 1525.797
+Synthesis Optimization Complete : Time (s): cpu = 00:02:45 ; elapsed = 00:03:06 . Memory (MB): peak = 2432.934 ; gain = 1630.156
 INFO: [Project 1-571] Translating synthesized netlist
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.154 . Memory (MB): peak = 3733.473 ; gain = 0.000
-INFO: [Netlist 29-17] Analyzing 322 Unisim elements for replacement
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.146 . Memory (MB): peak = 2432.934 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 318 Unisim elements for replacement
 INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
 INFO: [Project 1-570] Preparing netlist for logic optimization
 INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
-Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 3733.473 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 2432.934 ; gain = 0.000
 INFO: [Project 1-111] Unisim Transformation Summary:
   A total of 43 instances were transformed.
   MMCME2_BASE => MMCME2_ADV: 1 instance 
   RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 30 instances
   RAM32X1D => RAM32X1D (RAMD32(x2)): 12 instances
 
-Synth Design complete | Checksum: 23f4baf4
+Synth Design complete | Checksum: c1d2ef94
 INFO: [Common 17-83] Releasing license: Synthesis
 347 Infos, 382 Warnings, 0 Critical Warnings and 0 Errors encountered.
 synth_design completed successfully
-synth_design: Time (s): cpu = 00:05:42 ; elapsed = 00:06:38 . Memory (MB): peak = 3733.473 ; gain = 3127.090
-Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.023 . Memory (MB): peak = 3733.473 ; gain = 0.000
+synth_design: Time (s): cpu = 00:02:52 ; elapsed = 00:03:15 . Memory (MB): peak = 2432.934 ; gain = 1827.441
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.016 . Memory (MB): peak = 2432.934 ; gain = 0.000
 INFO: [Common 17-1381] The checkpoint 'C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.runs/synth_1/nexys4ddr_top.dcp' has been generated.
 INFO: [Vivado 12-24828] Executing command : report_utilization -file nexys4ddr_top_utilization_synth.rpt -pb nexys4ddr_top_utilization_synth.pb
-INFO: [Common 17-206] Exiting Vivado at Sat Nov  7 00:33:22 2026...
+INFO: [Common 17-206] Exiting Vivado at Sat Nov  7 23:44:31 2026...
