@@ -13,3 +13,6 @@ cocotb/results.xml
 
 # Vivado batch outputs (cook_vivado/build.tcl)
 cook_vivado/out/
+cook_vivado/cook_vivado.runs
+cook_vivado/cook_vivado.cache
+cook_vivado/cook_vivado.gen
