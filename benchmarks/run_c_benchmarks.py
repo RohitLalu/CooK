@@ -10,6 +10,7 @@ coremark/ here, the runtime is crt/. Writes results/c_benchmarks.md.
 No timer exists on a tile, so the testbench counts clock cycles.
 RV32I only: multiply and divide are libgcc routines.
 """
+import json
 import sys
 from cooklib import HERE, CLK_HZ, build_c, build_sim, run
 
@@ -32,7 +33,7 @@ def coremark(iters, tile):
                    + [HERE / "coremark" / "core_portme.c"], tile,
                    flags=[f"-I{CM}", f"-I{CM / 'barebones'}", "-Dmain=coremark_main",
                           f"-DITERATIONS={iters}", "-DHAS_FLOAT=0", "-DHAS_TIME_H=0",
-                          "-DMAIN_HAS_NOARGC=1", "-include", "stddef.h", "-DCLOCKS_PER_SEC=1", '-DFLAGS_STR="-O2 rv32i"',
+                          "-DMAIN_HAS_NOARGC=1", "-Dsize_t=unsigned", "-DCLOCKS_PER_SEC=1", '-DFLAGS_STR="-O2 rv32i"',
                           "-w", "-Wl,--undefined=main"])
 
 
@@ -54,8 +55,11 @@ def main():
              f"multiply and divide in software). Rates assume the board's {CLK_HZ // 1_000_000} MHz clock.", "",
              "| Benchmark | Arch | Cores | Result | Bytes | Cycles per iteration | Rate | Derived |",
              "|---|---|---|---|---|---|---|---|"]
+    cache = HERE / "results" / "c_benchmarks.json"
+    rows = json.loads(cache.read_text()) if cache.exists() else {}
     for name in names:
         builder, counts, cores, limit, unit, div, dname = BENCH[name]
+        rows[name] = []
         for arch, sim in sims.items():
             res = {}
             for n in counts:
@@ -69,9 +73,11 @@ def main():
             verdict = "pass" if ok else res[hi]["verdict"]
             print(f"{name:10s} {arch}  {verdict:8s} {per:12.0f} cycles/iter  {rate:9.2f} {unit}  "
                   f"{rate / div:.3f} {dname}", flush=True)
-            lines.append(f"| {name} | {arch} | {cores} | {verdict} | {size} | {per:.0f} | "
-                         f"{rate:.2f} {unit} | {rate / div:.3f} {dname} |")
+            rows[name].append(f"| {name} | {arch} | {cores} | {verdict} | {size} | {per:.0f} | "
+                              f"{rate:.2f} {unit} | {rate / div:.3f} {dname} |")
     (HERE / "results").mkdir(exist_ok=True)
+    cache.write_text(json.dumps(rows, indent=1))      # rows of benchmarks not rerun are kept
+    lines += [r for name in BENCH for r in rows.get(name, [])]
     (HERE / "results" / "c_benchmarks.md").write_text("\n".join(lines) + "\n")
 
 

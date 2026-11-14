@@ -66,9 +66,11 @@ All switches down. Program, then press CPU_RESET once.
 ## 5. Stage B: fault switches
 
 Set the switches, then press CPU_RESET. The BIST runs only after a reset.
-- SW15 on breaks the link selected by SW[3:0], which is the link leaving tile
-  `SW[3:0] / 4` in direction `SW[3:0] % 4` (0 N, 1 S, 2 E, 3 W).
-- SW14 picks silent (down) or bit-flip (up). Both give the same readings.
+- SW12 on injects the fault selected by SW[3:0]. For a single link that is
+  the link leaving tile `SW[3:0] / 4` in direction `SW[3:0] % 4` (0 N, 1 S,
+  2 E, 3 W).
+- SW11 picks silent (down) or bit-flip (up). Both give the same readings.
+- SW13 to SW15 are not used: they are faulty on our board.
 
 Expected for every real link:
 - LED17 red is on and the display shows code E.
@@ -79,17 +81,18 @@ Expected for every real link:
 
 | SW (hex) | Link | Dead physical link | Display |
 |---|---|---|---|
-| `8001` | tile 0 → S | 0–2 | `E00002D4` |
-| `8002` | tile 0 → E | 0–1 | `E00002D2` |
-| `8005` | tile 1 → S | 1–3 | `E0100358` |
-| `8007` | tile 1 → W | 0–1 | `E0000252` |
-| `8008` | tile 2 → N | 0–2 | `E0000294` |
-| `800A` | tile 2 → E | 2–3 | `E02002B1` |
-| `800C` | tile 3 → N | 1–3 | `E0100318` |
-| `800F` | tile 3 → W | 2–3 | `E0200231` |
-| `8000 8003 8004 8006 8009 800B 800D 800E` | off the mesh edge | none | as stage A, LED17 off |
+| `1001` | tile 0 → S | 0–2 | `E00002D4` |
+| `1002` | tile 0 → E | 0–1 | `E00002D2` |
+| `1005` | tile 1 → S | 1–3 | `E0100358` |
+| `1007` | tile 1 → W | 0–1 | `E0000252` |
+| `1008` | tile 2 → N | 0–2 | `E0000294` |
+| `100A` | tile 2 → E | 2–3 | `E02002B1` |
+| `100C` | tile 3 → N | 1–3 | `E0100318` |
+| `100F` | tile 3 → W | 2–3 | `E0200231` |
+| `1000 100D 100E` | unused codes | none | as stage A, LED17 off |
+| `1003 1004 1006 1009 100B` | several links at once (codes in `nexys4ddr_top.v`) | two to four | code E; cores cut off from each other fail (not simulated here) |
 
-With SW14 up, the SW value is `C0xx` and the readings are the same.
+With SW11 up, the SW value is `18xx` and the readings are the same.
 
 How to read the display: `E` is the code, the next two digits are the tile (the
 lower-numbered end of the dead link), then `0`, then that router's BIST status

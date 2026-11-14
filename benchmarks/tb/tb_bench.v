@@ -3,6 +3,10 @@
 //   BENCH cycles=<n> st0=<status> st1=<status> st2=<status> trap=<bits> bus=<busy cycles>
 // Three picorv32 cores (tiles 0..2), each loaded from its own image:
 //   vvp bench.out +img0=<file> +img1=<file> +img2=<file> [+limit=<cycles>]
+//   +need=<mask>   cores that must report before the run ends (default 7 = all)
+//   +fault=<hex>   inject a fault from reset: on the NoC the link mask of
+//                  noc_mesh (bit tile*4 + direction, silent links); on the bus
+//                  any non-zero value sticks the arbiter
 // Compile with -DBENCH_BUS for the single-bus baseline (sb_top + AXI4 memory
 // model), without it for the NoC (mesh_top with the gateway on tile 3, DMA
 // side idle). Cycles are counted from the moment the cores leave reset (on
@@ -22,6 +26,12 @@ module tb_bench;
     wire [NT*5-1:0]  tile_err;
     wire [NT*32-1:0] tile_sw;
     wire             started, active;
+    reg  [4*NT-1:0]  fault = 0;
+    reg  [2:0]       need = 3'b111;
+    initial begin
+        if ($value$plusargs("fault=%h", fault)) ;
+        if ($value$plusargs("need=%d", need)) ;
+    end
 
     generate
         if (NT != 4) begin : tb_check_nt
@@ -39,7 +49,7 @@ module tb_bench;
     sb_top dut (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
-        .fault_grant(1'b0), .fault_flip(1'b0), .bus_err_drop(), .bus_active(active),
+        .fault_grant(fault != 0), .fault_flip(1'b0), .bus_err_drop(), .bus_active(active),
         .m_axi_awaddr(awaddr), .m_axi_awlen(awlen), .m_axi_awsize(), .m_axi_awburst(),
         .m_axi_awvalid(awvalid), .m_axi_awready(awready),
         .m_axi_wdata(wdata), .m_axi_wstrb(wstrb), .m_axi_wlast(wlast),
@@ -66,7 +76,7 @@ module tb_bench;
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(),
-        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0),
+        .fault_rt_mask(fault), .fault_rt_flip(1'b0),
         .bist_status(), .sys_ready(started), .avail(), .gw_flags(), .gw_info(),
         .gw_axil_awaddr(), .gw_axil_awvalid(), .gw_axil_awready(1'b0),
         .gw_axil_wdata(), .gw_axil_wstrb(), .gw_axil_wvalid(), .gw_axil_wready(1'b0),
@@ -100,7 +110,7 @@ module tb_bench;
         rst_n = 1;
         while (!started) @(posedge clk);
         cyc = 0; act = 0; fin = 3'b0;
-        while (fin != 3'b111 && cyc < limit) begin
+        while ((fin & need) != need && cyc < limit) begin
             @(posedge clk);
             cyc = cyc + 1;
             if (active) act = act + 1;
@@ -116,6 +126,10 @@ module tb_bench;
             for (t = sig_lo; t < sig_hi; t = t + 1) $fdisplay(fd, "%08x", `TILE_MEM(0)[t]);
             $fclose(fd);
         end
+`ifndef BENCH_BUS
+        // what the start-up BIST found: one bit per dead physical link (noc_defs.vh)
+        $display("MESH dead_links=%h", dut.u_mesh.dead_links[`NOC_LINKS_W-1:0]);
+`endif
         $display("BENCH cycles=%0d st0=%h st1=%h st2=%h trap=%b bus=%0d",
                  cyc, tile_sw[0 +: 32], tile_sw[32 +: 32], tile_sw[64 +: 32], tile_trap[2:0], act);
         $finish;

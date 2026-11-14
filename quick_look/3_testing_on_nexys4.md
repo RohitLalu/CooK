@@ -103,9 +103,9 @@ This is the big demo. The switches damage a street inside the chip, and the boar
 2. Press **CPU_RESET**. This is essential, because the inspection only runs after a reset.
 3. Check the display. LED 17 red should be on, and **LEDs 4–7 should still all be on**. That is the result: a street is broken and nobody lost their work.
 
-SW15 up turns the fault on. Switches 0–3 pick the street. SW14 picks the failure style: down for silent, up for scrambled bits. Both styles give the same reading.
+SW12 up turns the fault on. Switches 0–3 pick the street. SW11 picks the failure style: down for silent, up for scrambled bits. Both styles give the same reading.
 
-| Switches up (plus SW15) | Street broken | Display |
+| Switches up (plus SW12) | Street broken | Display |
 |---|---|---|
 | SW0 | tile 0 going south | `E00002D4` |
 | SW1 | tile 0 going east | `E00002D2` |
@@ -118,7 +118,7 @@ SW15 up turns the fault on. Switches 0–3 pick the street. SW14 picks the failu
 
 **How to read `E0100358`:** code `E` (broken street found), tile `01`, a `0`, then `0358`, which is that tile's inspection report. The tile shown is the lower-numbered of the two ends of the street, which isn't always the end you broke.
 
-The other eight switch patterns name streets that don't exist (off the edge of the town). They should change nothing, leaving the stage A display with LED 17 red off. Try one, because it shows the switches aren't fooling you.
+The switch patterns that don't name a real street now do other things: three are unused and change nothing, and five break several streets at once (the list is at the top of `rtl/board/nexys4ddr/nexys4ddr_top.v`). With several streets broken the town splits, so some workers fail; that is expected. SW13 to SW15 are not used, because they are faulty on our board.
 
 With code E, LED 15 blinks 14 times per cycle, which is hard to count, so trust the display.
 

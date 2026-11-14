@@ -33,16 +33,18 @@ def sh(cmd, **kw):
     return r
 
 
-def to_mem(elf, mem):
-    """ELF -> full-tile $readmemh image (program from word 64). Returns bytes used."""
+def to_mem(elf, mem, ob=OB):
+    """ELF -> full-tile $readmemh image (program from word 64) for 2**ob-byte
+    tiles. Returns bytes used."""
+    words = 1 << (ob - 2)
     binf = Path(elf).with_suffix(".bin")
     sh([OC, "-O", "binary", str(elf), str(binf)])
     data = binf.read_bytes()
     data += b"\0" * (-len(data) % 4)
     prog = [w for (w,) in struct.iter_unpack("<I", data)]
-    if len(prog) > MEM_WORDS - 64:
+    if len(prog) > words - 64:
         raise SystemExit(f"{elf}: {len(prog)} words do not fit in a tile")
-    img = [0] * 64 + prog + [0] * (MEM_WORDS - 64 - len(prog))
+    img = [0] * 64 + prog + [0] * (words - 64 - len(prog))
     Path(mem).write_text("".join(f"{w:08x}\n" for w in img))
     return len(data)
 
@@ -60,12 +62,12 @@ def build_c(name, sources, tile, flags=(), opt="-O2"):
     return f"{stem}.mem", to_mem(f"{stem}.elf", f"{stem}.mem")
 
 
-def build_sim(arch, defines=(), tag="bench"):
+def build_sim(arch, defines=(), tag="bench", ob=OB):
     """Compile tb_bench for one architecture. `tag` names the output, so two
     runners can work at the same time without sharing a simulator file."""
     BUILD.mkdir(exist_ok=True)
     out = BUILD / f"{tag}_{arch}.out"
-    sh(["iverilog", "-g2012", "-Irtl/include", f"-DNOC_OFFSET_BITS={OB}",
+    sh(["iverilog", "-g2012", "-Irtl/include", f"-DNOC_OFFSET_BITS={ob}",
         *(["-DBENCH_BUS"] if arch == "bus" else []), *defines,
         "-s", "tb_bench", "-o", str(out), "benchmarks/tb/tb_bench.v", *RTL_SHARED, *RTL[arch]], cwd=REPO)
     return out
@@ -80,6 +82,9 @@ def run(sim, images, limit=400000, extra=()):
     if not m:
         raise SystemExit("no BENCH line:\n" + r.stdout)
     used = [t for t, im in enumerate(images) if im]
+    for e in extra:                                  # +need=<mask>: only those cores are judged
+        if e.startswith("+need="):
+            used = [t for t in used if int(e[6:]) >> t & 1]
     st = [[m[2], m[3], m[4]][t] for t in used]
     if any(m[5][2 - t] == "1" for t in used):
         verdict = "TRAP"

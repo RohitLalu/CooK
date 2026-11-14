@@ -1085,7 +1085,9 @@ module picorv32 #(
 
 			instr_ecall_ebreak <= ((mem_rdata_q[6:0] == 7'b1110011 && !mem_rdata_q[31:21] && !mem_rdata_q[19:7]) ||
 					(COMPRESSED_ISA && mem_rdata_q[15:0] == 16'h9002));
-			instr_fence <= (mem_rdata_q[6:0] == 7'b0001111 && !mem_rdata_q[14:12]);
+			// CooK change: fence.i (funct3 = 001) is accepted like fence. The core
+			// has no instruction cache, so both are no-ops; upstream traps on fence.i.
+			instr_fence <= (mem_rdata_q[6:0] == 7'b0001111 && mem_rdata_q[14:13] == 2'b00);
 
 			instr_getq    <= mem_rdata_q[6:0] == 7'b0001011 && mem_rdata_q[31:25] == 7'b0000000 && ENABLE_IRQ && ENABLE_IRQ_QREGS;
 			instr_setq    <= mem_rdata_q[6:0] == 7'b0001011 && mem_rdata_q[31:25] == 7'b0000001 && ENABLE_IRQ && ENABLE_IRQ_QREGS;

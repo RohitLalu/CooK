@@ -38,6 +38,9 @@ Fault switches: SW12 on injects a bus fault, SW11 picks stuck arbiter (down) or
 flipped data wire (up). Press CPU_RESET after setting them. Expect LEDs 8–10 on
 (all cores failed) and code 2 on the display.
 
+With the DDR2 build the system stays in reset until the memory is calibrated,
+so LED13 comes on only then.
+
 **Not yet run:** the Vivado scripts and the block design. Vivado is not on the
 development machine. The AXI4 port names on the generated `sb_mem_wrapper` are
 the most likely thing to need adjusting in `sb_nexys4ddr_top.v`.

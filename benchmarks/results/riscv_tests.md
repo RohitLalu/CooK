@@ -18,7 +18,7 @@ bus-busy cycles.
 | blt | 187 | pass | 1390 | 0 | pass | 1391 | 0 |
 | bltu | 200 | pass | 1515 | 0 | pass | 1516 | 0 |
 | bne | 188 | pass | 1398 | 0 | pass | 1399 | 0 |
-| fence_i | 64 | TRAP | 122 | 0 | TRAP | 123 | 0 |
+| fence_i | 64 | pass | 1749 | 0 | pass | 1750 | 0 |
 | jal | 32 | pass | 106 | 0 | pass | 107 | 0 |
 | jalr | 72 | pass | 445 | 0 | pass | 446 | 0 |
 | lb | 152 | pass | 1216 | 0 | pass | 1217 | 0 |
@@ -50,4 +50,4 @@ bus-busy cycles.
 | xor | 315 | pass | 2326 | 0 | pass | 2327 | 0 |
 | xori | 132 | pass | 890 | 0 | pass | 891 | 0 |
 
-Passed: NoC 40 of 42, bus 40 of 42.
+Passed: NoC 41 of 42, bus 41 of 42.

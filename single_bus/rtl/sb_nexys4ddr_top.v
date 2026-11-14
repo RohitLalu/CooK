@@ -14,7 +14,9 @@
 //   LED[6:4]    core 0..2 software reported pass (status CSR 0x600Dxxxx)
 //   LED[10:8]   core 0..2 software reported fail (status CSR 0xFA11xxxx)
 //   LED[12]     heartbeat, 1 Hz
-//   LED[13]     system ready: reset released (there is no BIST to wait for)
+//   LED[13]     system ready: reset released and, with DDR = 1, the DDR2
+//               calibrated (the cores are held in reset until then, so a
+//               program may use the DDR from its first instruction)
 //   LED[14]     slow blink code: TILE+1      LED[15]  slow blink code: error CODE
 //   LED16_G     DDR2 calibration complete    LED17_R  a bus fault is switched in
 // 7-segment display: code, tile, 0, low half of that tile's status CSR
@@ -132,8 +134,16 @@ module sb_nexys4ddr_top #(
     wire        arvalid, arready, rlast, rvalid, rready;
     wire        ddr_calib_done;
 
+    // the bus, its nodes and the cores wait for the DDR2 calibration; the
+    // memory controller itself is reset by rst_n alone
+    (* ASYNC_REG = "TRUE" *) reg [1:0] calib_s;      // init_calib_complete is in the MIG's clock domain
+    always @(posedge clk or negedge rst_n)
+        if (!rst_n) calib_s <= 2'b00;
+        else        calib_s <= {calib_s[0], ddr_calib_done};
+    wire sys_rst_n = rst_n && (DDR == 0 || calib_s[1]);
+
     sb_top #(.MEM_INIT(1), .MEM_PREFIX(MEM_PREFIX)) u_sys (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk), .rst_n(sys_rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .fault_grant(fault_grant), .fault_flip(fault_flip),
         .bus_err_drop(bus_err_drop), .bus_active(),
@@ -214,6 +224,6 @@ module sb_nexys4ddr_top #(
     );
     assign DP = 1'b1;
 
-    assign LED = {code_led, tile_led, rst_n, heartbeat, tile_fail, tile_pass, tile_bad};
+    assign LED = {code_led, tile_led, sys_rst_n, heartbeat, tile_fail, tile_pass, tile_bad};
 
 endmodule

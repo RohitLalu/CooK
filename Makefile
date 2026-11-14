@@ -127,8 +127,8 @@ board: sw | $(BUILD)
 	@echo "=== nexys4ddr_top, programs from tileNN.mem, read back from LEDs ==="
 	@$(call compile,board,-s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
 	@$(call run,board,FAIL|PASSED|TOTAL)
-	@echo "=== nexys4ddr_top, fault switch SW = 0x8005 (silent link, tile 1 south) ==="
-	@$(call compile,boardf,-Ptb_board.FAULT_SW=16\'h8005 -s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
+	@echo "=== nexys4ddr_top, fault switch SW = 0x1005 (SW12 on, silent link, tile 1 south) ==="
+	@$(call compile,boardf,-Ptb_board.FAULT_SW=16\'h1005 -s tb_board $(TB_BOARD) $(RTL_ALL) $(RTL_BOARD))
 	@$(call run,boardf,FAIL|PASSED|TOTAL)
 
 # ---- gateway: gw_ni in a 2x2 mesh against a behavioural axi_dma model ----

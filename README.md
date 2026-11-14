@@ -75,7 +75,7 @@ xc7a100t's LUTs); Vivado timing is still to be run.
 > 9 software failure, C DMA request refused (display shows the reason), D DMA lock lease
 > expired, A illegal address. Details in `rtl/board/status_panel.v`.
 >
-> **Fault-injection switches:** SW[15] on breaks one link, SW[14] picks silent (0) or bit-flip
+> **Fault-injection switches:** SW[12] on breaks one link, SW[11] picks silent (0) or bit-flip
 > (1), SW[3:0] picks the link (tile × 4 + direction 0 N, 1 S, 2 E, 3 W). Set them, press
 > CPU_RESET: BIST runs after every total reset and localises the fault (code E, LED17 red),
 > the routers go around the link, and every core still reaches pass. Expected readings per

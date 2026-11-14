@@ -51,19 +51,29 @@ def reference(test):
     return sig.read_text().split()
 
 
-def on_cook(test, sims):
+BIG_OB = 20      # 1 MB tiles (the largest a packet can address) for the tests that do not fit in 64 KB
+_big_sims = {}
+
+
+def big_sims():
+    if not _big_sims:
+        _big_sims.update({a: build_sim(a, tag="archbig", ob=BIG_OB) for a in ("noc", "bus")})
+    return _big_sims
+
+
+def on_cook(test, sims, ob=OB):
     """Signatures from tile 0 on each architecture: {arch: (words or None, cycles, verdict)}."""
     elf = BUILD / f"at_{test}_cook.elf"
     sh([CC, *COMMON, "-DTILE_BASE=0", f"-I{AT / 'cook'}", f"-T{AT / 'cook' / 'link.ld'}",
         "-Wl,--defsym,TEXT_BASE=0x100", "-o", str(elf), str(SRC / f"{test}.S")])
     mem = BUILD / f"at_{test}_cook.mem"
-    to_mem(elf, mem)
+    to_mem(elf, mem, ob)
     sym = symbols(elf)
     lo, hi = sym["begin_signature"] >> 2, sym["end_signature"] >> 2
     res = {}
     for arch, sim in sims.items():
         sig = BUILD / f"at_{test}_{arch}.sig"
-        r = run(sim, [str(mem), None, None], limit=3_000_000,
+        r = run(sim, [str(mem), None, None], limit=6_000_000,
                 extra=[f"+sig={sig}", f"+sig_lo={lo}", f"+sig_hi={hi}"])
         res[arch] = (sig.read_text().split() if r["verdict"] == "pass" else None, r["cycles"], r["verdict"])
     return res
@@ -75,18 +85,26 @@ def main():
     tests = sys.argv[1:] or sorted(p.stem for p in SRC.glob("*.S"))
     sims = {a: build_sim(a, tag="arch") for a in ("noc", "bus")}
     lines = ["# riscv-arch-test, RV32I base set, both architectures against Spike", "",
-             f"Release 3.9.1, tile memory {1 << OB >> 10} KB. Reference signatures from Spike",
+             f"Release 3.9.1, tile memory {1 << OB >> 10} KB ({1 << BIG_OB >> 10} KB for the tests that need it). Reference signatures from Spike",
              "(`--isa=rv32i`). A test passes when the signature read from the tile equals Spike's.", "",
-             "| Test | Signature words | NoC | NoC cycles | Bus | Bus cycles |", "|---|---|---|---|---|---|"]
+             "| Test | Tile KB | Signature words | NoC | NoC cycles | Bus | Bus cycles |",
+             "|---|---|---|---|---|---|---|"]
     npass = {"noc": 0, "bus": 0}
     for test in tests:
+        tile_kb = 1 << OB >> 10
         try:
             ref = reference(test)
-            got = on_cook(test, sims)
-        except SystemExit as e:                       # does not build or fit
-            reason = "does not fit in a tile" if "do not fit" in str(e) else "build error"
+            try:
+                got = on_cook(test, sims)
+            except SystemExit as e:
+                if "do not fit" not in str(e):
+                    raise
+                got = on_cook(test, big_sims(), BIG_OB)   # same systems, larger tiles
+                tile_kb = 1 << BIG_OB >> 10
+        except SystemExit as e:                       # does not build, or too big for any tile
+            reason = "larger than the biggest tile (1 MB)" if "do not fit" in str(e) else "build error"
             print(f"{test:20s} skipped: {reason}", flush=True)
-            lines.append(f"| {test} | - | skipped: {reason} | - | skipped | - |")
+            lines.append(f"| {test} | - | - | skipped: {reason} | - | skipped | - |")
             continue
         row = []
         for arch in ("noc", "bus"):
@@ -103,7 +121,7 @@ def main():
                 v = f"MISMATCH ({bad} words)"
             row += [v, cycles]
         print(f"{test:20s} noc {row[0]:22s} bus {row[2]}", flush=True)
-        lines.append(f"| {test} | {len(ref) if ref else '-'} | {row[0]} | {row[1]} | {row[2]} | {row[3]} |")
+        lines.append(f"| {test} | {tile_kb} | {len(ref) if ref else '-'} | {row[0]} | {row[1]} | {row[2]} | {row[3]} |")
     lines += ["", f"Passed: NoC {npass['noc']} of {len(tests)}, bus {npass['bus']} of {len(tests)}."]
     (HERE / "results").mkdir(exist_ok=True)
     (HERE / "results" / "arch_test.md").write_text("\n".join(lines) + "\n")
