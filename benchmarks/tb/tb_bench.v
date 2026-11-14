@@ -84,11 +84,15 @@ module tb_bench;
 `endif
 
     reg [8*256-1:0] img;
-    integer limit, cyc, act, t;
+    integer limit, cyc, act, t, sig_lo, sig_hi, fd;
     reg [2:0] fin;
 
     initial begin
         if (!$value$plusargs("limit=%d", limit)) limit = 2000000;
+        // a tile with no image holds zeros: its core traps on the first fetch
+        for (t = 0; t < (1 << (`NOC_OFFSET_BITS - 2)); t = t + 1) begin
+            `TILE_MEM(0)[t] = 32'b0;  `TILE_MEM(1)[t] = 32'b0;  `TILE_MEM(2)[t] = 32'b0;
+        end
         if ($value$plusargs("img0=%s", img)) $readmemh(img, `TILE_MEM(0));
         if ($value$plusargs("img1=%s", img)) $readmemh(img, `TILE_MEM(1));
         if ($value$plusargs("img2=%s", img)) $readmemh(img, `TILE_MEM(2));
@@ -103,6 +107,14 @@ module tb_bench;
             for (t = 0; t < 3; t = t + 1)
                 fin[t] = tile_trap[t] || tile_sw[t*32 + 16 +: 16] === 16'h600D ||
                          tile_sw[t*32 + 16 +: 16] === 16'hFA11;
+        end
+        // +sig=<file> +sig_lo=<word> +sig_hi=<word>: dump tile 0's memory words
+        // [sig_lo, sig_hi) for a signature comparison (riscv-arch-test)
+        if ($value$plusargs("sig=%s", img) && $value$plusargs("sig_lo=%d", sig_lo) &&
+            $value$plusargs("sig_hi=%d", sig_hi)) begin
+            fd = $fopen(img, "w");
+            for (t = sig_lo; t < sig_hi; t = t + 1) $fdisplay(fd, "%08x", `TILE_MEM(0)[t]);
+            $fclose(fd);
         end
         $display("BENCH cycles=%0d st0=%h st1=%h st2=%h trap=%b bus=%0d",
                  cyc, tile_sw[0 +: 32], tile_sw[32 +: 32], tile_sw[64 +: 32], tile_trap[2:0], act);
