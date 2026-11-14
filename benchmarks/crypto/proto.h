@@ -36,6 +36,22 @@
 #define AES_CORE   1
 #define SIGN_CORE  2
 
+/* Remote writes are posted: the sender gets no acknowledge. So the sequence
+ * word, which is written last and makes a job or result visible, is read back
+ * (a remote read does get an answer) and rewritten if it is not there.
+ * Returns 0 when it still is not after three tries: the path is broken.
+ * This confirms the last word; the words before it took the same path in
+ * order, so a single lost packet in the middle would still go unnoticed. */
+static inline int post_seq(volatile uint32_t *seq_word, uint32_t seq)
+{
+    int tries;
+    for (tries = 0; tries < 3; tries++) {
+        *seq_word = seq;
+        if (*seq_word == seq) return 1;
+    }
+    return 0;
+}
+
 /* bytes <-> mailbox words (little endian, like the cores) */
 static inline void put_bytes(volatile uint32_t *w, const uint8_t *b, unsigned n)
 {
@@ -50,5 +66,29 @@ static inline void get_bytes(uint8_t *b, const volatile uint32_t *w, unsigned n)
         uint32_t v = w[i >> 2];
         b[i] = (uint8_t)v; b[i+1] = (uint8_t)(v >> 8); b[i+2] = (uint8_t)(v >> 16); b[i+3] = (uint8_t)(v >> 24);
     }
+}
+
+/* ---- the arbiter's side: hand a job to a worker, wait for its result ---- */
+#ifndef WAIT_POLLS
+#define WAIT_POLLS 40000000u        /* local polls before giving up on a worker */
+#endif
+
+static inline int send_job(int worker, uint32_t seq, uint32_t op, const uint8_t *key, unsigned keylen,
+                           const uint8_t *data, unsigned len)
+{
+    volatile uint32_t *job = MBOX(worker);
+    put_bytes(job + JOB_KEY, key, keylen);
+    put_bytes(job + JOB_DATA, data, (len + 3) & ~3u);
+    job[JOB_LEN] = len;
+    job[JOB_OP]  = op;
+    return post_seq(job + JOB_SEQ, seq);             /* last, and confirmed: the job is complete */
+}
+
+static inline int wait_for(const volatile uint32_t *res, uint32_t seq)
+{
+    uint32_t n;
+    for (n = 0; n < WAIT_POLLS; n++)
+        if (res[0] == seq) return 1;
+    return 0;
 }
 #endif

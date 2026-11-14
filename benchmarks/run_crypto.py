@@ -12,6 +12,7 @@ per second. The board images use the full size (LOGW 8, N 32).
 Writes results/crypto.md; board images go to build/crypto_board_tNN.mem.
 """
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 import sys
 from cooklib import HERE, BUILD, build_c, build_sim, run
 
@@ -50,8 +51,10 @@ def main():
              ("noc", "link 0-1 dead", ["+fault=0004"]),
              ("bus", "arbiter stuck", ["+fault=1", "+need=1"])]
     sims = {a: build_sim(a, tag="crypto") for a in ("noc", "bus")}
-    for arch, what, extra in cases:
-        r = run(sims[arch], [m for m, _ in images], limit=12_000_000, extra=extra)
+    with ThreadPoolExecutor() as pool:               # the cases are independent: run them side by side
+        results = list(pool.map(lambda c: run(sims[c[0]], [m for m, _ in images], limit=12_000_000,
+                                              extra=c[2]), cases))
+    for (arch, what, extra), r in zip(cases, results):
         st = (r["status"] + ["-", "-"])[:3]
         print(f"{arch} {what}: {r['verdict']}  {r['cycles']} cycles  status {st}  flits {r['flits']}", flush=True)
         lines.append(f"| {arch}, {what} | {r['verdict']} | {r['cycles']} | {' | '.join(st)} | {r['flits']} |")

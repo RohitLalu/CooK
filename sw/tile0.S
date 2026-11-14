@@ -8,10 +8,16 @@
 # 3. Completion marker, then spin.
 #
 # Tile 0 region: 0x0000_0000..0x0000_0FFF  (0x000-0x0FF CSR, 0x100+ memory)
+/* Tile size: a tile owns 2**TILE_SHIFT bytes (NOC_OFFSET_BITS of the build).
+ * sw/build.sh passes it; 12 = the default 4 KB tiles. */
+#ifndef TILE_SHIFT
+#define TILE_SHIFT 12
+#endif
+
 .section .text
 .globl _start
 _start:
-    li   t0, 0x00003000      # tile 3, offset 0x000 = status/ID register
+    li   t0, (3 << TILE_SHIFT)  # tile 3, offset 0x000 = status/ID register
     lw   t1, 0(t0)           # REMOTE READ across two hops
     li   t2, 0x00000200
     sw   t1, 0(t2)

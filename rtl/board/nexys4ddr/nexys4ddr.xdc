@@ -54,6 +54,11 @@ set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { LED16_G 
 set_property -dict { PACKAGE_PIN G14 IOSTANDARD LVCMOS33 } [get_ports { LED17_B }]
 set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { LED17_R }]
 
+## USB serial port (live demo, LIVE_UART = 1; unused otherwise). Named from the
+## USB bridge's side, as on the board: TXD_IN is what the FPGA receives.
+set_property -dict { PACKAGE_PIN C4 IOSTANDARD LVCMOS33 } [get_ports { UART_TXD_IN }]
+set_property -dict { PACKAGE_PIN D4 IOSTANDARD LVCMOS33 } [get_ports { UART_RXD_OUT }]
+
 ## Slide switches: fault injection (SW[12] enable, SW[11] mode, SW[3:0] fault
 ## code: single links 1,2,5,7,8,10,12,15; multi-link 3,4,6,9,11, see
 ## nexys4ddr_top.v)
@@ -128,8 +133,8 @@ set_property -dict { PACKAGE_PIN V2 IOSTANDARD DIFF_SSTL18_II } [get_ports { ddr
 
 ## Buttons are asynchronous and synchronised inside; LEDs and the display are
 ## slow human-facing outputs. None of them need I/O timing.
-set_false_path -from [get_ports { CPU_RESETN BTNC SW[*] }]
-set_false_path -to   [get_ports { LED[*] SEG[*] DP AN[*] LED16_G LED17_B LED17_R }]
+set_false_path -from [get_ports { CPU_RESETN BTNC SW[*] UART_TXD_IN }]
+set_false_path -to   [get_ports { LED[*] SEG[*] DP AN[*] LED16_G LED17_B LED17_R UART_RXD_OUT }]
 
 ## NoC clock (MMCM CLKOUT0, 50 MHz) and the MIG's ui_clk (81.25 MHz) only meet
 ## inside the SmartConnect's clock converter, which carries its own CDC

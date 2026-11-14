@@ -9,6 +9,7 @@
 //   4  packets to a missing node or to the sender itself are dropped, flagged
 //   5  back-to-back packets use every bus cycle
 //   6  fault_grant: nothing moves; fault_flip: check bits fail at the receiver
+//   7  watchdog: a packet whose TAIL never comes loses the bus, others go on
 
 `timescale 1ns/1ps
 `include "noc_defs.vh"
@@ -38,7 +39,7 @@ module tb_sb_bus;
     wire [N-1:0]    err_drop;
     wire            bus_active;
 
-    sb_bus #(.N(N)) dut (
+    sb_bus #(.N(N), .WD_CYCLES(16)) dut (
         .clk(clk), .rst_n(rst_n),
         .loc_in_valid(in_valid), .loc_in_ready(in_ready), .loc_in_flit(in_flit),
         .loc_out_valid(out_valid), .loc_out_ready(out_ready), .loc_out_room(out_room),
@@ -204,6 +205,18 @@ module tb_sb_bus;
         repeat (10) @(posedge clk);
         check(lc[1] == 2 && !noc_chk_ok(lg[1*LD]) && !noc_chk_ok(lg[1*LD + 1]),
               "6: flipped data wire: both flits arrive with bad check bits");
+
+        // ---- 7 ----
+        restart;
+        q[0*QD + qt[0][4:0]] = noc_make_flit(HEAD, 1'b0, 2'd0, 1'b1, 1'b0, 32'h7777_7777);   // 0 -> 1, HEAD only
+        qt[0] = qt[0] + 1;
+        repeat (6) @(posedge clk);
+        send(2, 3, 32'h8888_8888);
+        repeat (8) @(posedge clk);
+        check(lc[3] == 0 && err_drop == 0, "7: bus held by the unfinished packet, 2->3 waits");
+        repeat (20) @(posedge clk);
+        check(err_drop == 4'b0001, "7: watchdog released the bus and flagged node 0");
+        check(lc[3] == 2 && whole_packets(3), "7: 2->3 delivered afterwards");
 
         $display("----------------------------------------");
         if (errors == 0) $display("ALL TESTS PASSED (%0d checks)", checks);

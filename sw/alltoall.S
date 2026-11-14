@@ -31,6 +31,12 @@
 # Software status CSR (0x008) while running: 0x52550000 ("RU"),
 #   at the end: 0x600D0000 | checks on pass, 0xFA110000 | errors on failure.
 
+/* Tile size: a tile owns 2**TILE_SHIFT bytes (NOC_OFFSET_BITS of the build).
+ * sw/build.sh passes it; 12 = the default 4 KB tiles. */
+#ifndef TILE_SHIFT
+#define TILE_SHIFT 12
+#endif
+
 .section .text
 .globl _start
 
@@ -43,9 +49,9 @@
 
 _start:
     auipc s0, 0
-    srli  s0, s0, 12
-    slli  s0, s0, 12         # s0 = my tile base
-    srli  s1, s0, 12         # s1 = my id
+    srli  s0, s0, TILE_SHIFT
+    slli  s0, s0, TILE_SHIFT         # s0 = my tile base
+    srli  s1, s0, TILE_SHIFT         # s1 = my id
     lw    s2, 0xC(s0)        # s2 = number of tiles (local CSR)
     li    s3, 0              # errors
     li    s8, 0              # checks
@@ -54,7 +60,7 @@ _start:
 
     li    s9, -1             # s9 = tiles to test (bitmap)
     addi  t0, s2, -1
-    slli  s10, t0, 12        # s10 = last tile's base
+    slli  s10, t0, TILE_SHIFT        # s10 = last tile's base
     lw    t0, 0x10(s10)      # its tile kind
     beqz  t0, tested         # a core: no gateway, test every tile
     li    t1, 0xDEADBEEF
@@ -81,7 +87,7 @@ outer:
     srl   t0, s9, s5
     andi  t0, t0, 1
     beqz  t0, next           # not available: skip
-    slli  s6, s5, 12         # s6 = target base
+    slli  s6, s5, TILE_SHIFT         # s6 = target base
     slli  t0, s1, 6
     add   s7, s6, t0
     li    t1, 0x800
@@ -192,5 +198,5 @@ done:
 # Runs from whichever tile's memory it is fetched from: returns that tile's id.
 remote_fn:
     auipc a0, 0
-    srli  a0, a0, 12
+    srli  a0, a0, TILE_SHIFT
     ret

@@ -24,6 +24,12 @@
 // sender, and any non-HEAD flit at the head of a queue while the channel is
 // free (the rest of a dropped packet) are consumed and flagged in err_drop.
 //
+// WATCHDOG. A sender that was granted the channel and then delivers no flit
+// for WD_CYCLES cycles (its TAIL never comes, or the receiver stopped taking
+// flits) loses the channel and is flagged in err_drop. The rest of its
+// packet, if it ever arrives, is dropped by the rule above. Without this one
+// broken node would hold the only channel forever.
+//
 // FAULTS (run-time fault injection for metric M3; tie both to 0 otherwise)
 //   fault_grant  the arbiter is stuck: nothing is ever granted
 //   fault_flip   one data wire of the shared channel is inverted, so every
@@ -36,7 +42,8 @@
 
 module sb_bus #(
     parameter integer N        = `NOC_NUM_TILES,
-    parameter integer TX_DEPTH = `NOC_LB_DEPTH
+    parameter integer TX_DEPTH = `NOC_LB_DEPTH,
+    parameter integer WD_CYCLES = 256
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -94,6 +101,7 @@ module sb_bus #(
     reg [SW-1:0] owner;      // sending node
     reg [SW-1:0] dest;       // receiving node
     reg [SW-1:0] rr;         // next node to be asked first
+    reg [$clog2(WD_CYCLES + 1)-1:0] wd;   // cycles the owner has made no progress
 
     reg          sel_v;      // a queue is served this cycle
     reg          sel_drop;   // ... by discarding its flit
@@ -156,7 +164,18 @@ module sb_bus #(
             dest     <= {SW{1'b0}};
             rr       <= {SW{1'b0}};
             err_drop <= {N{1'b0}};
+            wd       <= 0;
+        end else if (busy && !sel_v) begin
+            // the owner is stalled: give up on its packet after WD_CYCLES
+            if (wd == WD_CYCLES) begin
+                busy            <= 1'b0;
+                err_drop[owner] <= 1'b1;
+                wd              <= 0;
+            end else begin
+                wd <= wd + 1'b1;
+            end
         end else if (sel_v) begin
+            wd <= 0;
             if (sel_drop) begin
                 err_drop[sel] <= 1'b1;
             end else if (!busy) begin

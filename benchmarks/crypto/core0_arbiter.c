@@ -11,7 +11,8 @@
  *         plaintext, 3 decrypt timeout, 4 decrypt mismatch, 5 signature
  *         timeout, 6 signature rejected, 7 forged message accepted, 8 a worker
  *         does not answer: checked first, so a broken interconnect is
- *         reported at once instead of after a long wait) */
+ *         reported at once instead of after a long wait, 9 a job could not
+ *         be delivered: its sequence word did not read back) */
 #include "proto.h"
 #include "sha256.h"
 #include "wots.h"
@@ -19,7 +20,6 @@
 #ifndef NONCE
 #define NONCE 0x00C0FFEEu
 #endif
-#define WAIT_POLLS 40000000u        /* local polls before giving up on a worker */
 
 static const uint8_t plain[32] = "CooK: 3 cores, 1 NoC, AES + sig.";
 static uint8_t message[] = "signed by core 2";
@@ -36,25 +36,6 @@ static void derive(const char *label, uint8_t out[32])
     sha256_final(&c, out);
 }
 
-static void send_job(int worker, uint32_t seq, uint32_t op, const uint8_t *key, unsigned keylen,
-                     const uint8_t *data, unsigned len)
-{
-    volatile uint32_t *job = MBOX(worker);
-    put_bytes(job + JOB_KEY, key, keylen);
-    put_bytes(job + JOB_DATA, data, (len + 3) & ~3u);
-    job[JOB_LEN] = len;
-    job[JOB_OP]  = op;
-    job[JOB_SEQ] = seq;                              /* last: the job is complete */
-}
-
-static int wait_for(const volatile uint32_t *res, uint32_t seq)
-{
-    uint32_t n;
-    for (n = 0; n < WAIT_POLLS; n++)
-        if (res[0] == seq) return 1;
-    return 0;
-}
-
 int main(void)
 {
     volatile uint32_t *mine = MBOX(tile_id());
@@ -68,13 +49,13 @@ int main(void)
     derive("CooK AES key", aes_key);                 /* first 16 bytes are the key */
     derive("CooK signing seed", seed);
 
-    send_job(AES_CORE, 1, OP_AES_ENC, aes_key, 16, plain, 32);
-    send_job(SIGN_CORE, 1, OP_SIGN, seed, 32, message, sizeof message);
+    if (!send_job(AES_CORE, 1, OP_AES_ENC, aes_key, 16, plain, 32)) return 9;
+    if (!send_job(SIGN_CORE, 1, OP_SIGN, seed, 32, message, sizeof message)) return 9;
 
     if (!wait_for(mine + RES_AES, 1)) return 1;
     get_bytes(ct, mine + RES_AES + 2, 32);
     if (memcmp(ct, plain, 32) == 0) return 2;
-    send_job(AES_CORE, 2, OP_AES_DEC, aes_key, 16, ct, 32);
+    if (!send_job(AES_CORE, 2, OP_AES_DEC, aes_key, 16, ct, 32)) return 9;
     if (!wait_for(mine + RES_AES, 2)) return 3;
     get_bytes(back, mine + RES_AES + 2, 32);
     if (memcmp(back, plain, 32) != 0) return 4;

@@ -46,6 +46,8 @@ module sb_nexys4ddr_top #(
     input  wire        CPU_RESETN,
     input  wire        BTNC,          // unused: kept so the NoC's constraints apply as they are
     input  wire [15:0] SW,
+    input  wire        UART_TXD_IN,   // unused: kept so the NoC's constraints apply as they are
+    output wire        UART_RXD_OUT,
     output wire [15:0] LED,
     output wire [6:0]  SEG,
     output wire        DP,
@@ -197,6 +199,7 @@ module sb_nexys4ddr_top #(
         end
     endgenerate
 
+    assign UART_RXD_OUT = 1'b1;       // serial line idle
     assign LED16_G = ddr_calib_done;
     assign LED17_B = 1'b0;
     assign LED17_R = sw_s2[12];

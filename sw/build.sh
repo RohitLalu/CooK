@@ -8,19 +8,22 @@
 #   sw/tileNN.mem        what tile NN runs on the FPGA (FPGA_PROG on every tile)
 #
 # Environment overrides:
-#   MEM_WORDS   words per tile memory, = 2**(NOC_OFFSET_BITS-2)   (1024)
+#   TILE_SHIFT  NOC_OFFSET_BITS of the build                      (12)
+#   MEM_WORDS   words per tile memory, = 2**(TILE_SHIFT-2)        (1024)
 #   NUM_TILES   tiles in the mesh, = NOC_MESH_X*NOC_MESH_Y            (4)
 #   FPGA_PROG   program loaded on every tile for the board            (alltoall)
 set -e
 cd "$(dirname "$0")"
 CC=riscv64-unknown-elf-gcc
 OC=riscv64-unknown-elf-objcopy
-MEM_WORDS=${MEM_WORDS:-1024}
+TILE_SHIFT=${TILE_SHIFT:-12}                 # NOC_OFFSET_BITS of the build
+MEM_WORDS=${MEM_WORDS:-$((1 << (TILE_SHIFT - 2)))}
 NUM_TILES=${NUM_TILES:-4}
 FPGA_PROG=${FPGA_PROG:-alltoall}
 
 for f in tile0 spin hammer alltoall; do
     $CC -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles \
+        -DTILE_SHIFT=${TILE_SHIFT:-12} \
         -Wl,-Ttext=0x100 -Wl,--build-id=none -o $f.elf $f.S
     $OC -O binary $f.elf $f.bin
     python3 -I -c "

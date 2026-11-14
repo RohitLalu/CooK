@@ -11,6 +11,12 @@
 # Results as in alltoall.S: 0xF00 errors, 0xF04 marker 0xC0DE, 0xF08 checks,
 # status CSR 0x600D0000 | checks on pass, 0xFA110000 | errors on failure.
 
+/* Tile size: a tile owns 2**TILE_SHIFT bytes (NOC_OFFSET_BITS of the build).
+ * sw/build.sh passes it; 12 = the default 4 KB tiles. */
+#ifndef TILE_SHIFT
+#define TILE_SHIFT 12
+#endif
+
 .section .text
 .globl _start
 
@@ -23,9 +29,9 @@
 
 _start:
     auipc s0, 0
-    srli  s0, s0, 12
-    slli  s0, s0, 12         # s0 = my tile base
-    srli  s1, s0, 12         # s1 = my id
+    srli  s0, s0, TILE_SHIFT
+    slli  s0, s0, TILE_SHIFT         # s0 = my tile base
+    srli  s1, s0, TILE_SHIFT         # s1 = my id
     lw    s2, 0xC(s0)        # s2 = number of nodes
     li    s3, 0              # errors
     li    s8, 0              # checks
@@ -33,7 +39,7 @@ _start:
     sw    t0, 8(s0)          # status: running
 
     addi  t0, s2, -1
-    slli  s4, t0, 12         # s4 = memory node base
+    slli  s4, t0, TILE_SHIFT         # s4 = memory node base
     addi  s5, s4, 0x200      # s5 = DDR window
 
     # 1. private megabyte

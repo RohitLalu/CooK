@@ -44,7 +44,7 @@ int main(void)
         }
         put_bytes(res + 2, buf, len);
         res[1] = len;
-        res[0] = seq;                                /* last: the result is complete */
+        if (!post_seq(res, seq)) tile_report(0, 3);  /* last, and confirmed */
         tile_status(0x600D0000 | ++jobs);
     }
 }

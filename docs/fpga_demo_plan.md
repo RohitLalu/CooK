@@ -1,5 +1,8 @@
 # FPGA demos: what is ready, what is planned
 
+**Update:** the laptop link and the demos listed in section 3 are now built and
+simulated: see `demo_tests/README.md`. This file keeps the reasoning.
+
 Goal: show on the board that the computation happens in the FPGA's NoC, on
 three cores at once, and not on the laptop.
 

@@ -12,7 +12,8 @@
 //   LED[7:4]    tile 0..3 software reported pass (status CSR 0x600Dxxxx)
 //   LED[11:8]   tile 0..3 software reported fail (status CSR 0xFA11xxxx)
 //   LED[12]     heartbeat, 1 Hz: the clock is running
-//   LED[13]     system ready: reset released, start-up link BIST done, cores running
+//   LED[13]     system ready: reset released, DDR2 calibrated (GATEWAY = 1),
+//               start-up link BIST done, cores running
 //   LED[14]     slow blink code: TILE+1 blinks
 //   LED[15]     slow blink code: error CODE blinks (table in status_panel.v)
 // 7-segment display: code, tile, 0, and the low half of that tile's status CSR.
@@ -68,12 +69,18 @@ module nexys4ddr_top #(
     parameter integer UNIT_CYCLES    = CLK_MHZ * 250_000,   // 0.25 s
     parameter integer HEART_CYCLES   = CLK_MHZ * 500_000,   // 0.5 s half period
     parameter integer REFRESH_CYCLES = CLK_MHZ * 1_000,     // 1 ms per digit
-    parameter integer GATEWAY        = 1                    // tile 3 = DMA/DDR gateway
+    parameter integer GATEWAY        = 1,                   // tile 3 = DMA/DDR gateway
+    // live demo only: serial port on core 0 and text on the display. Needs
+    // demo_tests/rtl/uart_port.v and seven_seg_text.v in the project; with 0
+    // neither is built and the two UART pins are unused.
+    parameter integer LIVE_UART      = 0
 ) (
     input  wire        CLK100MHZ,
     input  wire        CPU_RESETN,
     input  wire        BTNC,
     input  wire [15:0] SW,
+    input  wire        UART_TXD_IN,   // from the laptop (the board's USB serial port)
+    output wire        UART_RXD_OUT,  // to the laptop
     output wire [15:0] LED,
     output wire [6:0]  SEG,     // {CG,CF,CE,CD,CC,CB,CA}
     output wire        DP,
@@ -192,6 +199,8 @@ module nexys4ddr_top #(
     wire [2:0]                    gw_flags;
     wire [31:0]                   gw_info;
     wire                          bist_fault;
+    wire [63:0]                   uart_text;       // live demo: 8 characters for the display
+    wire                          uart_text_en;
 
     // gateway <-> block design
     wire [9:0]  gw_awaddr, gw_araddr;
@@ -206,13 +215,24 @@ module nexys4ddr_top #(
     wire        gw_s2mm_tlast, gw_s2mm_tvalid, gw_s2mm_tready;
     wire        mm2s_irq, s2mm_irq, ddr_calib_done;
 
+    // With the gateway, the mesh (and so the BIST and the cores) waits for the
+    // DDR2 calibration: a program may then use the DMA from its first
+    // instruction. The memory controller itself is reset by rst_n alone.
+    (* ASYNC_REG = "TRUE" *) reg [1:0] calib_s;      // init_calib_complete is in the MIG's clock domain
+    always @(posedge clk or negedge rst_n)
+        if (!rst_n) calib_s <= 2'b00;
+        else        calib_s <= {calib_s[0], ddr_calib_done};
+    wire sys_rst_n = rst_n && (GATEWAY == 0 || calib_s[1]);
+
     mesh_top #(
         .MEM_INIT(1),
         .MEM_PREFIX(MEM_PREFIX),
         .GW_EN(GATEWAY),
-        .GW_TILE(NT - 1)
+        .GW_TILE(NT - 1),
+        .UART_EN(LIVE_UART),
+        .UART_CLKS_PER_BIT(CLK_MHZ * 1_000_000 / 115200)
     ) u_sys (
-        .clk(clk), .rst_n(rst_n),
+        .clk(clk), .rst_n(sys_rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}),     // debug hook, unused on the board
         .err_clear(err_clear),
@@ -231,7 +251,9 @@ module nexys4ddr_top #(
         .gw_mm2s_tdata(gw_mm2s_tdata), .gw_mm2s_tkeep(gw_mm2s_tkeep), .gw_mm2s_tlast(gw_mm2s_tlast),
         .gw_mm2s_tvalid(gw_mm2s_tvalid), .gw_mm2s_tready(gw_mm2s_tready),
         .gw_s2mm_tdata(gw_s2mm_tdata), .gw_s2mm_tkeep(gw_s2mm_tkeep), .gw_s2mm_tlast(gw_s2mm_tlast),
-        .gw_s2mm_tvalid(gw_s2mm_tvalid), .gw_s2mm_tready(gw_s2mm_tready)
+        .gw_s2mm_tvalid(gw_s2mm_tvalid), .gw_s2mm_tready(gw_s2mm_tready),
+        .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),
+        .uart_text(uart_text), .uart_text_en(uart_text_en)
     );
 
     generate
@@ -305,9 +327,26 @@ module nexys4ddr_top #(
         .display(display), .cur_code(), .cur_tile()
     );
 
+    wire [6:0] seg_hex;
+    wire [7:0] an_hex;
     seven_seg #(.REFRESH_CYCLES(REFRESH_CYCLES)) u_7seg (
-        .clk(clk), .rst_n(rst_n), .value(display), .seg(SEG), .an(AN)
+        .clk(clk), .rst_n(rst_n), .value(display), .seg(seg_hex), .an(an_hex)
     );
+    generate
+        if (LIVE_UART != 0) begin : g_text
+            // the display shows core 0's text while it has any, the status otherwise
+            wire [6:0] seg_txt;
+            wire [7:0] an_txt;
+            seven_seg_text #(.REFRESH_CYCLES(REFRESH_CYCLES)) u_7text (
+                .clk(clk), .rst_n(rst_n), .text(uart_text), .seg(seg_txt), .an(an_txt)
+            );
+            assign SEG = uart_text_en ? seg_txt : seg_hex;
+            assign AN  = uart_text_en ? an_txt  : an_hex;
+        end else begin : g_no_text
+            assign SEG = seg_hex;
+            assign AN  = an_hex;
+        end
+    endgenerate
     assign DP = 1'b1;   // decimal points off
 
     // first four tiles get individual LEDs; the blink codes cover every tile

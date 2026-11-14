@@ -9,15 +9,21 @@
 # holds 48 in each runner's slot. Several tiles running this at once force
 # packets from different sources onto shared outputs, which is exactly the
 # case the router's output lock exists for.
+/* Tile size: a tile owns 2**TILE_SHIFT bytes (NOC_OFFSET_BITS of the build).
+ * sw/build.sh passes it; 12 = the default 4 KB tiles. */
+#ifndef TILE_SHIFT
+#define TILE_SHIFT 12
+#endif
+
 .section .text
 .globl _start
 _start:
     auipc s0, 0
-    srli  s0, s0, 12
-    slli  s0, s0, 12         # s0 = my tile base (PC rounded down to 4KB)
-    srli  s4, s0, 12         # s4 = my tile id
+    srli  s0, s0, TILE_SHIFT
+    slli  s0, s0, TILE_SHIFT         # s0 = my tile base (PC rounded down to 4KB)
+    srli  s4, s0, TILE_SHIFT         # s4 = my tile id
     slli  s4, s4, 2
-    li    s1, 0x00003000     # tile 3 base
+    li    s1, (3 << TILE_SHIFT)  # tile 3 base
     add   s5, s1, s4
     li    t1, 0x800
     add   s5, s5, t1         # s5 = tile 3 base + 0x800 + 4*id

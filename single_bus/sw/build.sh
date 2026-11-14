@@ -7,10 +7,12 @@ set -e
 cd "$(dirname "$0")"
 CC=riscv64-unknown-elf-gcc
 OC=riscv64-unknown-elf-objcopy
-MEM_WORDS=${MEM_WORDS:-1024}
+TILE_SHIFT=${TILE_SHIFT:-12}                 # NOC_OFFSET_BITS of the build
+MEM_WORDS=${MEM_WORDS:-$((1 << (TILE_SHIFT - 2)))}
 
 for f in ddr; do
     $CC -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles \
+        -DTILE_SHIFT=${TILE_SHIFT:-12} \
         -Wl,-Ttext=0x100 -Wl,--build-id=none -o $f.elf $f.S
     $OC -O binary $f.elf $f.bin
     python3 -I -c "

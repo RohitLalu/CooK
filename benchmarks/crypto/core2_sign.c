@@ -28,7 +28,7 @@ int main(void)
         put_bytes(res + 2, pk, 32);
         put_bytes(res + 10, sig, 32 * (unsigned)wots_len());
         res[1] = (uint32_t)wots_len();
-        res[0] = seq;
+        if (!post_seq(res, seq)) tile_report(0, 3);  /* last, and confirmed */
         tile_status(0x600D0000 | ++jobs);
     }
 }

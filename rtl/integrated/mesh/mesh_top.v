@@ -52,7 +52,11 @@ module mesh_top #(
     parameter integer MEM_INIT        = 0,
     parameter         MEM_PREFIX      = "tile",
     parameter integer GW_EN           = 0,
-    parameter integer GW_TILE         = `NOC_NUM_TILES - 1
+    parameter integer GW_TILE         = `NOC_NUM_TILES - 1,
+    // optional serial port on core 0 (the live demo's laptop link):
+    // demo_tests/rtl/uart_port.v, only needed and only built when UART_EN = 1
+    parameter integer UART_EN         = 0,
+    parameter integer UART_CLKS_PER_BIT = 434
 ) (
     input  wire                        clk,
     input  wire                        rst_n,
@@ -109,7 +113,13 @@ module mesh_top #(
     output wire [3:0]  gw_s2mm_tkeep,
     output wire        gw_s2mm_tlast,
     output wire        gw_s2mm_tvalid,
-    input  wire        gw_s2mm_tready
+    input  wire        gw_s2mm_tready,
+
+    // serial port of core 0 (UART_EN = 1; otherwise tx idles high, text is off)
+    input  wire        uart_rx,
+    output wire        uart_tx,
+    output wire [63:0] uart_text,
+    output wire        uart_text_en
 );
 
     localparam integer NT = `NOC_NUM_TILES;
@@ -174,9 +184,33 @@ module mesh_top #(
     genvar t;
     generate
         for (t = 0; t < NT; t = t + 1) begin : g_tile
-            wire        mem_valid, mem_instr, mem_ready;
+            wire        mem_valid, mem_instr, mem_ready;       // at the NI
             wire [31:0] mem_addr, mem_wdata, mem_rdata;
             wire [ 3:0] mem_wstrb;
+            wire        cpu_valid, cpu_instr, cpu_ready;       // at the core
+            wire [31:0] cpu_addr, cpu_wdata, cpu_rdata;
+            wire [ 3:0] cpu_wstrb;
+
+            if (UART_EN != 0 && t == 0) begin : g_uart
+                // core 0's bus goes through the serial port, which answers its
+                // own page and hands every other access to the NI untouched
+                uart_port #(.CLKS_PER_BIT(UART_CLKS_PER_BIT)) u_uart (
+                    .clk(clk), .rst_n(rst_n),
+                    .c_valid(cpu_valid), .c_instr(cpu_instr), .c_ready(cpu_ready),
+                    .c_addr(cpu_addr), .c_wdata(cpu_wdata), .c_wstrb(cpu_wstrb), .c_rdata(cpu_rdata),
+                    .n_valid(mem_valid), .n_instr(mem_instr), .n_ready(mem_ready),
+                    .n_addr(mem_addr), .n_wdata(mem_wdata), .n_wstrb(mem_wstrb), .n_rdata(mem_rdata),
+                    .rx(uart_rx), .tx(uart_tx), .text(uart_text), .text_en(uart_text_en)
+                );
+            end else begin : g_direct
+                assign mem_valid = cpu_valid;
+                assign mem_instr = cpu_instr;
+                assign mem_addr  = cpu_addr;
+                assign mem_wdata = cpu_wdata;
+                assign mem_wstrb = cpu_wstrb;
+                assign cpu_ready = mem_ready;
+                assign cpu_rdata = mem_rdata;
+            end
 
             // "<prefix>NN.mem", NN = tile number in two decimal digits
             localparam [7:0] DIG_HI = 8'd48 + ((t / 10) % 10);
@@ -250,21 +284,29 @@ module mesh_top #(
                     .STACKADDR((t + 1) << OB)
                 ) u_core (
                     .clk(clk), .resetn(core_rst_n), .trap(tile_trap[t]),
-                    .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
-                    .mem_addr(mem_addr), .mem_wdata(mem_wdata), .mem_wstrb(mem_wstrb),
-                    .mem_rdata(mem_rdata),
+                    .mem_valid(cpu_valid), .mem_instr(cpu_instr), .mem_ready(cpu_ready),
+                    .mem_addr(cpu_addr), .mem_wdata(cpu_wdata), .mem_wstrb(cpu_wstrb),
+                    .mem_rdata(cpu_rdata),
                     .pcpi_wr(1'b0), .pcpi_rd(32'b0), .pcpi_wait(1'b0), .pcpi_ready(1'b0),
                     .irq(32'b0)
                 );
             end else begin : g_nocore
                 // gateway / responder-only tile: nothing initiates from here yet
-                assign mem_valid    = 1'b0;
-                assign mem_instr    = 1'b0;
-                assign mem_addr     = 32'b0;
-                assign mem_wdata    = 32'b0;
-                assign mem_wstrb    = 4'b0;
+                assign cpu_valid    = 1'b0;
+                assign cpu_instr    = 1'b0;
+                assign cpu_addr     = 32'b0;
+                assign cpu_wdata    = 32'b0;
+                assign cpu_wstrb    = 4'b0;
                 assign tile_trap[t] = 1'b0;
             end
+        end
+    endgenerate
+
+    generate
+        if (UART_EN == 0) begin : g_no_uart
+            assign uart_tx      = 1'b1;
+            assign uart_text    = 64'b0;
+            assign uart_text_en = 1'b0;
         end
     endgenerate
 
