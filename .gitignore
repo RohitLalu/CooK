@@ -16,3 +16,14 @@ cook_vivado/out/
 cook_vivado/cook_vivado.runs
 cook_vivado/cook_vivado.cache
 cook_vivado/cook_vivado.gen
+
+# single-bus baseline: simulation and Vivado outputs
+single_bus/sim/
+single_bus/vivado_proj/sb_vivado/
+single_bus/vivado_proj/out/
+single_bus/sw/*.elf
+single_bus/sw/*.bin
+
+# benchmarks: fetched suites and build outputs
+benchmarks/third_party/
+benchmarks/build/
