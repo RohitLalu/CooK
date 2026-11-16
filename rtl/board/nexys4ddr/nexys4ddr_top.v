@@ -73,7 +73,10 @@ module nexys4ddr_top #(
     // live demo only: serial port on core 0 and text on the display. Needs
     // demo_tests/rtl/uart_port.v and seven_seg_text.v in the project; with 0
     // neither is built and the two UART pins are unused.
-    parameter integer LIVE_UART      = 0
+    parameter integer LIVE_UART      = 0,
+    // 1 = a tile's RAM outside its mailbox cannot be read by other tiles
+    // (ni.v). Use it for the crypto and link demos; alltoall.S needs 0.
+    parameter integer RD_PROTECT     = 0
 ) (
     input  wire        CLK100MHZ,
     input  wire        CPU_RESETN,
@@ -229,6 +232,7 @@ module nexys4ddr_top #(
         .MEM_PREFIX(MEM_PREFIX),
         .GW_EN(GATEWAY),
         .GW_TILE(NT - 1),
+        .RD_PROTECT(RD_PROTECT),
         .UART_EN(LIVE_UART),
         .UART_CLKS_PER_BIT(CLK_MHZ * 1_000_000 / 115200)
     ) u_sys (

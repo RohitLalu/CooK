@@ -53,8 +53,33 @@ module tb_ni;
         .mem_addr(mem_addr), .mem_wdata(mem_wdata), .mem_wstrb(mem_wstrb), .mem_rdata(mem_rdata),
         .in_valid(in_valid), .in_ready(in_ready), .in_room(in_room), .in_flit(in_flit),
         .out_valid(out_valid), .out_ready(out_ready), .out_flit(out_flit),
-        .err_flags(err_flags), .sw_status(sw_status), .bist_status(BIST_ST)
+        .err_flags(err_flags), .sw_status(sw_status), .bist_status(BIST_ST),
+        .core_trap(core_trap), .core_restart(core_restart)
     );
+    reg  core_trap = 1'b0;
+    wire core_restart;
+
+    // a second NI with the remote read window on (RD_PROTECT = 1). It hears
+    // the same incoming packets as the DUT; only its answers are looked at.
+    wire          p_valid;
+    wire [FW-1:0] p_flit;
+    wire [4:0]    p_err;
+    reg  [31:0]   p_last;        // data of its last response
+    integer       p_cnt;
+    ni #(.MY_ID(MY), .GW_ID(GW), .RD_PROTECT(1)) dut_p (
+        .clk(clk), .rst_n(rst_n),
+        .mem_valid(1'b0), .mem_instr(1'b0), .mem_ready(), .mem_addr(32'b0), .mem_wdata(32'b0),
+        .mem_wstrb(4'b0), .mem_rdata(),
+        .in_valid(in_valid && in_ready), .in_ready(), .in_room(), .in_flit(in_flit),
+        .out_valid(p_valid), .out_ready(1'b1), .out_flit(p_flit),
+        .err_flags(p_err), .sw_status(), .bist_status(10'b0),
+        .core_trap(1'b0), .core_restart()
+    );
+    always @(posedge clk)
+        if (p_valid && p_flit[`NOC_F_TYPE_LSB +: 2] == TAIL) begin
+            p_last <= p_flit[`NOC_F_DATA_LSB +: 32];
+            p_cnt  <= p_cnt + 1;
+        end
 
     // core model: like picorv32, hold mem_valid until mem_ready
     always @(posedge clk)
@@ -311,6 +336,42 @@ module tb_ni;
         core_rd(32'h0000_1014);
         check(core_rdata == {6'b0, ~BIST_ST, 6'b0, BIST_ST}, "BIST CSR: status and its complement");
         core_rd(32'h0000_1010); check(core_rdata == 0, "tile-kind CSR reads 0 on a core tile");
+
+        $display("=== 7c. remote read window (RD_PROTECT = 1) ===");
+        reset_all;
+        p_cnt = 0;
+        dut_p.mem[12'h300 >> 2] = 32'h5EC2_E700;       // private: a key, say
+        dut_p.mem[12'h900 >> 2] = 32'h0A11_0BED;       // in the mailbox
+        send_pkt(0, hdr(12'h300, 0, 0, 4'b0, 1), 32'h0, 1'b0);
+        run(12);
+        check(p_cnt == 1 && p_last == `NOC_POISON_DATA, "read of private RAM by another tile answered with POISON");
+        check(p_err[1], "... and flagged as illegal on the tile that was read");
+        send_pkt(0, hdr(12'h900, 0, 0, 4'b0, 2), 32'h0, 1'b0);
+        run(12);
+        check(p_cnt == 2 && p_last == 32'h0A11_0BED, "read inside the mailbox window answered");
+        send_pkt(0, hdr(12'h000, 0, 0, 4'b0, 3), 32'h0, 1'b0);
+        run(12);
+        check(p_cnt == 3 && p_last == MY, "CSR read still answered");
+        send_pkt(GW, hdr(12'h300, 0, 0, 4'b0, 1), 32'h0, 1'b0);
+        run(12);
+        check(p_cnt == 4 && p_last == 32'h5EC2_E700, "the gateway (DMA) may still read anywhere");
+
+        $display("=== 7d. core control CSR: trap visible, restart from another tile ===");
+        reset_all;
+        send_pkt(0, hdr(12'h018, 0, 0, 4'b0, 1), 32'h0, 1'b0);
+        run(10);
+        check(f_data(oq[1]) == 32'h0, "core-control CSR reads 0 while the core runs");
+        core_trap = 1'b1;
+        send_pkt(0, hdr(12'h018, 0, 0, 4'b0, 2), 32'h0, 1'b0);
+        run(10);
+        check(f_data(oq[3]) == 32'h1, "... and 1 once the core has trapped");
+        check(core_restart == 1'b0, "no restart without a request");
+        send_pkt(0, hdr(12'h018, 1, 0, 4'hF, 0), 32'h1, 1'b0);
+        run(5);
+        check(core_restart == 1'b1, "write 1 from another tile: core held in reset");
+        run(30);
+        check(core_restart == 1'b0, "... and released again after a few cycles");
+        core_trap = 1'b0;
 
         // ------------------------------------------------------------
         tnum = 8;

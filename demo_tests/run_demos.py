@@ -2,7 +2,7 @@
 """Simulates the board demos in demo_tests/programs on the NoC and checks them.
 
     python3 demo_tests/run_demos.py                 # all
-    python3 demo_tests/run_demos.py traffic dma     # some: traffic, dma, speedup
+    python3 demo_tests/run_demos.py traffic dma     # some: traffic, dma, speedup, restart
     python3 demo_tests/run_demos.py --board         # only build the board images
 
 Board images: benchmarks/build/demo_<name>_tNN.mem (64 KB tiles).
@@ -85,13 +85,27 @@ def speedup(out):
              f"one core {a} cycles, three cores {b} cycles: {a / b:.2f}× faster; digests equal")]
 
 
-DEMOS = {"traffic": traffic, "dma": dma, "speedup": speedup}
+def restart(out):
+    """Core 1 traps; core 0 sees it through the core-control CSR and restarts it."""
+    v = build_c("demo_restart_victim", [P / "restart.c"], 1, flags=["-DVICTIM"])[0]
+    imgs = [build_c("demo_restart", [P / "restart.c"], 0)[0], v, build_c("demo_restart", [P / "restart.c"], 2)[0]]
+    r = run(out, imgs, limit=400000, need=1)
+    trapped = any(core == 1 and val == "52550001" for core, _, val in r["changes"])
+    good = r["status"][0] == "600d0001" and r["status"][1] == "600d0002" and trapped and r["trap"][1] == "0"
+    return [("Restart: core 1 traps, core 0 restarts it", good,
+             f"status {', '.join(r['status'])}; core 1 running again (trap bits {r['trap']}); {r['cycles']} cycles")]
+
+
+DEMOS = {"traffic": traffic, "dma": dma, "speedup": speedup, "restart": restart}
 
 
 def main():
     if "--board" in sys.argv:
         sets = {"traffic": images("loop_traffic"), "dma": images("dma_lock"),
-                "speedup": images("speedup", [], ["-DWORKER"])}
+                "speedup": images("speedup", [], ["-DWORKER"]),
+                "restart": [build_c("demo_restart", [P / "restart.c"], 0)[0],
+                            build_c("demo_restart_victim", [P / "restart.c"], 1, flags=["-DVICTIM"])[0],
+                            build_c("demo_restart", [P / "restart.c"], 2)[0]]}
         for name, imgs in sets.items():
             for t, m in enumerate(imgs):
                 dst = BUILD / f"demo_{name}_t{t:02d}.mem"

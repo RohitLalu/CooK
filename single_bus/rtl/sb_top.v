@@ -21,6 +21,7 @@ module sb_top #(
     parameter         MEM_PREFIX   = "tile",
     parameter integer NI_TIMEOUT   = 1024,
     parameter integer NI_RETRY_MAX = 2,
+    parameter integer RD_PROTECT   = 0,       // ni.v: remote reads limited to CSRs and the mailbox
     parameter [`NOC_NUM_TILES-1:0] CORE_MASK = {`NOC_NUM_TILES{1'b1}}
 ) (
     input  wire clk,
@@ -108,6 +109,7 @@ module sb_top #(
             wire        mem_valid, mem_instr, mem_ready;
             wire [31:0] mem_addr, mem_wdata, mem_rdata;
             wire [ 3:0] mem_wstrb;
+            wire        core_restart;        // another tile restarts this core (ni.v CSR 0x018)
 
             // "<prefix>NN.mem", NN = tile number in two decimal digits
             localparam [7:0] DIG_HI = 8'd48 + ((t / 10) % 10);
@@ -118,7 +120,8 @@ module sb_top #(
                 .MY_ID(t),
                 .TIMEOUT_CYCLES(NI_TIMEOUT),
                 .RETRY_MAX(NI_RETRY_MAX),
-                .INIT_FILE(MEM_INIT ? {MEM_PREFIX, NUM_STR, ".mem"} : "none")
+                .INIT_FILE(MEM_INIT ? {MEM_PREFIX, NUM_STR, ".mem"} : "none"),
+                .RD_PROTECT(RD_PROTECT)
             ) u_ni (
                 .clk(clk), .rst_n(rst_n),
                 .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
@@ -130,7 +133,8 @@ module sb_top #(
                 .out_flit(n2b_flit[t*FW +: FW]),
                 .err_flags(tile_err[t*5 +: 5]),
                 .sw_status(tile_sw[t*32 +: 32]),
-                .bist_status(10'b0)          // no link BIST on a bus
+                .bist_status(10'b0),         // no link BIST on a bus
+                .core_trap(tile_trap[t]), .core_restart(core_restart)
             );
 
             if (CORE_MASK[t]) begin : g_core
@@ -140,7 +144,7 @@ module sb_top #(
                     .PROGADDR_RESET((t << OB) + 32'h100),
                     .STACKADDR((t + 1) << OB)
                 ) u_core (
-                    .clk(clk), .resetn(rst_n), .trap(tile_trap[t]),
+                    .clk(clk), .resetn(rst_n && !core_restart), .trap(tile_trap[t]),
                     .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
                     .mem_addr(mem_addr), .mem_wdata(mem_wdata), .mem_wstrb(mem_wstrb),
                     .mem_rdata(mem_rdata),

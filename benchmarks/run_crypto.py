@@ -34,12 +34,14 @@ def main():
             shutil.copy(mem, dst)
             print(f"{dst}  ({size} bytes of program)")
         return
-    images = build(["-DWOTS_LOGW=2", "-DWOTS_N=1"], "_sim")
+    # simulated with the tiles' remote read window on, and the arbiter checks
+    # that it cannot read the AES core's private memory
+    images = build(["-DWOTS_LOGW=2", "-DWOTS_N=1", "-DEXPECT_RD_PROTECT"], "_sim")
     lines = ["# Three-core crypto demo on both architectures", "",
              "Core 0: keys and arbiter. Core 1: AES-128 encrypt, then decrypt. Core 2: WOTS",
              "signature (simulation size: `WOTS_LOGW=2`, `WOTS_N=1`). Pass means core 0 got the",
-             "plaintext back from the decrypt, the signature verified, and a changed message was",
-             "rejected.", "",
+             "plaintext back from the decrypt, the signature verified, a changed message was",
+             "rejected, and core 0 could not read core 1's private memory (remote read window on).", "",
              "| Arch | Result | Cycles | Core 0 status | Core 1 status | Core 2 status | Flits on the interconnect |",
              "|---|---|---|---|---|---|---|"]
     # healthy, then with one fault from reset. NoC: the link leaving tile 0
@@ -50,7 +52,7 @@ def main():
     cases = [("noc", "healthy", []), ("bus", "healthy", []),
              ("noc", "link 0-1 dead", ["+fault=0004"]),
              ("bus", "arbiter stuck", ["+fault=1", "+need=1"])]
-    sims = {a: build_sim(a, tag="crypto") for a in ("noc", "bus")}
+    sims = {a: build_sim(a, defines=["-DBENCH_RD_PROTECT"], tag="crypto") for a in ("noc", "bus")}
     with ThreadPoolExecutor() as pool:               # the cases are independent: run them side by side
         results = list(pool.map(lambda c: run(sims[c[0]], [m for m, _ in images], limit=12_000_000,
                                               extra=c[2]), cases))

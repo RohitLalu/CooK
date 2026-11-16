@@ -15,14 +15,21 @@ checked in simulation first. **None of it has run on the board yet**, and a
 | 4 | **DMA to DDR and back** | `programs/dma_lock.c` | LED17 blue flickers (DMA interrupts), status counts rounds | yes, with the DMA model |
 | 5 | **Lock contention** | the same program on all three cores | All three cores keep making rounds: the gateway hands the one DMA lock round in turn | yes |
 | 6 | **Dhrystone on three cores** | `benchmarks/run_c_benchmarks.py` (images `benchmarks/build/dhry500_t0.mem` to `_t2.mem`) | Three pass LEDs after about 40 ms | yes, both architectures |
+| 8 | **Restart a stopped core** | `programs/restart.c` | Core 1 stops on purpose (its error LED and code 1 show briefly), core 0 notices and restarts it, both end on pass | yes |
 | 7 | **Laptop link** (live demo) | `link/`, `rtl/uart_port.v`, `rtl/seven_seg_text.v` | Type a message on the laptop; the board decrypts it and shows the first 8 characters, or encrypts it and the laptop checks the answer | yes |
 
 ```
-python3 demo_tests/run_demos.py            # simulate 2 to 5, writes results.md
+python3 demo_tests/run_demos.py            # simulate 2 to 5 and 8, writes results.md
 python3 demo_tests/run_demos.py --board    # build their board images
 python3 demo_tests/run_link_sim.py         # simulate 7
 python3 demo_tests/run_link_sim.py --board # build its board images
 ```
+
+The demos are simulated with the remote read window on (`RD_PROTECT = 1` on
+`mesh_top`): a tile's memory outside its mailbox cannot be read by other
+tiles. Set the same generic on the board build for the crypto and link demos,
+so that "core 1's keys stay in core 1" is enforced by hardware. Leave it off
+for `alltoall.S`, which fetches code from other tiles.
 
 Board images land in `benchmarks/build/` as `<name>_t00.mem` to `_t02.mem`.
 To use a set, build the FPGA with the Verilog define `NOC_OFFSET_BITS=16` and

@@ -16,6 +16,7 @@ Per-test tables are in the other files in this folder.
 | Three-core crypto demo, healthy | pass | pass | `crypto.md` |
 | Three-core crypto demo, one fault | **pass** | **fail** | `crypto.md` |
 | Fabric benchmark, three simultaneous flows | 1,807 cycles | 2,697 cycles | `fabric.md` |
+| Random traffic from 9 nodes, same sequences | 13,513 cycles | 27,398 cycles | this file |
 
 ## Fabric benchmark: the one that compares the interconnects
 
@@ -43,6 +44,37 @@ Three flows of 448 words that share no link on the mesh:
   simultaneous and on different paths. Two flows into the same tile, or a
   single flow, gain nothing, and a lone remote read is still slower over the
   mesh's extra hops.
+
+## Random traffic from every node: correctness and scaling
+
+`make soak` in the repo root (mesh) and in `single_bus/` (bus), testbench
+`tb/tb_soak.v`. Every node issues 1,000 random accesses to random other nodes,
+all at once, with a scoreboard: each read must return the last value written
+there, and afterwards every mailbox word must equal the scoreboard.
+
+| Run | Result |
+|---|---|
+| Mesh 2×2, three seeds | pass, about 2,100 checks each |
+| Mesh 3×3 | pass, 5,077 checks |
+| Mesh 2×2 with a link dead from reset (routed around) | pass, 2,129 checks |
+| Bus, 4 and 9 nodes | pass |
+
+No access hung, no packet was lost, duplicated or misdelivered, no error flag
+was set and no router dropped anything. This supports the claim that the
+fabric does not deadlock under the conditions it was designed for (one
+outstanding read per node); it is evidence from random testing, not a proof.
+
+The same runs, with identical access sequences on both fabrics, also show how
+the two scale:
+
+| Nodes | Mesh, cycles to finish | Bus, cycles to finish | Bus / mesh |
+|---|---|---|---|
+| 4 | 12,387 | 13,785 | 1.11× |
+| 9 | 13,513 | 27,398 | 2.03× |
+
+From 4 to 9 nodes the total traffic more than doubles. The mesh finishes in
+almost the same time, because the added traffic uses added links; the bus has
+one channel and takes twice as long.
 
 ## The two tests that do not pass
 
@@ -77,11 +109,13 @@ signature size (`WOTS_LOGW=2`, `WOTS_N=1`); the board images use the full one.
 
 | Case | Result | Cycles | Core 0 status |
 |---|---|---|---|
-| NoC, healthy | pass | 3,052,291 | `600D2806` |
-| Bus, healthy | pass | 3,052,292 | `600D2806` |
-| NoC, link 0-1 dead from reset (the direct link between the arbiter and the AES core) | pass | 3,052,275 | `600D2806` |
+| NoC, healthy | pass | 3,052,328 | `600D2806` |
+| Bus, healthy | pass | 3,052,329 | `600D2806` |
+| NoC, link 0-1 dead from reset (the direct link between the arbiter and the AES core) | pass | 3,052,316 | `600D2806` |
 | Bus, arbiter stuck from reset | fail, code 8 (workers unreachable) | 4,786 | `FA110008` |
 
+- All four cases run with the tiles' remote read window on, and core 0 first
+  checks that reading core 1's private memory returns POISON.
 - `2806` is the first two bytes of the ciphertext. OpenSSL on the laptop,
   given the same key and plaintext, produces a ciphertext starting `2806`.
 - In the NoC fault case the start-up BIST reported the link dead

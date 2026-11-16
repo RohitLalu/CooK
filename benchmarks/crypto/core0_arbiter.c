@@ -12,7 +12,9 @@
  *         timeout, 6 signature rejected, 7 forged message accepted, 8 a worker
  *         does not answer: checked first, so a broken interconnect is
  *         reported at once instead of after a long wait, 9 a job could not
- *         be delivered: its sequence word did not read back) */
+ *         be delivered: its sequence word did not read back, 10 core 1's
+ *         private memory could be read from here: only checked when built
+ *         with -DEXPECT_RD_PROTECT, for a system with the read window on) */
 #include "proto.h"
 #include "sha256.h"
 #include "wots.h"
@@ -46,6 +48,10 @@ int main(void)
     /* are the workers there? A remote read that fails returns POISON. */
     if (REG32(TILE_ADDR(AES_CORE, CSR_ID)) != AES_CORE || REG32(TILE_ADDR(SIGN_CORE, CSR_ID)) != SIGN_CORE)
         return 8;
+#ifdef EXPECT_RD_PROTECT
+    /* core 1's program and working memory must not be readable from here */
+    if (REG32(TILE_ADDR(AES_CORE, 0x1000)) != POISON) return 10;
+#endif
     derive("CooK AES key", aes_key);                 /* first 16 bytes are the key */
     derive("CooK signing seed", seed);
 

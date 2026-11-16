@@ -17,9 +17,9 @@ RTL_BOARD  = ../rtl/board/reset_sync.v ../rtl/board/status_panel.v ../rtl/board/
              rtl/sb_nexys4ddr_top.v
 MODEL      = tb/axi4_mem_model.v
 
-.PHONY: all test clean sw bus mem system faults board synth_check
+.PHONY: all test clean sw bus mem system faults board soak synth_check
 
-test: bus mem system faults board
+test: bus mem system faults board soak
 	@echo ""
 	@echo "=== single-bus suites completed ==="
 
@@ -62,6 +62,16 @@ board: sw | $(BUILD)
 	@echo "=== sb_nexys4ddr_top, fault switch SW = 0x1000 (stuck arbiter) ==="
 	@$(call compile,boardf,-Ptb_sb_board.FAULT_SW=16\'h1000 -s tb_sb_board tb/tb_sb_board.v $(MODEL) $(RTL_ALL) $(RTL_BOARD))
 	@$(call run,boardf,FAIL|PASSED|TOTAL)
+
+# the NoC's randomised soak test, on the bus (four and nine nodes)
+SOAK_RTL = ../tb/tb_soak.v rtl/sb_bus.v ../rtl/router/link_buffer.v ../rtl/network_interface/address_decoder.v \
+           ../rtl/network_interface/ni.v
+soak: | $(BUILD)
+	@echo "=== soak: random traffic from every node, scoreboard ==="
+	@$(call compile,soak,-DSOAK_BUS -Ptb_soak.SEED=1 $(SOAK_RTL))
+	@$(call run,soak,^soak|FAIL|PASSED|TOTAL)
+	@$(call compile,soak9,-DSOAK_BUS -DNOC_MESH_X=3 -DNOC_MESH_Y=3 -Ptb_soak.SEED=2 $(SOAK_RTL))
+	@$(call run,soak9,^soak|FAIL|PASSED|TOTAL)
 
 synth_check: | $(BUILD)
 	@echo "=== yosys: bus + memory node, latches and loops ==="

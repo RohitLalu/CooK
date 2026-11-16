@@ -70,16 +70,29 @@
 //                 inverted. The gateway reads this after BIST and accepts it
 //                 only if the two halves are complements, so a stuck-at fault
 //                 on the way back can never turn a failed link into a pass.
-//   0x018..0x0FF  reserved CSRs (read 0)
+//   0x018         core control. Read: bit 0 = this tile's core has trapped
+//                 (it executed an illegal instruction and stopped). Write 1
+//                 to bit 0: restart the core from its reset address. Any tile
+//                 may do either, so one core can notice that another has
+//                 stopped and start it again; the core's memory is NOT
+//                 reloaded, so the program must cope with being run twice.
+//   0x01C..0x0FF  reserved CSRs (read 0)
 //   0x100..       local memory
 //
 // REMOTE WRITE WINDOW (option b memory isolation)
 //   Another tile may write this tile's RAM only inside [WIN_LO, WIN_HI)
 //   (default 0x800..0xEFF, the mailbox the software lays out). The gateway
 //   (GW_ID) may write anywhere from 0x100 up, because DMA lands there.
-//   Anything else is dropped and sets the illegal-address flag. Reads are not
-//   restricted (remote instruction fetch and status reads need them), and
-//   remote CSR writes (clear errors, software status) stay allowed.
+//   Anything else is dropped and sets the illegal-address flag. Remote CSR
+//   writes (clear errors, software status, core restart) stay allowed.
+//
+// REMOTE READ WINDOW (RD_PROTECT = 1)
+//   By default any tile may read all of this tile's RAM (remote instruction
+//   fetch and the alltoall test need that). With RD_PROTECT = 1 the same
+//   window applies to reads: another tile may read the CSRs and the mailbox,
+//   and nothing else. A read outside it is answered with POISON and sets the
+//   illegal-address flag here. The gateway may still read anywhere (DMA).
+//   That is what keeps a tile's private data private: keys, state, code.
 //   PROGADDR_RESET for tile N must therefore be (N << NOC_OFFSET_BITS) + 0x100.
 
 `timescale 1ns/1ps
@@ -94,7 +107,8 @@ module ni #(
     parameter         INIT_FILE      = "none",
     parameter integer GW_ID          = -1,      // gateway tile, -1 = none
     parameter [11:0]  WIN_LO         = 12'h800,
-    parameter [11:0]  WIN_HI         = 12'hF00
+    parameter [11:0]  WIN_HI         = 12'hF00,
+    parameter integer RD_PROTECT     = 0        // 1 = remote reads limited to CSRs and the window
 ) (
     input  wire clk,
     input  wire rst_n,
@@ -122,7 +136,9 @@ module ni #(
     // ---- status ----
     output wire [4:0]             err_flags,   // same bits as CSR 0x004
     output wire [31:0]            sw_status,   // CSR 0x008
-    input  wire [9:0]             bist_status  // this tile's router, CSR 0x014
+    input  wire [9:0]             bist_status, // this tile's router, CSR 0x014
+    input  wire                   core_trap,   // this tile's core has trapped, CSR 0x018
+    output wire                   core_restart // hold the core in reset (a few cycles)
 );
 
 `include "noc_funcs.vh"
@@ -142,6 +158,7 @@ module ni #(
     localparam [OB-1:0] CSR_SW    = 'h008;
     localparam [OB-1:0] CSR_NT    = 'h00C;
     localparam [OB-1:0] CSR_BIST  = 'h014;
+    localparam [OB-1:0] CSR_CORE  = 'h018;
     localparam [1:0] T_BODY = `NOC_T_BODY, T_HEAD = `NOC_T_HEAD,
                      T_HEADTAIL = `NOC_T_HEADTAIL, T_TAIL = `NOC_T_TAIL;
     localparam [`NOC_LEN_W-1:0] LEN_2FLIT = 1;    // length-1 for HEAD+TAIL
@@ -209,7 +226,8 @@ module ni #(
                        (off == CSR_ERR) ? {27'b0, err_vec} :
                        (off == CSR_SW)  ? sw_reg :
                        (off == CSR_NT)  ? `NOC_NUM_TILES :
-                       (off == CSR_BIST) ? {6'b0, ~bist_status, 6'b0, bist_status} : 32'b0;
+                       (off == CSR_BIST) ? {6'b0, ~bist_status, 6'b0, bist_status} :
+                       (off == CSR_CORE) ? {31'b0, core_trap} : 32'b0;
         end
     endfunction
 
@@ -308,6 +326,11 @@ module ni #(
     wire b_wr     = net_req && rx_is_write && (rx_off >= CSR_LIMIT) && (rx_from_gw || rx_in_win);
     wire b_wr_bad = net_req && rx_is_write && (rx_off >= CSR_LIMIT) && !(rx_from_gw || rx_in_win);
     wire b_rd     = net_req && !rx_is_write && !rq_full && !rd_pend;
+    // a remote read of RAM this requester is not allowed to see
+    wire rd_denied = (RD_PROTECT != 0) && (rx_off >= CSR_LIMIT) && !(rx_from_gw || rx_in_win);
+
+    reg [3:0] restart_cnt;                 // core held in reset while non-zero
+    assign core_restart = |restart_cnt;
     wire          b_en    = b_wr || b_rd;
     wire [3:0]    b_we    = b_wr ? rx_wstrb : 4'b0;
     wire [AW-1:0] b_addr  = rx_off[OB-1:2];
@@ -377,8 +400,10 @@ module ni #(
             err_stale    <= 1'b0;
             err_chk      <= 1'b0;
             sw_reg       <= 32'b0;
+            restart_cnt  <= 4'd0;
         end else begin
             mem_ready <= 1'b0;      // single-cycle ack by default
+            if (restart_cnt != 0) restart_cnt <= restart_cnt - 1'b1;
             rq_push    = 1'b0;
             rq_pop     = 1'b0;
 
@@ -448,17 +473,20 @@ module ni #(
                         if (rx_wstrb[1]) sw_reg[15: 8] <= rx_data[15: 8];
                         if (rx_wstrb[2]) sw_reg[23:16] <= rx_data[23:16];
                         if (rx_wstrb[3]) sw_reg[31:24] <= rx_data[31:24];
+                    end else if (rx_off == CSR_CORE) begin
+                        if (rx_data[0]) restart_cnt <= 4'hF;     // restart this tile's core
                     end
                     rx_have <= 1'b0;
                 end else if (b_rd) begin
                     // remote read: RAM read issued on port B this cycle; the
                     // response is queued next cycle when the data is out
                     rd_pend   <= 1'b1;
-                    rd_is_mem <= (rx_off >= CSR_LIMIT);
+                    rd_is_mem <= (rx_off >= CSR_LIMIT) && !rd_denied;
                     rd_dst    <= rx_src;
                     rd_tag    <= rx_tag;
                     rd_off    <= rx_off;
-                    rd_csr    <= csr_read(rx_off);
+                    rd_csr    <= rd_denied ? POISON : csr_read(rx_off);
+                    if (rd_denied) err_illegal <= 1'b1;
                     rx_have   <= 1'b0;
                 end
             end

@@ -55,6 +55,9 @@ module mesh_top #(
     parameter integer GW_TILE         = `NOC_NUM_TILES - 1,
     // optional serial port on core 0 (the live demo's laptop link):
     // demo_tests/rtl/uart_port.v, only needed and only built when UART_EN = 1
+    // 1 = a tile's RAM outside its mailbox cannot be read by other tiles
+    // (ni.v RD_PROTECT). Off by default: alltoall.S fetches code remotely.
+    parameter integer RD_PROTECT      = 0,
     parameter integer UART_EN         = 0,
     parameter integer UART_CLKS_PER_BIT = 434
 ) (
@@ -187,6 +190,7 @@ module mesh_top #(
             wire        mem_valid, mem_instr, mem_ready;       // at the NI
             wire [31:0] mem_addr, mem_wdata, mem_rdata;
             wire [ 3:0] mem_wstrb;
+            wire        core_restart;                          // another tile restarts this core (ni.v CSR 0x018)
             wire        cpu_valid, cpu_instr, cpu_ready;       // at the core
             wire [31:0] cpu_addr, cpu_wdata, cpu_rdata;
             wire [ 3:0] cpu_wstrb;
@@ -220,6 +224,7 @@ module mesh_top #(
             localparam integer IS_GW = (GW_EN != 0) && (t == GW_TILE);
 
             if (IS_GW) begin : g_gw
+                assign core_restart = 1'b0;
                 // gateway: AXI DMA bridge instead of a core and local RAM
                 gw_ni #(
                     .MY_ID(t),
@@ -260,7 +265,8 @@ module mesh_top #(
                     .TIMEOUT_CYCLES(NI_TIMEOUT),
                     .RETRY_MAX(NI_RETRY_MAX),
                     .INIT_FILE(MEM_INIT ? {MEM_PREFIX, NUM_STR, ".mem"} : "none"),
-                    .GW_ID((GW_EN != 0) ? GW_TILE : -1)
+                    .GW_ID((GW_EN != 0) ? GW_TILE : -1),
+                    .RD_PROTECT(RD_PROTECT)
                 ) u_ni (
                     .clk(clk), .rst_n(rst_n),
                     .mem_valid(mem_valid), .mem_instr(mem_instr), .mem_ready(mem_ready),
@@ -272,7 +278,8 @@ module mesh_top #(
                     .out_flit(ni2r_flit[t*FW +: FW]),
                     .err_flags(tile_err[t*5 +: 5]),
                     .sw_status(tile_sw[t*32 +: 32]),
-                    .bist_status(bist_status[t*10 +: 10])
+                    .bist_status(bist_status[t*10 +: 10]),
+                    .core_trap(tile_trap[t]), .core_restart(core_restart)
                 );
             end
 
@@ -283,7 +290,7 @@ module mesh_top #(
                     .PROGADDR_RESET((t << OB) + 32'h100),
                     .STACKADDR((t + 1) << OB)
                 ) u_core (
-                    .clk(clk), .resetn(core_rst_n), .trap(tile_trap[t]),
+                    .clk(clk), .resetn(core_rst_n && !core_restart), .trap(tile_trap[t]),
                     .mem_valid(cpu_valid), .mem_instr(cpu_instr), .mem_ready(cpu_ready),
                     .mem_addr(cpu_addr), .mem_wdata(cpu_wdata), .mem_wstrb(cpu_wstrb),
                     .mem_rdata(cpu_rdata),

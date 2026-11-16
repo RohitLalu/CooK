@@ -9,7 +9,7 @@
 //                  any non-zero value sticks the arbiter
 // Compile with -DBENCH_BUS for the single-bus baseline (sb_top + AXI4 memory
 // model), without it for the NoC (mesh_top with the gateway on tile 3, DMA
-// side idle). Cycles are counted from the moment the cores leave reset (on
+// side idle). -DBENCH_RD_PROTECT turns the tiles' remote read window on. Cycles are counted from the moment the cores leave reset (on
 // the NoC that is after the start-up BIST) until every core has written a
 // pass or fail word to its status CSR, or trapped.
 
@@ -19,6 +19,11 @@
 module tb_bench;
 
     localparam integer NT = `NOC_NUM_TILES;
+`ifdef BENCH_RD_PROTECT
+    localparam integer RDP = 1;
+`else
+    localparam integer RDP = 0;
+`endif
     reg clk = 0, rst_n = 0;
     always #5 clk = ~clk;
 
@@ -46,7 +51,7 @@ module tb_bench;
     wire [3:0]  wstrb;
     wire        awvalid, awready, wlast, wvalid, wready, bvalid, bready;
     wire        arvalid, arready, rlast, rvalid, rready;
-    sb_top dut (
+    sb_top #(.RD_PROTECT(RDP)) dut (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .fault_grant(fault != 0), .fault_flip(1'b0), .bus_err_drop(), .bus_active(active),
@@ -71,7 +76,7 @@ module tb_bench;
     assign started = rst_n;
     `define TILE_MEM(t) dut.g_tile[t].u_ni.mem
 `else
-    mesh_top #(.GW_EN(1), .GW_TILE(NT - 1)) dut (
+    mesh_top #(.GW_EN(1), .GW_TILE(NT - 1), .RD_PROTECT(RDP)) dut (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),

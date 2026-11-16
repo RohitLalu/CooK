@@ -41,11 +41,11 @@ MESH_DEFS   ?=
 
 .PHONY: all test clean sw synth_check cocotb \
         router link_buffer address_decoder ni mesh mesh_faults mesh_3x3 \
-        alltoall alltoall_3x3 status_panel board gateway bist m3 wv_router
+        alltoall alltoall_3x3 status_panel board gateway bist m3 soak wv_router
 
 # Run the whole regression suite.
 test: address_decoder link_buffer router bist ni mesh mesh_faults mesh_3x3 \
-      alltoall alltoall_3x3 status_panel board gateway m3
+      alltoall alltoall_3x3 status_panel board gateway m3 soak
 	@echo ""
 	@echo "=== all suites completed ==="
 
@@ -151,6 +151,22 @@ m3: sw | $(BUILD)
 	@echo "=== M3 sweep: gateway system, alltoall.S, every link faulted ==="
 	@$(call compile,m3,-s tb_m3 tb/tb_m3.v $(RTL_ALL))
 	@$(call run,m3,^PASS:|^FAIL:|^M3|PASSED|TOTAL)
+
+# ---- randomised soak with a scoreboard: every tile drives random traffic ----
+# (the bus runs the same testbench: single_bus/Makefile, target soak)
+
+SOAK_RTL = tb/tb_soak.v $(RTL_ROUTER) $(RTL_NI) rtl/integrated/mesh/noc_mesh.v
+soak: | $(BUILD)
+	@echo "=== soak: random traffic from every tile, scoreboard (mesh 2x2, 3x3, 2x2 with a dead link) ==="
+	@for seed in 1 2 3; do \
+	  $(IV) -Ptb_soak.SEED=$$seed -o $(BUILD)/soak.out $(SOAK_RTL) > $(BUILD)/soak.clog 2>&1 || (cat $(BUILD)/soak.clog; exit 1); \
+	  $(VVP) $(BUILD)/soak.out > $(BUILD)/soak_$$seed.log 2>&1; grep -E "^soak|FAIL|PASSED|TOTAL" $(BUILD)/soak_$$seed.log; \
+	  ! grep -q "FAIL" $(BUILD)/soak_$$seed.log || exit 1; \
+	done
+	@$(call compile,soak33,-DNOC_MESH_X=3 -DNOC_MESH_Y=3 -Ptb_soak.SEED=4 $(SOAK_RTL))
+	@$(call run,soak33,^soak|FAIL|PASSED|TOTAL)
+	@$(call compile,soakf,-Ptb_soak.SEED=5 -Ptb_soak.FAULT_MASK=16\'h0020 $(SOAK_RTL))
+	@$(call run,soakf,^soak|FAIL|PASSED|TOTAL)
 
 # ---- synthesis sanity: no combinational loops, no latches ----
 

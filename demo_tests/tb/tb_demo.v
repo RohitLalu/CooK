@@ -34,7 +34,8 @@ module tb_demo;
     wire [1:0]  bresp, rresp;
     wire        mm_tlast, mm_tvalid, mm_tready, s2_tlast, s2_tvalid, s2_tready;
 
-    mesh_top #(.GW_EN(1), .GW_TILE(NT - 1)) dut (
+    // the demos run with the remote read window on: a tile's private RAM is its own
+    mesh_top #(.GW_EN(1), .GW_TILE(NT - 1), .RD_PROTECT(1)) dut (
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
