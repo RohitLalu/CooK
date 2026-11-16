@@ -54,7 +54,7 @@ module mesh_top #(
     parameter integer GW_EN           = 0,
     parameter integer GW_TILE         = `NOC_NUM_TILES - 1,
     // optional serial port on core 0 (the live demo's laptop link):
-    // demo_tests/rtl/uart_port.v, only needed and only built when UART_EN = 1
+    // encryption_code/rtl/uart_port.v, only needed and only built when UART_EN = 1
     // 1 = a tile's RAM outside its mailbox cannot be read by other tiles
     // (ni.v RD_PROTECT). Off by default: alltoall.S fetches code remotely.
     parameter integer RD_PROTECT      = 0,

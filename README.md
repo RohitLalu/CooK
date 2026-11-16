@@ -1,5 +1,7 @@
 # CooK — Cluster of On-chip Konnectivity
 
+> **Status: OPEN** (2026-11-16). The design it describes is built and passes in simulation, but this file has not had a full pass since the router self-test, the single-bus baseline, the benchmarks and the demos were added. Sections 5 to 8 in particular predate them. For the current state use `quick_look/user_guide.md`.
+
 An AXI/DMA-extended, BIST-aware Network-on-Chip: a 2×2 mesh of **3 PicoRV32 compute
 tiles + 1 gateway tile** (DMA/DDR, no core), built from a written specification with no
 inherited code except PicoRV32.
@@ -53,7 +55,7 @@ bonus milestone, not a requirement.
 | Hand-wired two- and four-router configs | `rtl/integrated/two_router_config/`, `four_router_config/` | **Legacy.** Superseded by the generated mesh; no longer compile against the new port lists |
 | Baremetal images | `sw/*.S`, `sw/build.sh` | **Working.** rv32i, linked at 0x100. `alltoall.S` and `hammer.S` are position and mesh-size independent. `build.sh` writes full-memory `.mem` images, plus `tileNN.mem` for the FPGA |
 | DMA/DDR gateway (`gw_ni`: NoC to Xilinx AXI DMA, DMA lock with round-robin handoff and lease, checks at the "go" write, DDR zones, own-tile rule, BIST control point) + block design (`create_cook_gw.tcl`: axi_dma, SmartConnect, MIG DDR2) | `rtl/dma_ddr/` | **Built, simulated** against a DMA model (49 checks, healthy and faulted mesh) and with tiles running `alltoall.S`. The real-IP bench `tb_gw_dma_ip` runs only in Vivado |
-| Link BIST: distributed ping-pong per router (`bist_node`), dead-link gossip and routing around dead links, gateway collection, availability bitmap, cores held until done | `rtl/router/bist_node.v`, `rtl/router/noc_router.v`, `rtl/dma_ddr/gw_ni.v` | **Built and verified.** `tb_bist` localises silent, bit-flip and run-time faults and checks every router's mask; mesh, gateway and board benches check the start-up results and the detours |
+| Link BIST and router self-test: distributed ping-pong per router (`bist_node`), a walk of every crossbar path and an arbitration check on each router, dead-link gossip and routing around dead links and failed routers, gateway collection, availability bitmap, cores held until done | `rtl/router/bist_node.v`, `rtl/router/noc_router.v`, `rtl/dma_ddr/gw_ni.v` | **Built and verified.** `tb_bist` localises silent, bit-flip and run-time faults and checks every router's mask; mesh, gateway and board benches check the start-up results and the detours |
 | M3 sweep: every single link fault, both modes, plus two double faults, on the gateway system running `alltoall.S` | `tb/tb_m3.v` (`make m3`) | **Built and passing.** 16/16 single faults leave 3/3 cores usable |
 | 3-core single-bus baseline (Step 9) | `rtl/baseline/` | **Not started** |
 | cocotb / pyuvm router testbench | `cocotb/test_router.py`, `cocotb/noc_defs.py` | Working: 20/20 routing + no-interleave |
@@ -70,7 +72,7 @@ xc7a100t's LUTs); Vivado timing is still to be run.
 > tile+1 · LED[15] blinks the error code · LED17 red: BIST found a faulty link · LED17 blue:
 > DMA interrupt · LED16 green: DDR2 calibrated · BTNC clears router error flags ·
 > 7-segment shows code, tile and a detail word. Codes, highest priority first: 1 trap,
-> E BIST link fault, 2 NI timeout, 3 check-bit error, 4 poison received, 5 stale response,
+> F router self-test failed, E BIST link fault, 2 NI timeout, 3 check-bit error, 4 poison received, 5 stale response,
 > 6 router output dead, 7 watchdog fired, 8 router input error, B DMA engine error,
 > 9 software failure, C DMA request refused (display shows the reason), D DMA lock lease
 > expired, A illegal address. Details in `rtl/board/status_panel.v`.
@@ -357,7 +359,7 @@ line.
 
 **What M3 does not cover, stated plainly:**
 - The gateway router is a single point of failure for DMA.
-- BIST tests links and FIFOs, not the inside of a router (crossbar, arbiter).
+- The router self-test covers the crossbar paths and one arbitration case, not the watchdog or the error-drop paths.
 - A fault that appears after start-up shows only through M5 (NI timeout) until the next
   reset.
 - Two faults on opposite links split the 2×2 mesh in two.
@@ -423,7 +425,7 @@ line.
 ## 8. Immediate next steps
 
 - Run `cook_vivado/build.tcl` with `0` then `1` (timing at 50 MHz on the -1 part), run `tb_gw_dma_ip` against the real DMA IP, then work through `docs/hardware_test.md` on the board
-- Extend BIST to the routers themselves (crossbar, arbiter), once the board checks pass
+- Router self-test is in (`bist_node.v`, code F); rebuild the bitstream and rerun the hardware checklist
 - C runtime and linker script with private, `.mailbox` (0x800–0xEFF) and stack sections, matching the NI's remote write window
 - A debug path that does not depend on the fabric under test (serial ring or JTAG via BSCANE2)
 - Build the 3-core single-bus baseline in `rtl/baseline/` and collect M1–M5 (M3 for the NoC: `make m3`)

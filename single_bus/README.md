@@ -1,5 +1,7 @@
 # Single-bus baseline
 
+> **Status: OPEN** (2026-11-16). RTL and all simulation suites complete and passing. Open: the Vivado scripts and block design have never been run.
+
 The comparison system for the NoC: three PicoRV32 cores and one DDR memory on
 **one shared bus**. Built to differ from the NoC in the interconnect only.
 

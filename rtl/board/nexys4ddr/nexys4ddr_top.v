@@ -74,7 +74,7 @@ module nexys4ddr_top #(
     parameter integer REFRESH_CYCLES = CLK_MHZ * 1_000,     // 1 ms per digit
     parameter integer GATEWAY        = 1,                   // tile 3 = DMA/DDR gateway
     // live demo only: serial port on core 0 and text on the display. Needs
-    // demo_tests/rtl/uart_port.v and seven_seg_text.v in the project; with 0
+    // encryption_code/rtl/uart_port.v and seven_seg_text.v in the project; with 0
     // neither is built and the two UART pins are unused.
     parameter integer LIVE_UART      = 0,
     // 1 = a tile's RAM outside its mailbox cannot be read by other tiles

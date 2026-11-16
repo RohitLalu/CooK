@@ -1,7 +1,7 @@
 /* core0_link.c -- core 0 of the live demo: the laptop link.
  * Replaces core0_arbiter.c on tile 0; cores 1 and 2 run the same workers as
- * the crypto demo (benchmarks/crypto/core1_aes.c, core2_sign.c). Needs the
- * optional serial port (demo_tests/rtl/uart_port.v, UART_EN = 1).
+ * the crypto demo (encryption_code/crypto/core1_aes.c, core2_sign.c). Needs the
+ * optional serial port (encryption_code/rtl/uart_port.v, UART_EN = 1).
  *
  * Core 0 holds the AES key but has no AES code: every message is sent across
  * the NoC to core 1 as a job, and the answer comes back the same way.

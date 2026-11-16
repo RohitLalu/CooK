@@ -1,6 +1,8 @@
 # Testing on the Nexys4 DDR through Vivado
 
-**Where this stands: nothing here has been run yet.** The expected readings come from simulation, and the two Vivado scripts have never been executed, because Vivado isn't on the development machine. If a script or a reading is wrong, that's a useful finding. Note it down. The short checklist version of this guide is `docs/hardware_test.md`.
+> **Status: OPEN** (2026-11-16). The guide is written. Open: stages D and E and the "changed since the first session" items have never been run on the board, so their expected readings are predictions.
+
+**Where this stands.** The first board session, on 7 November, passed for the design as it was then: the healthy test and the single-street fault switches. Everything added since has passed in simulation only and needs a fresh build: the intersection test (code F), the wait for the memory to calibrate, the privacy options, restart, the laptop link, and all the demos, which need bigger house memories. Treat every "expect" below that mentions those as a prediction. If the board disagrees, that is a useful finding. The short checklist is `docs/hardware_test.md`; the demos are in `demo_tests/README.md`.
 
 ## The idea in plain words
 
@@ -143,11 +145,39 @@ Build and program with `1` in place of `0` (the file is `cook_gw1.bit`). Switche
 
 Then repeat the stage B table. The displays should match, with LEDs 4–6 still on.
 
+## Stage D: break an intersection on purpose
+
+SW10 up breaks a traffic cop from the inside. SW9 and SW8 pick which one, as a binary number (both down = tile 0, SW8 up = tile 1, SW9 up = tile 2, both up = tile 3). Press CPU_RESET.
+
+| Look at | Expect |
+|---|---|
+| Display | starts with `F` (intersection test failed), then the tile number |
+| That tile's LEDs | its pass LED stays off: the town has cut that house off |
+| The other tiles | still pass |
+
+This has been simulated but never run on the board, and the last four display digits have not been recorded. Write down what you see.
+
+## Stage E: the demos
+
+These need a build with bigger house memories (64 KB instead of 4 KB) and their own programs. That build has not been made yet. `demo_tests/README.md` has the list and what each should show:
+
+- three workers doing encryption and a signature, with and without a fault;
+- traffic that never stops, where flipping a fault switch **without** reset makes the workers on that street fail while the others keep counting;
+- one worker restarting another;
+- the laptop link: type a message on the laptop, and the board decrypts it and shows the first 8 letters.
+
 ## What this doesn't test yet
 
 - **Real warehouse transfers.** The program never uses the DMA, so only memory calibration is shown. Moving data needs a new test program, which comes with the compiler work. `tb_gw_dma_ip` covers it in simulation until then.
 - **Faults that appear while running,** for the reason above.
 - **Inside-the-router faults,** which are planned after these tests pass.
+
+## Things that changed since the first session
+
+- **LED 13 now waits for the big memory.** With the warehouse build, the system holds everything until the DDR2 has calibrated, so LED 13 comes on a moment later than before, after LED 16 green.
+- **The morning inspection is longer** (545 ticks, up from 329). Still far too fast to see.
+- **A new code, F,** ranks above E. A failed intersection also closes its streets, so you may see its neighbours report E as well; F is the cause.
+- **Two new pins** are used for the laptop link (the USB serial port). They do nothing unless the link is switched on in the build.
 
 ## If something looks wrong
 
@@ -156,6 +186,7 @@ Then repeat the stage B table. The displays should match, with LEDs 4–6 still 
 | Nothing lit, no heartbeat | The bitstream didn't load. Check the board's DONE LED and the USB cable |
 | Heartbeat, but LED 13 never on | Reset stuck, or the inspection stuck. If this is the gateway build, go back to `0` |
 | Code 1 on every tile | The programs are missing. See the `$readmemh` check in step 1 |
+| Code F with SW10 down | An intersection failed its own test. Check slack first: the test adds logic on every router. Then note the display |
 | Code E with all switches down | Either a timing problem (check slack first) or a real fault. Note the display |
 | Code 2 or 9 with no E | A fault the inspection didn't see. Note the display and the switches |
 | LED 16 green never on | The memory controller couldn't calibrate. Check the 200 MHz clock and DDR2 pins in `rtl/dma_ddr/mig_nexys4ddr.prj` |

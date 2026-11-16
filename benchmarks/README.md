@@ -1,5 +1,7 @@
 # Benchmarks
 
+> **Status: OPEN** (2026-11-16). All four runners work and their results are final for simulation. Open: the two items under "Not done" (remote-execution mode, core-v-verif's own programs).
+
 Programs run on both architectures: the NoC (`rtl/`) and the single-bus
 baseline (`single_bus/`). One testbench, `tb/tb_bench.v`, builds either
 system; the runners build the programs, run them on both and write a table
@@ -33,7 +35,7 @@ git clone --depth 1 https://github.com/eembc/coremark.git
 | `run_riscv_tests.py` | riscv-tests `rv32ui` (42 tests), three cores at once | `results/riscv_tests.md` |
 | `run_arch_test.py` | riscv-arch-test 3.9.1, RV32I base set (39 tests), signatures compared with Spike | `results/arch_test.md` |
 | `run_c_benchmarks.py` | Dhrystone 2.1 (from riscv-tests) and CoreMark | `results/c_benchmarks.md` |
-| `run_crypto.py` | three-core crypto demo: keys and arbiter, AES-128, WOTS signature; healthy and with one fault | `results/crypto.md` |
+| `../encryption_code/run_crypto.py` | three-core crypto demo: keys and arbiter, AES-128, WOTS signature; healthy and with one fault | `results/crypto.md` |
 
 Run any of them from the repo root, for example `python3 benchmarks/run_arch_test.py`.
 

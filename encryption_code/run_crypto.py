@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""The three-core crypto demo on both architectures (benchmarks/crypto/).
+"""The three-core crypto demo on both architectures (encryption_code/crypto/).
 
-    python3 benchmarks/run_crypto.py            # simulate on the NoC and on the bus
-    python3 benchmarks/run_crypto.py --board    # only build the full-size board images
+    python3 encryption_code/run_crypto.py            # simulate on the NoC and on the bus
+    python3 encryption_code/run_crypto.py --board    # only build the full-size board images
 
 Core 0 generates the keys and hands out the work, core 1 does AES-128,
 core 2 signs (WOTS over SHA-256); see crypto/proto.h. Simulation uses the
 small signature size (WOTS_LOGW=2, WOTS_N=1), because a SHA-256 block costs
 tens of thousands of cycles on this core and Icarus runs about 1500 cycles
 per second. The board images use the full size (LOGW 8, N 32).
-Writes results/crypto.md; board images go to build/crypto_board_tNN.mem.
+Uses the benchmark helpers (benchmarks/cooklib.py). Writes
+benchmarks/results/crypto.md; board images go to benchmarks/build/crypto_board_tNN.mem.
 """
 import shutil
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import sys
-from cooklib import HERE, BUILD, build_c, build_sim, run
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "benchmarks"))
+from cooklib import HERE, BUILD, build_c, build_sim, run   # noqa: E402  (HERE = benchmarks/)
 
-C = HERE / "crypto"
+C = Path(__file__).resolve().parent / "crypto"
 PROGS = [("crypto_arbiter", ["core0_arbiter.c", "sha256.c", "wots.c"]),
          ("crypto_aes",     ["core1_aes.c", "aes128.c", "sha256.c"]),
          ("crypto_sign",    ["core2_sign.c", "sha256.c", "wots.c"])]

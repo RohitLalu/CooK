@@ -1,10 +1,12 @@
 # CooK in plain words: architecture, software and tests
 
+> **Status: COMPLETE** (2026-11-16). Matches the system as of this date.
+
 ## The one-paragraph idea
 
-CooK is a tiny computer system on one chip, built to keep working when part of it breaks. Think of a small town with four houses on a square of streets. Three houses each have a worker (a small processor). The fourth is a warehouse door leading to a huge storage building. Workers send each other letters along the streets. Every morning, inspectors test each street before anyone leaves home. If a street is broken, the traffic police route around it and the town carries on.
+CooK is a tiny computer system on one chip, built to keep working when part of it breaks. Think of a small town with four houses on a square of streets. Three houses each have a worker (a small processor). The fourth is a warehouse door leading to a huge storage building. Workers send each other letters along the streets. Every morning, inspectors test each street and each intersection before anyone leaves home. If something is broken, traffic is sent round it and the town carries on.
 
-Most chips connect their processors with a single shared bus, like a town with one road. Break that road and everything stops. Our town has other ways round. That is the whole point of the project, and it is what we measure.
+Most chips connect their processors with a single shared bus, like a town with one road. Break that road and everything stops. We built that one-road town too, as a comparison, and we measure both.
 
 ## The town map
 
@@ -14,102 +16,103 @@ Most chips connect their processors with a single shared bus, like a town with o
 | House's mail room | Network Interface (NI) | `rtl/network_interface/ni.v` |
 | Intersection with a traffic cop | Router | `rtl/router/noc_router.v` |
 | Street, with a waiting lane | Link buffer | `rtl/router/link_buffer.v` |
-| Morning street inspector | BIST node (Built-In Self-Test) | `rtl/router/bist_node.v` |
+| Morning inspector | BIST node (Built-In Self-Test) | `rtl/router/bist_node.v` |
 | Warehouse door and front office | Gateway NI | `rtl/dma_ddr/gw_ni.v` |
-| Warehouse and forklift | DDR2 memory and Xilinx AXI DMA | `rtl/dma_ddr/create_cook_gw.tcl` |
+| Warehouse and forklift | DDR2 memory and Xilinx AXI DMA | `rtl/dma_ddr/` |
 | Town layout | Mesh generator | `rtl/integrated/mesh/noc_mesh.v` |
-| Town rulebook | Shared constants | `rtl/include/noc_defs.vh` |
 | Dashboard | LEDs and display | `rtl/board/status_panel.v` |
+| The one-road town | Single-bus baseline | `single_bus/` |
 
-Houses are numbered like reading a book. Tile 0 and tile 1 are on the top row, tile 2 and tile 3 on the bottom. Tile 3 is the gateway. The town also works as four ordinary worker houses with no warehouse, which we use for the first board test.
+Houses are numbered like reading a book: tiles 0 and 1 on the top row, 2 and 3 below. Tile 3 is the gateway.
 
 ## How a letter travels
 
 Say the worker in tile 0 wants a number stored in tile 3.
 
-1. **The worker just asks for an address.** It has no idea a network exists. Each house owns 4 KB of addresses, so the top of the address names the house.
-2. **The mail room checks the address.** If it is local, it answers straight away. If it is remote, it writes a letter.
-3. **The letter is two pieces**, called flits: a HEAD (the envelope, with destination, sender and what is wanted) and a TAIL (the contents). Each flit is 44 bits, including parity bits that catch damage, like a checksum on a parcel.
-4. **Traffic cops forward it.** The normal rule is X-Y routing: go across first, then down. Because nobody ever turns from down back to across, cars can never end up in a circle all waiting for each other. That kind of jam is called deadlock.
-5. **The other mail room answers by itself.** Its worker does not have to stop. This matters: a house can answer even if its worker is doing something else.
-6. **If no answer comes,** the mail room waits, then sends again with a new ticket number. After a few tries, it hands the worker a special "this failed" value (`0xDEADBEEF`) and raises a flag. The worker never hangs forever.
+1. **The worker just asks for an address.** It has no idea a network exists. The top of the address names the house.
+2. **The mail room checks the address.** Local: it answers at once. Remote: it writes a letter.
+3. **The letter is two pieces**, called flits: a HEAD (the envelope) and a TAIL (the contents). Each carries parity bits that catch damage, like a checksum on a parcel.
+4. **Traffic cops forward it.** The rule is X-Y routing: go across first, then down. Nobody ever turns from down back to across, so cars can never end up in a circle all waiting for each other. That jam is called deadlock.
+5. **The other mail room answers by itself.** Its worker does not have to stop.
+6. **If no answer comes,** the mail room tries again, and after three tries hands the worker a special "this failed" value (`0xDEADBEEF`) and raises a flag. The worker never waits forever.
 
-Three traffic rules keep the streets orderly:
-- **A letter is not allowed to mix with another.** Once a HEAD takes an exit, that exit is locked until its TAIL passes.
-- **Don't enter unless the whole letter fits.** The cop checks the waiting lane has room first. So a stuck exit means something is truly broken, not just busy.
-- **Cops have stopwatches.** An exit that makes no progress for too long gets its letter closed off with a "damaged" mark, or gets marked dead.
+Three traffic rules keep order: a letter can't be mixed with another (its exit is reserved until its TAIL passes); a letter only enters a street if the whole of it fits; and cops have stopwatches, so an exit that makes no progress is closed off.
 
 ## The morning inspection (BIST)
 
-This runs in hardware after every full reset, before any worker is allowed to start. It takes about 330 clock ticks, under 7 microseconds on the board.
+This runs in hardware after every full reset, before any worker starts. It takes about 545 clock ticks, around 11 millionths of a second.
 
-1. **Ping-pong.** Each cop sends 6 test words down each street: all zeros, all ones, alternating. A wire stuck at 0 or 1 cannot pass both. The neighbour checks them and sends one "pong" back. Each cop records what passed in a 10-bit report.
-2. **Sharing the closed-road list.** Cops pass a list of dead streets to their neighbours over good streets only, for four rounds, until everyone has the same list.
-3. **Going around.** Both ends stop using a dead street. Our four streets form a ring (0-1-3-2-0), so a letter simply goes the other way round. Remove one street from a ring and you have a line, which cannot form a circle, so this cannot cause a deadlock.
-4. **Roll call.** The gateway reads every house's report over the network. A house counts as available only if that read comes back correct. Only then do the workers start.
+1. **Streets.** Each cop sends test words down each street, all zeros and all ones. A stuck wire can't pass both. The neighbour checks them and answers.
+2. **Intersections.** Each cop is then tested from the inside: a test letter is pushed in at every entrance, for every exit, and must come out of the right exit, whole and unchanged. Two letters are also sent at once, to check they don't get shuffled together.
+3. **The closed-road list.** Cops pass a list of dead streets to their neighbours over good streets only, until everyone has the same list. A cop that failed its own test puts all its streets on the list.
+4. **Going around.** Our four streets form a ring. With one street closed, traffic simply goes the other way round. A ring with a piece missing is a line, which can't form a circle, so this can't cause a deadlock.
+5. **Roll call.** The gateway reads every house's report over the network. A house counts as available only if that read really arrives. Only then do the workers start.
 
-Two results are easy to mix up, and they go to different places:
+Two results go to different places. The **closed-road list** goes to every router and steers traffic. The **availability list** stays in the gateway's office, where it is used to refuse warehouse jobs.
 
-- The **closed-road list** goes to every router. It is what steers traffic.
-- The **availability bitmap** stays in the gateway's office (register `0x120`). The gateway uses it to refuse warehouse jobs. A worker only sees it if its program looks it up.
-
-**The result we measure (M3):** for every single broken street, in both directions and both failure styles (silent, or scrambling bits), all 3 of 3 workers keep working. A single-road bus design would have 0 of 3.
+**What this gives:** any single broken street, and all three workers still work. A broken intersection costs only its own house. In the one-road town, one fault stops everyone.
 
 ## The warehouse (DMA)
 
-The workers share one forklift, so there are rules, all enforced in hardware at the gateway:
-- **One key.** A worker claims the forklift by reading a register (the lock). Others queue in turn.
-- **The key expires.** If the owner goes quiet for 16,384 ticks, the lock is taken back, so a dead worker can't block everyone.
-- **Your own shelves only.** The 128 MB warehouse has three 40 MB zones (one per worker) and two 4 MB shared areas.
-- **Refusals come with a reason.** A bad request is rejected with a reason number instead of being carried out.
+The workers share one forklift, with rules enforced in hardware at the gateway: one key (a lock), handed round in turn; the key expires if its holder goes quiet; each worker may only use its own shelves; and a bad request is refused with a reason number.
 
-Separately, other houses can only write into a small mailbox (`0x800` to `0xEFF`) in each house's memory, so a confused neighbour can't overwrite your program.
+## Keeping houses private
+
+- **Other houses can only write into your mailbox,** a small marked area. They can't touch your program.
+- **Optionally, they can only read your mailbox too.** With this switched on, a neighbour who tries to read your private notes gets the "failed" value.
+- **Messages carry a secret stamp.** Workers who share a secret word add a stamp computed from it. A message with a wrong stamp is ignored. This is done by the programs, not the hardware.
+- **A worker who collapses can be woken.** Any house can see that another worker has stopped and restart it. On a restart the worker's notes are put back to how they were at power-on.
+
+## One thing left to the programs
+
+There is no hardware rule that stops two workers writing the same shared note at the same moment. The warehouse has its lock; shared notes do not. Today every shared note has exactly one writer, so nothing goes wrong. A program that breaks that habit would corrupt data without any warning. This was a deliberate choice: it keeps the hardware small and lets programs decide the rules.
 
 ## The software
 
-A worker runs a program stored in its house's memory. We write programs in assembly (`sw/*.S`), which is the worker's own language. The script `sw/build.sh` turns each into a `.mem` file, a plain list of numbers. That file gets loaded into memory when the chip is built, so the program is already there at power-on.
+A worker runs a program stored in its house's memory. Small test programs are written in assembly (`sw/*.S`). Larger ones are written in C, with a small start-up file and a memory plan (`benchmarks/crt/`) that keep the program clear of the mailbox.
 
 | Program | What it does |
 |---|---|
-| `alltoall.S` | Every worker tests every other worker: 74 checks per worker, including byte writes, patterns and even running code from another house's memory |
-| `hammer.S` | Rush hour: lots of letters at once, to force traffic to share streets |
-| `tile0.S` | A few specific reads, including a deliberately bad address |
-| `spin.S` | Does nothing, forever |
-
-`alltoall.S` is what runs on the board. It first asks the gateway for the bitmap and skips houses marked unavailable. Then it writes a score to its status register: `0x600D....` for pass or `0xFA11....` for fail. The board's LEDs show those.
-
-BIST itself uses no software. The only software link is that one optional lookup. C programs and a proper linker script come later, with the compiler work.
+| `alltoall.S` | Every worker tests every other worker: 74 checks each |
+| Standard processor tests | Two public test suites, checked against a reference simulator, to show the workers compute correctly |
+| Dhrystone, CoreMark | Standard speed tests for a single worker |
+| Crypto demo | Worker 0 makes keys and hands out jobs; worker 1 encrypts with AES; worker 2 signs a message. Each keeps its working data at home |
+| Demos | Never-ending traffic, sharing work for speed, warehouse turns, restarting a worker, and a laptop link |
 
 ## How the testbenches work
 
-A testbench is a pretend world built around the real part, like a crash-test lab around a real car. It is ordinary Verilog that never goes on the chip. Nearly all of ours follow the same recipe:
+A testbench is a pretend world built round the real part, like a crash-test lab round a real car. It never goes on the chip. Nearly all of ours follow one recipe:
 
-1. **Make a clock and hold reset**, then release it.
-2. **Build the part** being tested (the "DUT", device under test).
-3. **Fake whatever is missing.** The router test uses queues for incoming letters and logs for outgoing ones. The gateway test uses `tb/axi_dma_model.v` as a pretend forklift.
-4. **Run scenarios** and check results with a small `check(condition, "message")` task, which prints `PASS` or `FAIL`.
-5. **Print a total.** The Makefile fails the run if the word `FAIL` appears anywhere.
+1. Make a clock, hold reset, release it.
+2. Build the part being tested.
+3. Fake whatever is missing. A pretend forklift stands in for the real one; pretend workers stand in for processors when we want traffic faster than a real worker can make it.
+4. Run scenarios and check each result. The run fails if the word `FAIL` appears anywhere.
 
-**Breaking things on purpose.** A link buffer can be told to go silent or flip a bit. That can be set at build time, or live by the board's switches. This is how we test faults without damaging hardware.
+**Breaking things on purpose.** A street can be told to go silent or scramble bits, and an intersection can be told to corrupt what it sends. That is how we test faults without damaging hardware.
 
-We test from small to large, like checking a brick, then a wall, then a house:
+We test from small to large:
 
-| Level | Testbench | Checks | What it proves |
-|---|---|---|---|
-| Parts | `tb_address_decoder`, `tb_link_buffer` | 17, 229 | Addresses and waiting lanes behave |
-| Router | `tb_noc_router` | 159 | Routing, locks, drops, stopwatches. Plus 2 Python tests in `cocotb/` as a second opinion |
-| Mail room | `tb_ni` | 56 | Requests, retries, mailbox rule |
-| Inspection | `tb_bist` | 12 | Five towns side by side, each with a different fault; every report compared |
-| Whole town | `tb_mesh_top` | 14, 8, 8, 6, 14, 10, 15 | Real workers running real programs, healthy, faulted, and on a 3×3 town |
-| Warehouse | `tb_gw_ni`, `tb_gw_alltoall` | 41, 8, 7, 11 | Lock, zones, every refusal, broken paths |
-| Dashboard | `tb_status_panel` | 57 | Blink codes and which error shows first |
-| Board | `tb_board` | 11, 9 | The whole chip design; results read only from the LEDs |
-| The headline | `tb_m3` | 19 | Every broken street, both styles, plus two double faults |
+| Level | What it proves |
+|---|---|
+| Parts | Addresses, waiting lanes, one router, one mail room |
+| Inspection | Six towns side by side, each with a different fault, every report compared |
+| Whole town | Real workers running real programs, healthy and faulted |
+| Random traffic with a scorekeeper | Every house sends random letters at once; every answer is checked against a record of what should be there. No letter lost, none duplicated, nothing stuck |
+| Fault sweep | Every street broken in turn, both ways, plus a broken intersection |
+| Board | The whole design, read only from the LEDs |
 
-`tb_gw_dma_ip` is the one test that needs Vivado, because it uses the real Xilinx forklift.
+**Testing the tests.** A test that can't fail is worthless. So we break the design on purpose, for example by making a cop route the wrong way, and confirm the tests go red.
 
-**Testing the tests.** A test that can't fail is worthless. So we sometimes break the design on purpose, for example by turning the detour off, and confirm the tests go red. They did, each time we tried.
+## NoC against one road: what we measured
 
-Run everything with `make test` (a few minutes). `make synth_check` also checks that the design can be turned into real hardware without accidental memory (latches) or logic loops.
+- **One letter at a time:** no difference. The mail room, not the road, is the limit.
+- **Three streams at once on different streets:** the town finishes in 1,807 ticks; the one-road town needs 2,697.
+- **Nine houses all sending random letters:** the town takes 13,513 ticks, the one-road town 27,398. The town with four houses took almost the same time as with nine; the one road took twice as long.
+- **One fault:** all three workers still usable in the town, none on the one road.
+- **A single worker's speed:** identical on both, because a worker computing at home doesn't use the streets.
 
-**All of this is simulation.** It has not yet run on the real board. That is what `3_testing_on_nexys4.md` is for.
+The town wins when several things happen at once on different streets, and when something breaks. It does not win on a single errand.
+
+## Where this stands
+
+The first board test, on 7 November, passed for the design as it was then. Everything added since (the intersection test, privacy options, restart, the laptop link, larger house memories) passes in simulation and still has to be built and run on the board.

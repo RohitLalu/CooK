@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE.parent / "benchmarks"))
 from cooklib import BUILD, OB, REPO, RTL, RTL_SHARED, build_c, sh   # noqa: E402
 
 P = HERE / "programs"
-C = HERE.parent / "benchmarks" / "crypto"
+C = HERE.parent / "encryption_code" / "crypto"        # sha256 for the speed-up demo
 
 
 def images(name, flags=(), worker_flags=None):

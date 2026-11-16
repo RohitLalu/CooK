@@ -1,5 +1,7 @@
 # Hardware test: Nexys4 DDR bring-up
 
+> **Status: OPEN** (2026-11-16). Stages A and B (single-link switches) passed on the board on 7 November for the design as it then was. Not yet run: anything on the current RTL, the multi-link switch codes as documented here, the router fault step (its display value is not recorded), and stage C on the current RTL.
+
 A checklist for the first sessions on the board. Every expected reading below
 comes from simulation of the same RTL and images (`make board`, `make m3`, and
 the switch-table run noted in section 5). If the board disagrees with a row,
@@ -51,7 +53,7 @@ All switches down. Program, then press CPU_RESET once.
 | What | Expected |
 |---|---|
 | LED12 | blinks at 1 Hz (the clock runs) |
-| LED13 | on almost at once (BIST done after about 330 cycles, 7 µs) |
+| LED13 | on almost at once (BIST, including the router self-test, takes about 545 cycles, 11 µs) |
 | LED[7:4] | all on: every tile passed `alltoall.S` |
 | LED[3:0], LED[11:8] | off |
 | LED14, LED15 | dark (no error code) |
@@ -103,6 +105,13 @@ correctly from E, S and its local port, but could not verify its S output.
 - [ ] Every row of the table as expected, in both modes.
 - [ ] The pass LEDs stay on for every row: this is the M3 result on silicon.
 - [ ] Switches back down and CPU_RESET: back to stage A.
+
+**Router fault.** SW10 on breaks a router from the inside; SW9 and SW8 pick
+which one (the tile number in binary). Press CPU_RESET. Expected: code `F` on
+that tile, with the last four display digits showing its failed inputs and
+outputs; the mesh drops that router's links, so that tile's core fails and the
+other tiles pass. Simulated for router 1 (`tb_bist` case F, `make m3`); the
+exact display value has not been captured, so note what you see.
 
 A switch changed *without* a reset injects a fault the start-up BIST never saw.
 `alltoall.S` finishes within a millisecond of reset, so with no traffic left,

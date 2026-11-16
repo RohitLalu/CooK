@@ -1,86 +1,66 @@
-# FPGA demos: what is ready, what is planned
+# FPGA demos: status
 
-**Update:** the laptop link and the demos listed in section 3 are now built and
-simulated: see `demo_tests/README.md`. This file keeps the reasoning.
+> **Status: OPEN** (2026-11-16). Every item is built and passes in simulation. Open: none has run on the board, and the live-demo top is elaboration-checked only.
 
 Goal: show on the board that the computation happens in the FPGA's NoC, on
 three cores at once, and not on the laptop.
 
-## 1. Three-core crypto demo (passes in simulation on both architectures, not yet on the board)
+Everything that was planned in this file is now built and passes in
+simulation. **None of it has run on the board yet**: it all needs a bitstream
+with 64 KB tiles (`NOC_OFFSET_BITS=16`), which has not been built. What to
+expect on the board for each demo is in `demo_tests/README.md`.
 
-Code: `benchmarks/crypto/`. All C, RV32I only: no multiplier, no FPU, no
-custom instructions, no extra hardware.
-
-| Core | Job | What stays private to its tile |
+| Planned | Status | Where |
 |---|---|---|
-| 0 | Key generator and arbiter: derives the AES key and the signing seed (SHA-256), hands out jobs, checks results | the nonce, the verification state |
-| 1 | AES-128: encrypts, then decrypts on request | round keys, S-boxes, block state |
-| 2 | Digital signature: one-time key pair, sign | secret chain values, hash state |
+| Crypto on three cores: keys and arbiter, AES-128, signature | Built, simulated on NoC and bus | `encryption_code/crypto/`, `encryption_code/run_crypto.py` |
+| The same with a fault: NoC survives, bus does not | Built, simulated | the same runner, fault cases |
+| Laptop link: decrypt and show, encrypt and return | Built, simulated with the testbench as the laptop | `encryption_code/link/`, `encryption_code/run_link_sim.py` |
+| Serial port on core 0 | Built, optional | `encryption_code/rtl/uart_port.v` |
+| A separate top module for the live demo | Built, elaboration-checked only | `encryption_code/rtl/nexys4ddr_live_top.v` |
+| Text on the 7-segment display | Built | `encryption_code/rtl/seven_seg_text.v` |
+| Laptop script | Built; its AES self-checked, never run against a board | `encryption_code/link/laptop.py` |
+| Looping traffic, so a fault switched in while running is visible | Built, simulated | `demo_tests/programs/loop_traffic.c` |
+| Parallel speed-up | Built, simulated (2.89× with three cores) | `demo_tests/programs/speedup.c` |
+| DMA to DDR and back | Built, simulated with the DMA model | `demo_tests/programs/dma_lock.c` |
+| Lock contention | Built, simulated (same program on three cores) | the same |
+| Dhrystone on three cores | Built, simulated | `benchmarks/run_c_benchmarks.py` |
+| Restart a stopped core (added later) | Built, simulated | `demo_tests/programs/restart.c` |
 
-Shared data goes only through the mailboxes (offsets `0x800`–`0xEFF` of each
-tile, the one region other tiles may write). A job carries the key and the
-input; a result carries the output. Protocol: `crypto/proto.h`.
+## How the serial port is attached
 
-**Signature scheme: WOTS over SHA-256, not ML-DSA.** ML-DSA-44 does not fit
-this system as it stands: it needs tens of kilobytes of working memory on top
-of its code, and its polynomial arithmetic is all multiplication, which these
-cores do in software. A hash-based signature needs only SHA-256. WOTS is a
-one-time signature: one key pair signs one message. If ML-DSA matters for the
-write-up, it needs larger tiles and the core's multiplier enabled, which is a
-hardware change to decide separately.
+There are two board tops.
 
-**AES-128 only.** AES-256 is the same code with a longer key schedule; not
-written.
+- `rtl/board/nexys4ddr/nexys4ddr_top.v` is the normal one. It contains no
+  serial port and needs no file from `encryption_code/`.
+- `encryption_code/rtl/nexys4ddr_live_top.v` is the live-demo top. It is the
+  normal top with the serial port on core 0, the text display and the remote
+  read window switched on.
 
-In simulation it passes on the NoC and on the bus, the ciphertext matches
-OpenSSL, and with the arbiter-to-AES link dead the NoC still finishes while a
-stuck bus arbiter fails at once (`benchmarks/results/SUMMARY.md`).
+For the live demo, make `nexys4ddr_live_top` the synthesis top, add the three
+files in `encryption_code/rtl/`, define `NOC_OFFSET_BITS=16`, and use the
+images from `python3 encryption_code/run_link_sim.py --board`. The serial
+port sits on core 0's memory bus in front of its network interface and
+answers one page of addresses; the network interface is not changed.
 
-To put it on the board:
-1. Build the images: `python3 benchmarks/run_crypto.py --board` (writes
-   `benchmarks/build/crypto_board_t00..02.mem`, 64 KB images).
-2. Build the FPGA with 64 KB tiles: add the Verilog define
-   `NOC_OFFSET_BITS=16` to the Vivado project and point the memory images at
-   those three files. Not done or tried yet.
-3. Expected: LED4–LED6 on (three cores pass), and the display's last four
-   digits show the first two ciphertext bytes, which core 0 can only have got
-   from core 1.
+## Decisions taken along the way
 
-## 2. Laptop link (planned, not built)
+- **Signature scheme: WOTS over SHA-256, not ML-DSA.** ML-DSA needs more
+  working memory than a tile holds and is dominated by multiplication, which
+  these cores do in software.
+- **AES-128 only.** AES-256 is not written.
+- **The key is compiled into both sides.** This is not a key exchange.
+- **Mailbox messages carry a keyed checksum, in firmware.**
 
-What you asked for: type a message on the laptop, send it encrypted, core 1
-decrypts and the display shows the first characters; or the reverse.
+## Why this shows the FPGA did the work
 
-It needs one new hardware piece: a UART on the board's USB serial port
-(pins C4 and D4, the same cable used for programming).
+- In `show` mode the laptop sends ciphertext only; the plaintext appears on
+  the board's own display.
+- Core 0 has no AES code, so the answer crossed the NoC to core 1 and back.
+- With a fault switch set and a reset, it still works; the single-bus build
+  with its fault switch does not.
 
-| Piece | What it is | Size of the job |
-|---|---|---|
-| UART receiver and transmitter | small RTL block, 115200 baud | new module + testbench |
-| Where it attaches | registers in core 0's tile (new CSRs for "byte ready", "read byte", "send byte") | a change to `ni.v`, or a small wrapper beside it |
-| Core 0 program | reads the message from the UART, forwards it as a job, sends the result back | extends `core0_arbiter.c` |
-| Laptop script | Python with `pyserial` and an AES library: encrypts, sends, prints what comes back | new script |
-| Display text | six characters on the 7-segment display | a character table in `seven_seg.v`, or hex only |
+## Still to do
 
-Decision needed before building: attaching the UART touches the NI, which
-both architectures share. The alternative is a UART that sits beside core 0's
-memory bus without touching `ni.v`.
-
-**How this proves the FPGA did the work:**
-- The laptop sends ciphertext and never sends the key or the plaintext in
-  that direction; the plaintext then appears on the board's own display.
-- Core 0 has no AES code, so the answer must have crossed the NoC to core 1.
-- Break a link with the fault switches and press reset: the demo still works
-  (the routers go around it). On the single-bus build, one fault stops it.
-- Unplug the USB data after sending: the board still shows the result.
-
-## 3. Other demos worth showing
-
-| Demo | What it shows | Needs |
-|---|---|---|
-| **Fault switch during the crypto demo** | the same computation survives any single link fault on the NoC and dies on the bus | section 1 on the board, both bitstreams |
-| **Looping all-to-all with a live counter** | traffic never stops; flipping a fault switch without reset shows timeouts live (the test the current program cannot show) | a looping variant of `alltoall.S` |
-| **Parallel speed-up** | hash N blocks on one core, then split across three: display the time for each | a cycle counter CSR, small C program |
-| **DMA to DDR and back** | a core claims the lock, moves a block to DDR and back, compares | C program using the gateway registers; already covered in simulation |
-| **Lock contention** | three cores fight for the DMA lock; display shows whose turn it is | small C program |
-| **Dhrystone on three cores** | each core's pass LED; same score on NoC and bus | images exist (`run_c_benchmarks.py`) |
+- Build a 64 KB-tile bitstream and run each demo on the board.
+- Run `laptop.py` against the real serial port.
+- Record the board readings in `demo_tests/README.md`.

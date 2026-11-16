@@ -1,5 +1,7 @@
 # Why it is built this way: decisions and mistakes
 
+> **Status: COMPLETE** (2026-11-16). Matches the system as of this date.
+
 The town analogy from `1_architecture_and_software.md` is used here too: houses are tiles, streets are links, traffic cops are routers, mail rooms are network interfaces (NIs).
 
 ## Part 1: The decisions
@@ -65,6 +67,33 @@ At first, a broken street simply got closed. When we counted honestly, one broke
 - Two opposite broken streets split the town in two.
 - Detours work on 2×2 only.
 
+### Later decisions: privacy, recovery, and the comparison town
+
+| Decision | Why | Cost |
+|---|---|---|
+| **Test the intersections too, not only the streets** | A cop who sends cars the wrong way is as bad as a broken street. Each cop is now tested from the inside every morning | The inspection takes longer (545 ticks, up from 329). The cop's stopwatch is still not tested |
+| **A failed intersection is cut out completely** | We can't trust any of its exits, so all its streets go on the closed-road list | That house is lost. The other houses carry on |
+| **An optional "read only my mailbox" rule** | Without it any worker could read another's private notes, including secret keys | It is off by default, because one test program reads its neighbours' code on purpose |
+| **A secret stamp on messages, done by the programs** | Any house can write to any mailbox, so a message needs proof of who sent it | A worker who knows the secret can still forge. Hardware does not enforce it |
+| **Let any house restart a collapsed worker** | Before, one stopped worker stayed stopped until the whole town was reset | Nothing checks who restarts whom |
+| **No hardware lock on shared notes** | Keeps the mail room small, and programs can choose their own rules. The warehouse lock covers the big transfers | Two workers writing one shared note at once corrupt it silently. Programs must avoid this |
+| **Build the one-road town with the same houses** | If only the roads differ, any difference we measure is the roads | It is not a textbook bus |
+| **Measure the roads with pretend workers** | A real worker is so slow that both towns sit mostly idle, so they looked equal | The result is about the roads, and we say so |
+| **A hash-based signature, not ML-DSA** | ML-DSA needs far more memory than a house has and is all multiplication, which these workers do slowly in software | A one-time signature: one key signs one message |
+
+### What we take for granted
+
+Every design rests on assumptions. Ours, in plain words:
+
+- **Each worker sends one request at a time and waits.** The no-jam guarantee depends on this.
+- **Everyone wakes at the same moment.** The inspectors keep in step by counting ticks, not by talking.
+- **Things that are broken are broken at wake-up.** The inspection runs once. A street that breaks later is noticed (letters time out) but not driven round until the next reset.
+- **Only streets and intersections break.** Workers, mail rooms and memories are trusted.
+- **Programs behave.** One writer per shared note; give the warehouse key back.
+- **Four houses.** Driving round a fault relies on the streets forming a ring.
+
+If one of these stops being true, the matching guarantee goes with it. `docs/assumptions_decisions_risks.md` lists what fails and how.
+
 ## Part 2: The mistakes
 
 Mistakes are the most useful part of this file. The lesson matters more than the slip.
@@ -93,6 +122,18 @@ Mistakes are the most useful part of this file. The lesson matters more than the
 | **Accidental latch** | A loop counter wasn't set on every path, so synthesis added stray memory. `make synth_check` caught it | Simulation won't show everything, so also run the hardware checks |
 | **Used before declared** | `bist_fault` in the board top was used above its declaration. Icarus accepted it, but Vivado can reject it | One tool passing doesn't mean all will |
 
+### Slips during the benchmark and demo work
+
+| Mistake | What happened | Lesson |
+|---|---|---|
+| **A "pass" that checked nothing** | A build setting renamed the benchmark's `main`, and also renamed the call in our start-up file, so our result check was skipped. Dhrystone "passed" unchecked | A pass only counts if you have seen the check fail at least once |
+| **The benchmark ignored our setting** | Dhrystone's own header fixes 500 runs and silently overrode ours. Our timing was for the wrong count | Read what the borrowed code really does |
+| **Old switch numbers left behind** | After the fault switches moved (three switches on our board are faulty), the regression still drove the old value. It injected no fault and nobody noticed | When hardware mapping changes, search for every use |
+| **The new test broke an old feature** | The intersection test ran while a debug setting had one exit switched off. The cop "failed" and was cut out of the town | A new check must not judge things that were switched off on purpose |
+| **Workers started before the warehouse was ready** | On the board the big memory needs time to calibrate. Cores started earlier. Simulation could not show it, because the pretend warehouse is always ready | Ask what the model leaves out |
+| **A test that looked stuck** | The random-traffic test seemed to hang. It was just slow, and its output was buffered | Measure before concluding |
+| **Unknown is not zero** | The scorekeeper expected 0 in never-written slots; the simulator says "unknown". 61 false failures, the same on both towns | A failure that is identical everywhere is probably the test |
+
 ### Wrong claims, the kind to watch most
 
 These cost nothing to fix, but they would have misled people.
@@ -101,6 +142,7 @@ These cost nothing to fix, but they would have misled people.
 |---|---|---|
 | **The README said M3 was "at least 2 workers"** | Counting every case gave a worst case of 1. Counting properly is what led to the detour | Measure a headline number before stating it |
 | **"Flip SW15 while running to see timeouts"** | The test program finishes within a millisecond, so no traffic is left to notice. Nothing would show | Think through what the board will really do, not only the logic |
+| **"These benchmarks compare the two towns"** | The processor tests and speed tests run inside one house and never use the streets, so they are bound to be equal. They show the workers work, nothing more | Know what a test can and can't tell you |
 | **"Duplicate assign in `mesh_top`"** | No such thing. Two overlapping printouts showed one line twice | Check a finding before reporting it, and retract openly when it's wrong |
 
 ### Tool surprises

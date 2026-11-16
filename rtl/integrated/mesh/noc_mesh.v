@@ -126,7 +126,9 @@ module noc_mesh #(
                     .out_ready(rr_out_ready[ID*5 +: 5]),
                     .out_room (rr_out_room [ID*5 +: 5]),
                     .out_flit (ro_flit),
-                    .port_disable(port_disable[ID*5 +: 5] | bist_dis),
+                    // the external override applies only after BIST: the router
+                    // self-test must see the router as it is, not a debug setting
+                    .port_disable((node_done[ID] ? port_disable[ID*5 +: 5] : 5'b0) | bist_dis),
                     .dead_links(dead_links[ID*`NOC_LINKS_W +: `NOC_LINKS_W]),
                     .err_clear(err_clear),
                     .in_err   (rt_in_err  [ID*5*`NOC_E_W +: 5*`NOC_E_W]),

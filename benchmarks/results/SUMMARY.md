@@ -1,5 +1,7 @@
 # Benchmark results, both architectures
 
+> **Status: COMPLETE** (2026-11-16). Final for simulation. The other files in this folder are written by the runners and are covered by this status: `riscv_tests.md`, `arch_test.md`, `c_benchmarks.md`, `fabric.md`, `crypto.md` are all complete. Nothing here is a board result.
+
 Stabilised 2026-11-14. Simulation only (Icarus Verilog); nothing here has run
 on the board. Both systems built with 64 KB tiles (`NOC_OFFSET_BITS=16`),
 RV32I, no multiplier, no barrel shifter. Rates assume the board's 50 MHz clock.
@@ -13,7 +15,7 @@ Per-test tables are in the other files in this folder.
 | riscv-arch-test 3.9.1, RV32I base set, signatures against Spike | 38 of 39 | 38 of 39 | `arch_test.md` |
 | Dhrystone 2.1, three cores at once | pass | pass | `c_benchmarks.md` |
 | CoreMark, one core | pass | pass | `c_benchmarks.md` |
-| Three-core crypto demo, healthy | pass | pass | `crypto.md` |
+| Three-core crypto demo, healthy (`encryption_code/run_crypto.py`) | pass | pass | `crypto.md` |
 | Three-core crypto demo, one fault | **pass** | **fail** | `crypto.md` |
 | Fabric benchmark, three simultaneous flows | 1,807 cycles | 2,697 cycles | `fabric.md` |
 | Random traffic from 9 nodes, same sequences | 13,513 cycles | 27,398 cycles | this file |
@@ -60,9 +62,10 @@ there, and afterwards every mailbox word must equal the scoreboard.
 | Bus, 4 and 9 nodes | pass |
 
 No access hung, no packet was lost, duplicated or misdelivered, no error flag
-was set and no router dropped anything. This supports the claim that the
-fabric does not deadlock under the conditions it was designed for (one
-outstanding read per node); it is evidence from random testing, not a proof.
+was set and no router dropped anything. How to state this: it is evidence
+from random testing, not a proof, and it covers the condition the design
+assumes, at most one read outstanding per node. `docs/known_issues.md` has
+the exact wording to use.
 
 The same runs, with identical access sequences on both fabrics, also show how
 the two scale:
@@ -109,20 +112,22 @@ signature size (`WOTS_LOGW=2`, `WOTS_N=1`); the board images use the full one.
 
 | Case | Result | Cycles | Core 0 status |
 |---|---|---|---|
-| NoC, healthy | pass | 3,052,328 | `600D2806` |
-| Bus, healthy | pass | 3,052,329 | `600D2806` |
-| NoC, link 0-1 dead from reset (the direct link between the arbiter and the AES core) | pass | 3,052,316 | `600D2806` |
-| Bus, arbiter stuck from reset | fail, code 8 (workers unreachable) | 4,786 | `FA110008` |
+| NoC, healthy | pass | 4,517,573 | `600D2806` |
+| Bus, healthy | pass | 4,517,574 | `600D2806` |
+| NoC, link 0-1 dead from reset (the direct link between the arbiter and the AES core) | pass | 4,517,589 | `600D2806` |
+| Bus, arbiter stuck from reset | fail, code 8 (workers unreachable) | 5,010 | `FA110008` |
 
 - All four cases run with the tiles' remote read window on, and core 0 first
   checks that reading core 1's private memory returns POISON.
+- Every job and result carries a keyed checksum; core 0 also sends core 1 a
+  forged job and checks that it is ignored.
 - `2806` is the first two bytes of the ciphertext. OpenSSL on the laptop,
   given the same key and plaintext, produces a ciphertext starting `2806`.
 - In the NoC fault case the start-up BIST reported the link dead
   (`dead_links = 01`) and the same computation finished within a few cycles
   of the healthy run.
 - The crypto code also passes known-answer tests on the laptop
-  (`crypto/host_test.c`): SHA-256 and AES-128 against the FIPS vectors, WOTS
+  (`encryption_code/crypto/host_test.c`): SHA-256 and AES-128 against the FIPS vectors, WOTS
   sign, verify and two tamper checks at three sizes.
 
 ## Regressions run with this state of the code

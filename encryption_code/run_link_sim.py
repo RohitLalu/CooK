@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Simulates the laptop link (demo_tests/link) and checks it against the laptop's AES.
+"""Simulates the laptop link (encryption_code/link) and checks it against the laptop's AES.
 
-    python3 demo_tests/run_link_sim.py            # simulate
-    python3 demo_tests/run_link_sim.py --board    # only build the board images
+    python3 encryption_code/run_link_sim.py            # simulate
+    python3 encryption_code/run_link_sim.py --board    # only build the board images
 
 Two messages are sent down the serial line one after the other:
   1. "show": ciphertext made on this machine; the board must decrypt it and put
@@ -22,7 +22,7 @@ sys.path.insert(0, str(HERE / "link"))
 from cooklib import BUILD, OB, REPO, RTL, RTL_SHARED, build_c, sh   # noqa: E402
 import laptop                                                        # noqa: E402
 
-C = HERE.parent / "benchmarks" / "crypto"
+C = HERE / "crypto"
 PROGS = [("link_core0", [HERE / "link" / "core0_link.c", C / "sha256.c"]),
          ("link_aes",   [C / "core1_aes.c", C / "aes128.c", C / "sha256.c"]),
          ("link_sign",  [C / "core2_sign.c", C / "sha256.c", C / "wots.c"])]
@@ -47,7 +47,7 @@ def main():
 
     out = BUILD / "link.out"
     sh(["iverilog", "-g2012", "-Irtl/include", f"-DNOC_OFFSET_BITS={OB}", "-s", "tb_link", "-o", str(out),
-        "demo_tests/tb/tb_link.v", "demo_tests/rtl/uart_port.v", *RTL_SHARED, *RTL["noc"]], cwd=REPO)
+        "encryption_code/tb/tb_link.v", "encryption_code/rtl/uart_port.v", *RTL_SHARED, *RTL["noc"]], cwd=REPO)
     text = sh(["vvp", "-n", str(out), *[f"+img{t}={m}" for t, (m, _) in enumerate(images)],
                f"+frame={ff}", f"+nbytes={len(frames)}", f"+nreply={len(expect)}"]).stdout
     reply = bytes.fromhex(re.search(r"LINK reply=(\w*)", text)[1])

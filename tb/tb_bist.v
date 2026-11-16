@@ -128,7 +128,7 @@ module tb_bist;
 
         // router self-test
         check(rts[0] === {NT*10{1'b0}} && rts[1] === {NT*10{1'b0}} && rts[4] === {NT*10{1'b0}},
-              "A, B, E: every router passes its self-test (a link fault is not a router fault)");
+              "A, B, E: routers pass the self-test: a link fault is no router fault");
         check(rts[5][1*10 +: 10] !== 10'b0 && rts[5][1*10 + L] === 1'b1,
               "F: router 1 fails its self-test, local output flagged");
         check(rts[5][0*10 +: 10] === 10'b0 && rts[5][2*10 +: 10] === 10'b0 && rts[5][3*10 +: 10] === 10'b0,
