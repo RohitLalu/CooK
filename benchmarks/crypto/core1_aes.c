@@ -2,7 +2,8 @@
  * mailbox, encrypts or decrypts the blocks with the key in the job, and
  * writes only the result into core 0's mailbox. Before serving it checks
  * itself against the FIPS 197 vector; a core that fails that reports failure
- * and serves nothing. Status: 0x600D0000 | jobs done. */
+ * and serves nothing. A job whose keyed checksum is wrong (proto.h) is
+ * ignored. Status: 0x600D0000 | jobs done. */
 #include "proto.h"
 #include "aes128.h"
 
@@ -37,6 +38,8 @@ int main(void)
             tile_report(0, 2);
         get_bytes(key, job + JOB_KEY, 16);
         get_bytes(buf, job + JOB_DATA, len);
+        if (job[JOB_TAG] != proto_tag(seq, job[JOB_OP], len, key, 16, buf, len))
+            continue;                                /* not from the arbiter, or damaged: ignore */
         aes128_init(&a, key);
         for (i = 0; i < len; i += 16) {
             if (job[JOB_OP] == OP_AES_ENC) aes128_encrypt(&a, buf + i, buf + i);
@@ -44,6 +47,7 @@ int main(void)
         }
         put_bytes(res + 2, buf, len);
         res[1] = len;
+        res[RES_AES_TAG] = proto_tag(seq, len, 0, buf, len, 0, 0);
         if (!post_seq(res, seq)) tile_report(0, 3);  /* last, and confirmed */
         tile_status(0x600D0000 | ++jobs);
     }

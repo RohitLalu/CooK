@@ -13,7 +13,8 @@
  *         go to the board's display, the reply carries no data
  *   op 2  the bytes are plaintext: core 1 encrypts, the reply is the ciphertext
  *   len   16, 32, 48 or 64 (whole AES blocks)
- *   status 0 ok, 1 bad frame, 2 job not delivered, 3 no answer from core 1
+ *   status 0 ok, 1 bad frame, 2 job not delivered, 3 no answer from core 1,
+ *          4 the answer failed its keyed checksum (proto.h)
  * The key is the crypto demo's: SHA-256("CooK AES key" || nonce), first 16
  * bytes. It is compiled in on both sides; this is not a key exchange.
  * Status CSR: 0x600D0000 | messages served. */
@@ -72,6 +73,7 @@ int main(void)
         if (!send_job(AES_CORE, seq, op == 1 ? OP_AES_DEC : OP_AES_ENC, key, 16, buf, len)) { reply(2, 0, 0); continue; }
         if (!wait_for(mine + RES_AES, seq)) { reply(3, 0, 0); continue; }
         get_bytes(buf, mine + RES_AES + 2, len);
+        if (mine[RES_AES + RES_AES_TAG] != proto_tag(seq, len, 0, buf, len, 0, 0)) { reply(4, 0, 0); continue; }
 
         if (op == 1) {
             UART[UART_TEXT]     = buf[0] | ((uint32_t)buf[1] << 8) | ((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);

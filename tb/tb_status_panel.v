@@ -27,6 +27,7 @@ module tb_status_panel;
     reg                      bist_done = 1;
     reg [2:0]                gw_flags = 0;
     reg [31:0]               gw_info = 0;
+    reg [NT*10-1:0]          rt_status = 0;
     wire code_led, tile_led, heartbeat;
     wire [NT-1:0] tile_bad, tile_pass, tile_fail;
     wire [31:0] display;
@@ -35,7 +36,8 @@ module tb_status_panel;
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead), .rt_out_wd(rt_out_wd),
-        .bist_status(bist_status), .bist_done(bist_done), .gw_flags(gw_flags), .gw_info(gw_info),
+        .bist_status(bist_status), .rt_status(rt_status), .bist_done(bist_done),
+        .gw_flags(gw_flags), .gw_info(gw_info),
         .code_led(code_led), .tile_led(tile_led), .heartbeat(heartbeat),
         .tile_bad(tile_bad), .tile_pass(tile_pass), .tile_fail(tile_fail),
         .display(display), .cur_code(), .cur_tile()
@@ -95,7 +97,7 @@ module tb_status_panel;
     task clear_all;
         begin
             tile_trap = 0; tile_err = 0; tile_sw = 0; rt_in_err = 0; rt_out_dead = 0; rt_out_wd = 0;
-            bist_status = BIST_OK; gw_flags = 0; gw_info = 0;
+            bist_status = BIST_OK; gw_flags = 0; gw_info = 0; rt_status = 0;
         end
     endtask
 
@@ -136,6 +138,10 @@ module tb_status_panel;
         tile_err[0*5 + 0] = 1;                                   // ...and the timeout it causes
         expect_code(14, 1, "BIST fault outranks the timeout it causes");
         check(display[15:0] == {6'b0, bist_status[1*10 +: 10]}, "display shows router 1's in/out bits");
+        clear_all; rt_status[2*10 +: 10] = 10'b00100_10000;      // router 2: path from input E to output L failed
+        bist_status[2*10 + `NOC_P_E] = 1'b0;                     // ... and a link code on the same tile
+        expect_code(15, 2, "router self-test failure is code F, ahead of the link code E");
+        check(display[15:0] == 16'h0090, "display shows router 2's in_bad / out_bad bits");
         clear_all; bist_status[0*10 + `NOC_P_N] = 1'b0;          // absent port (edge): not a fault
         expect_code(0, 0, "absent edge port at 0 is not a BIST fault");
         clear_all; gw_flags = 3'b100; gw_info = 32'h0050_0000;

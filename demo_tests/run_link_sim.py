@@ -24,7 +24,7 @@ import laptop                                                        # noqa: E40
 
 C = HERE.parent / "benchmarks" / "crypto"
 PROGS = [("link_core0", [HERE / "link" / "core0_link.c", C / "sha256.c"]),
-         ("link_aes",   [C / "core1_aes.c", C / "aes128.c"]),
+         ("link_aes",   [C / "core1_aes.c", C / "aes128.c", C / "sha256.c"]),
          ("link_sign",  [C / "core2_sign.c", C / "sha256.c", C / "wots.c"])]
 
 

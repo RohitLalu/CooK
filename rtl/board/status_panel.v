@@ -9,6 +9,7 @@
 // ERROR CODES. The panel reports the highest-priority code present on any
 // tile, and the lowest tile that has it. Listed in priority order:
 //    1  core trapped                         (tile_trap)
+//    F  router self-test failed              (that tile's router, at start-up)
 //    E  link BIST failed a port that exists  (that tile's router, at start-up)
 //    2  NI timeout: retries exhausted        (NI flag bit 0)
 //    3  NI check-bit error                   (NI flag bit 4)
@@ -22,7 +23,9 @@
 //    C  DMA request refused by the gateway   (gateway tile)
 //    D  DMA lock lease expired               (gateway tile)
 //   10  NI illegal address  (shown as A)     (NI flag bit 1)
-// Hardware faults come first, software misuse after. BIST (E) sits right
+// Hardware faults come first, software misuse after. A failed router (F)
+// comes before a failed link (E): the neighbours of a failed router drop
+// their links to it, so its E codes are a consequence. BIST sits right
 // after a trap: a faulty link found at start-up is the cause of most of the
 // later symptoms (timeouts, failed self-tests), so it is the one to show.
 // Illegal address is last on purpose: tile0.S triggers it deliberately to
@@ -37,6 +40,8 @@
 //
 // DISPLAY VALUE (8 hex digits, left to right)
 //   [31:28] code   [27:20] tile   [19:16] 0   [15:0] detail:
+//     F  {6'b0, in_bad[4:0], out_bad[4:0]} of that router: the inputs and
+//        outputs involved in a failed path (port order N, S, E, W, L; 1 = failed)
 //     E  {6'b0, inlinks[4:0], outlinks[4:0]} of that router (port order
 //        N, S, E, W, L; 0 = failed or absent)
 //     B  the DMA status error bits      C  {tile refused, 0, reason}
@@ -65,6 +70,7 @@ module status_panel #(
     input  wire [`NOC_NUM_TILES*5-1:0]          rt_out_dead,
     input  wire [`NOC_NUM_TILES*5-1:0]          rt_out_wd,
     input  wire [`NOC_NUM_TILES*10-1:0]         bist_status,
+    input  wire [`NOC_NUM_TILES*10-1:0]         rt_status,   // router self-test, 1 = failed
     input  wire                                 bist_done,
     input  wire [2:0]                           gw_flags,    // {DMA error, lease, rejected}
     input  wire [31:0]                          gw_info,     // layout in gw_ni.v
@@ -82,7 +88,7 @@ module status_panel #(
 );
 
     localparam integer NT    = `NOC_NUM_TILES;
-    localparam integer NCODE = 14;
+    localparam integer NCODE = 15;
     localparam integer EW    = 5 * `NOC_E_W;
 
     // ---------------------------------------------------------------
@@ -112,11 +118,14 @@ module status_panel #(
             localparam [4:0] EX = {1'b1, (TX > 0), (TX < `NOC_MESH_X-1), (TY < `NOC_MESH_Y-1), (TY > 0)};
             assign ev[13*NT + t] = bist_done && (bist_status[t*10 +: 10] & {EX, EX}) != {EX, EX};
 
+            // router self-test: any failed path
+            assign ev[14*NT + t] = bist_done && |rt_status[t*10 +: 10];
+
             assign tile_pass[t] = (sw_hi == 16'h600D);
             assign tile_fail[t] = (sw_hi == 16'hFA11);
             assign tile_bad[t]  = ev[0*NT+t] | ev[1*NT+t] | ev[2*NT+t] | ev[3*NT+t] | ev[4*NT+t] |
                                   ev[5*NT+t] | ev[6*NT+t] | ev[7*NT+t] | ev[8*NT+t] | ev[9*NT+t] |
-                                  ev[10*NT+t] | ev[11*NT+t] | ev[12*NT+t] | ev[13*NT+t];
+                                  ev[10*NT+t] | ev[11*NT+t] | ev[12*NT+t] | ev[13*NT+t] | ev[14*NT+t];
         end
     endgenerate
 
@@ -127,11 +136,11 @@ module status_panel #(
         input integer rank;
         begin
             case (rank)
-                0: prio_code = 4'd1;   1: prio_code = 4'd14;  2: prio_code = 4'd2;
-                3: prio_code = 4'd3;   4: prio_code = 4'd4;   5: prio_code = 4'd5;
-                6: prio_code = 4'd6;   7: prio_code = 4'd7;   8: prio_code = 4'd8;
-                9: prio_code = 4'd11; 10: prio_code = 4'd9;  11: prio_code = 4'd12;
-               12: prio_code = 4'd13; default: prio_code = 4'd10;
+                0: prio_code = 4'd1;   1: prio_code = 4'd15;  2: prio_code = 4'd14;
+                3: prio_code = 4'd2;   4: prio_code = 4'd3;   5: prio_code = 4'd4;
+                6: prio_code = 4'd5;   7: prio_code = 4'd6;   8: prio_code = 4'd7;
+                9: prio_code = 4'd8;  10: prio_code = 4'd11; 11: prio_code = 4'd9;
+               12: prio_code = 4'd12; 13: prio_code = 4'd13; default: prio_code = 4'd10;
             endcase
         end
     endfunction
@@ -214,7 +223,8 @@ module status_panel #(
     // display value (live, not frame-latched)
     // ---------------------------------------------------------------
     wire [15:0] sel_sw_lo = tile_sw[sel_tile*32 +: 16];
-    wire [15:0] detail = (sel_code == 4'd14) ? {6'b0, bist_status[sel_tile*10 +: 10]} :
+    wire [15:0] detail = (sel_code == 4'd15) ? {6'b0, rt_status[sel_tile*10 +: 10]} :
+                         (sel_code == 4'd14) ? {6'b0, bist_status[sel_tile*10 +: 10]} :
                          (sel_code == 4'd11) ? {13'b0, gw_info[22:20]} :
                          (sel_code == 4'd12) ? {gw_info[11:4], 4'h0, gw_info[3:0]} :
                          (sel_code == 4'd13) ? {gw_info[19:12], 8'h00} : sel_sw_lo;

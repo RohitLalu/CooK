@@ -5,8 +5,14 @@
  *   base + 0x800  mailbox, 0x700 bytes: the remote write window. Other tiles
  *                 may write here and nowhere else (ni.v WIN_LO/WIN_HI), so
  *                 nothing of the program lives here. Layout: tile.h.
- *   base + 0x1000 code, constants, data, bss
+ *   base + 0x1000 code, constants, then a pristine copy of the initialised
+ *                 data, then the data itself and bss
  *   top of tile   stack, growing down
+ *
+ * The initialised data is LOADED as a copy (at __data_load) and crt0.S copies
+ * it to where the program uses it (__data_start) on every start. So a core
+ * that is restarted (ni.v CSR 0x018) begins with the same variables as after
+ * power-on, whatever its last run did to them. The mailbox is not touched.
  *
  * The build passes TILE_BASE and TILE_SIZE with --defsym. Tiles must be
  * built with NOC_OFFSET_BITS >= 14 for any real C program (64 KB = 16).
@@ -24,11 +30,16 @@ SECTIONS
     .text   : { *(.text*) }
     .rodata : { *(.rodata*) *(.srodata*) }
     . = ALIGN(4);
-    .data   : {
+    __data_load = .;                        /* the pristine copy lives here */
+    . = . + SIZEOF(.data);
+    . = ALIGN(4);
+    .data   : AT(__data_load) {
+        __data_start = .;
         __global_pointer$ = . + 0x800;
         *(.sdata*) *(.data*)
+        . = ALIGN(4);
+        __data_end = .;
     }
-    . = ALIGN(4);
     __bss_start = .;
     .bss    : { *(.sbss*) *(.bss*) *(COMMON) }
     . = ALIGN(4);

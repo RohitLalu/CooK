@@ -8,18 +8,25 @@
  *           Then waits for core 1's pass and reports its own:
  *           0x600D0001, or 0xFA110000 | step (1 no trap seen, 2 no pass after
  *           the restart).
- * A restart does not reload memory, which is how the mark survives it. */
+ * A restart does not reload the tile's memory, which is how the mark in the
+ * mailbox survives it. The program's own initialised variables are put back
+ * by the start-up code on every start (crt0.S); `lives` below checks that:
+ * the first run changes it, and the second run must find it at 1 again. */
 #include "tile.h"
 
 #define CSR_CORE 0x018
 #define MARK     440          /* a mailbox word nobody else uses */
 
 #ifdef VICTIM
+volatile uint32_t lives = 1;                     /* initialised data */
+
 int main(void)
 {
     volatile uint32_t *mark = MBOX(tile_id()) + MARK;
+    if (lives != 1) tile_report(0, 3);           /* start-up did not restore it */
     if (*mark != 0x1BADC0DEu) {
         *mark = 0x1BADC0DEu;
+        lives = 99;                              /* what a first run leaves behind */
         tile_status(0x52550001);                 /* first life */
         __asm__ volatile (".word 0x00000000");   /* illegal instruction: the core traps */
     }

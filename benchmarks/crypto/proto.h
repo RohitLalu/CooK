@@ -11,16 +11,27 @@
  * mailbox, which is local memory and costs no network traffic.
  * A RESULT is written by the worker into its area of core 0's mailbox, again
  * with the sequence word last. Only the result leaves the worker's tile:
- * round keys, S-boxes, secret chain values and hash state never do. */
+ * round keys, S-boxes, secret chain values and hash state never do.
+ *
+ * WHO SENT IT. Any tile can write any mailbox (the hardware checks where a
+ * write lands, not who sent it), so every job and every result carries a
+ * keyed checksum: 32 bits of SHA-256 over a key the three programs share
+ * (LINK_KEY, compiled in) and the whole message. A receiver ignores a message
+ * whose checksum is wrong. That stops a core without the key from forging a
+ * job or a result, and it also catches a message damaged or cut short on the
+ * way. It is firmware, not hardware: a program that has the key can still
+ * forge, and 32 bits is a demonstration strength, not a real one. */
 #ifndef COOK_CRYPTO_PROTO_H
 #define COOK_CRYPTO_PROTO_H
 #include "tile.h"
+#include "sha256.h"
 
 /* job, word offsets in the worker's mailbox */
 #define JOB_SEQ    0        /* nonzero, changes with every job; written last */
 #define JOB_OP     1
 #define JOB_KEY    2        /* AES key (4 words) or signature seed (8 words) */
 #define JOB_LEN    10       /* bytes of data */
+#define JOB_TAG    11       /* keyed checksum of the job */
 #define JOB_DATA   12
 #define JOB_MAX    256      /* most data bytes in one job */
 
@@ -29,8 +40,31 @@
 #define OP_SIGN    3
 
 /* results, word offsets in core 0's mailbox */
-#define RES_AES    0        /* [0] seq  [1] bytes  [2..] data */
+#define RES_AES    0        /* [0] seq  [1] bytes  [2..] data  [RES_AES_TAG] checksum */
 #define RES_SIG    80       /* [0] seq  [1] signature blocks  [2..9] public key  [10..] signature */
+#define RES_AES_TAG 20
+#define RES_SIG_TAG 300     /* word offsets from RES_AES / RES_SIG */
+
+#ifndef LINK_KEY
+#define LINK_KEY "CooK mailbox key"         /* 16 bytes, the same in all three programs */
+#endif
+
+/* keyed checksum of a message: header words a, b, c and two byte strings */
+static inline uint32_t proto_tag(uint32_t a, uint32_t b, uint32_t c,
+                                 const uint8_t *x, unsigned nx, const uint8_t *y, unsigned ny)
+{
+    sha256_ctx s;
+    uint8_t h[32];
+    uint32_t hdr[3];
+    hdr[0] = a; hdr[1] = b; hdr[2] = c;
+    sha256_init(&s);
+    sha256_update(&s, (const uint8_t *)LINK_KEY, 16);
+    sha256_update(&s, (const uint8_t *)hdr, 12);
+    sha256_update(&s, x, nx);
+    if (ny) sha256_update(&s, y, ny);
+    sha256_final(&s, h);
+    return h[0] | ((uint32_t)h[1] << 8) | ((uint32_t)h[2] << 16) | ((uint32_t)h[3] << 24);
+}
 
 #define ARBITER    0
 #define AES_CORE   1
@@ -81,6 +115,7 @@ static inline int send_job(int worker, uint32_t seq, uint32_t op, const uint8_t 
     put_bytes(job + JOB_DATA, data, (len + 3) & ~3u);
     job[JOB_LEN] = len;
     job[JOB_OP]  = op;
+    job[JOB_TAG] = proto_tag(seq, op, len, key, keylen, data, len);
     return post_seq(job + JOB_SEQ, seq);             /* last, and confirmed: the job is complete */
 }
 

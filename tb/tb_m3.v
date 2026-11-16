@@ -10,6 +10,7 @@
 //   every directed link (8), silent and bit-flip         -> 16 single faults
 //   both links of tile 0 (tile 0 cut off)                 -> double fault
 //   links 0-1 and 2-3 (the mesh splits in two)            -> double fault
+//   router 1 broken from the inside (its self-test fails) -> that tile is lost
 // A core counts as usable when its status CSR reads pass with exactly the
 // checks expected for the tiles marked available (74 per other core, 2 for
 // the gateway). Every case must give the expected bitmap and usable count,
@@ -44,6 +45,7 @@ module tb_m3;
     always #5 clk = ~clk;
 
     reg  [4*NT-1:0]  fmask = 0;
+    reg  [NT-1:0]    frt = 0;        // routers broken from the inside
     reg              fflip = 0;
     wire [NT-1:0]    tile_trap;
     wire [NT*5-1:0]  tile_err;
@@ -57,7 +59,7 @@ module tb_m3;
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(rt_drop_cnt),
-        .fault_rt_mask(fmask), .fault_rt_flip(fflip),
+        .fault_rt_mask(fmask), .fault_rt_flip(fflip), .fault_router(frt),
         .bist_status(), .sys_ready(sys_ready), .avail(avail), .gw_flags(), .gw_info(),
         .gw_axil_awaddr(), .gw_axil_awvalid(), .gw_axil_awready(1'b0),
         .gw_axil_wdata(), .gw_axil_wstrb(), .gw_axil_wvalid(), .gw_axil_wready(1'b0),
@@ -160,6 +162,9 @@ module tb_m3;
             run_case(lnk(3, W), md, 4'b1111, 3, 1, md ? "flip   3->W (link 2-3)" : "silent 3->W (link 2-3)");
         end
         run_case(lnk(0, E) | lnk(0, S), 0, 4'b1110, 2, 0, "double: tile 0 cut off");
+        frt = 4'b0010;               // router 1 fails its self-test: tile 1 is lost, the rest carry on
+        run_case(0, 0, 4'b1101, 2, 0, "router 1 broken inside");
+        frt = 4'b0000;
         run_case(lnk(0, E) | lnk(2, E), 0, 4'b1010, 1, 0, "double: mesh split 0-2 / 1-3");
 
         $display("M3 single link faults: %0d cases, usable cores min %0d / avg %0d.%0d of 3 (bus: 0 of 3)",

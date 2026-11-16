@@ -61,9 +61,14 @@ module noc_mesh #(
     // go silent, or flip a bit when fault_rt_flip is 1. Tie the mask to 0.
     input  wire [4*`NOC_NUM_TILES-1:0]           fault_rt_mask,
     input  wire                                  fault_rt_flip,
+    // run-time fault inside a router: bit t flips one data bit of everything
+    // router t sends to its local port (a broken crossbar output). Tie to 0.
+    input  wire [`NOC_NUM_TILES-1:0]             fault_router,
 
     // link BIST results
     output wire [`NOC_NUM_TILES*10-1:0]          bist_status,
+    // router self-test results: router t at [10t +: 10] = {in_bad, out_bad}, 1 = failed
+    output wire [`NOC_NUM_TILES*10-1:0]          rt_status,
     output wire                                  bist_done
 );
 
@@ -101,6 +106,12 @@ module noc_mesh #(
                 wire [4:0] port_dead;
                 wire [4:0] bist_dis = node_done[ID] ? port_dead : 5'b0;
 
+                // fault injection sits between the router and its BIST node, so the
+                // self-test sees what a broken router would send
+                wire [5*FW-1:0] ro_flit;
+                assign rr_out_flit[ID*5*FW +: 5*FW] =
+                    ro_flit ^ (fault_router[ID] ? ({{(5*FW-1){1'b0}}, 1'b1} << (PL*FW)) : {5*FW{1'b0}});
+
                 noc_router #(
                     .MY_X(gx), .MY_Y(gy), .PORT_EXISTS(PORTS),
                     .WD_PRESCALE_W(WD_PRESCALE_W),
@@ -114,7 +125,7 @@ module noc_mesh #(
                     .out_valid(rr_out_valid[ID*5 +: 5]),
                     .out_ready(rr_out_ready[ID*5 +: 5]),
                     .out_room (rr_out_room [ID*5 +: 5]),
-                    .out_flit (rr_out_flit [ID*5*FW +: 5*FW]),
+                    .out_flit (ro_flit),
                     .port_disable(port_disable[ID*5 +: 5] | bist_dis),
                     .dead_links(dead_links[ID*`NOC_LINKS_W +: `NOC_LINKS_W]),
                     .err_clear(err_clear),
@@ -138,6 +149,7 @@ module noc_mesh #(
                     .l_in_valid (r_in_valid [ID*5 +: 5]), .l_in_ready (r_in_ready [ID*5 +: 5]),
                     .l_in_flit  (r_in_flit  [ID*5*FW +: 5*FW]),
                     .status(bist_status[ID*10 +: 10]),
+                    .rt_status(rt_status[ID*10 +: 10]),
                     .dead_links(dead_links[ID*`NOC_LINKS_W +: `NOC_LINKS_W]),
                     .port_dead(port_dead),
                     .done(node_done[ID])

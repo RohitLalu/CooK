@@ -2,6 +2,7 @@
  * mailbox: a seed and a message. Derives the one-time key pair from the seed,
  * signs the message, and writes the public key and the signature into core
  * 0's mailbox. The secret chain values never leave this tile.
+ * A job whose keyed checksum is wrong (proto.h) is ignored.
  * Status: 0x600D0000 | jobs done. */
 #include "proto.h"
 #include "wots.h"
@@ -23,11 +24,14 @@ int main(void)
         if (len > JOB_MAX || job[JOB_OP] != OP_SIGN) tile_report(0, 2);
         get_bytes(seed, job + JOB_KEY, 32);
         get_bytes(msg, job + JOB_DATA, (len + 3) & ~3u);
+        if (job[JOB_TAG] != proto_tag(seq, OP_SIGN, len, seed, 32, msg, len))
+            continue;                                /* not from the arbiter, or damaged: ignore */
         wots_keygen(seed, pk);
         wots_sign(seed, msg, len, sig);
         put_bytes(res + 2, pk, 32);
         put_bytes(res + 10, sig, 32 * (unsigned)wots_len());
         res[1] = (uint32_t)wots_len();
+        res[RES_SIG_TAG] = proto_tag(seq, (uint32_t)wots_len(), 0, pk, 32, sig, 32 * (unsigned)wots_len());
         if (!post_seq(res, seq)) tile_report(0, 3);  /* last, and confirmed */
         tile_status(0x600D0000 | ++jobs);
     }

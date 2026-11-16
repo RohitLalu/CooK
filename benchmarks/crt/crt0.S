@@ -24,7 +24,18 @@ _cstart:
     .option norelax
     la    gp, __global_pointer$
     .option pop
-    la    t0, __bss_start
+    # initialised data: copy the pristine image into place (every start, so
+    # a restarted core sees the same variables as after power-on)
+    la    t0, __data_load
+    la    t1, __data_start
+    la    t2, __data_end
+5:  bgeu  t1, t2, 6f
+    lw    t3, 0(t0)
+    sw    t3, 0(t1)
+    addi  t0, t0, 4
+    addi  t1, t1, 4
+    j     5b
+6:  la    t0, __bss_start
     la    t1, __bss_end
 1:  bgeu  t0, t1, 2f
     sw    zero, 0(t0)

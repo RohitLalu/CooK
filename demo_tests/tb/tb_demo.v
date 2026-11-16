@@ -40,7 +40,7 @@ module tb_demo;
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(),
-        .fault_rt_mask(fault_now), .fault_rt_flip(1'b0),
+        .fault_rt_mask(fault_now), .fault_rt_flip(1'b0), .fault_router({`NOC_NUM_TILES{1'b0}}),
         .bist_status(), .sys_ready(sys_ready), .avail(), .gw_flags(gw_flags), .gw_info(),
         .gw_axil_awaddr(awaddr), .gw_axil_awvalid(awvalid), .gw_axil_awready(awready),
         .gw_axil_wdata(wdata), .gw_axil_wstrb(wstrb), .gw_axil_wvalid(wvalid), .gw_axil_wready(wready),

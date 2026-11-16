@@ -37,6 +37,24 @@
 //   Known limitation, inherited from the thesis: a broken INLINK d also
 //   leaves OUTLINK d at 0, because the pong cannot get back.
 //
+// ROUTER SELF-TEST, after the local phase (the router is still cut off from
+// its links, so this node can drive its inputs and watch its outputs)
+//   Path test: for every input port i and every other output port o that
+//   both exist, a two-flit packet addressed so that X-Y routing sends it to
+//   o is put on input i. Exactly those two flits must come out of o, in
+//   order and unchanged, and nothing may come out anywhere else. That walks
+//   every path of the crossbar and the route computation for each direction.
+//   Arbitration test: two inputs offer a packet for the local output on the
+//   same cycle. Both packets must come out whole, one after the other.
+//   A failed test marks the input and the output it involved in
+//   rt_status = {in_bad[4:0], out_bad[4:0]} (1 = failed; note the sense is
+//   the opposite of the link status). A router with any bit set is not
+//   trusted with anything: all its ports are reported dead and all its links
+//   go into the dead-link mask, so the rest of the mesh routes around it and
+//   its tile is cut off. The test takes the same number of cycles in every
+//   node, so the nodes stay in step for the gossip that follows.
+//   Not covered: the watchdog and the error-drop paths of the router.
+//
 // DEAD-LINK GOSSIP, NOC_NUM_TILES rounds after the ping-pong
 //   A link is dead when either of its two status bits here is 0; by the
 //   limitation above, both ends of a broken link then see it. Each router
@@ -82,6 +100,7 @@ module bist_node #(
     input  wire [5*`NOC_FLIT_W-1:0] l_in_flit,
 
     output wire [9:0]               status,     // {in[4:0], out[4:0]}
+    output wire [9:0]               rt_status,  // router self-test {in_bad, out_bad}, 1 = failed
     output wire [`NOC_LINKS_W-1:0]  dead_links,
     output wire [4:0]               port_dead,
     output wire                     done
@@ -141,7 +160,7 @@ module bist_node #(
         end
     endfunction
 
-    localparam [1:0] ST_WAIT = 2'd0, ST_RUN = 2'd1, ST_DONE = 2'd2;
+    localparam [1:0] ST_WAIT = 2'd0, ST_RUN = 2'd1, ST_DONE = 2'd2, ST_RTR = 2'd3;
     reg [1:0]    state;
     reg [DW-1:0] wait_cnt;
     reg [HW-1:0] ph;
@@ -179,7 +198,7 @@ module bist_node #(
         mask_port = 4'b0;
         for (lb = 0; lb < 4; lb = lb + 1)
             if (PORT_EXISTS[lb]) begin
-                own_dead[noc_link_bit(MY_ID, lb)] = !(st_in[lb] && st_out[lb]);
+                own_dead[noc_link_bit(MY_ID, lb)] = rt_fail || !(st_in[lb] && st_out[lb]);
                 mask_port[lb] = mask[noc_link_bit(MY_ID, lb)];
             end
     end
@@ -195,7 +214,8 @@ module bist_node #(
     end
 
     assign dead_links = mask;
-    assign port_dead  = {PORT_EXISTS[L] && !st_out[L], mask_port};
+    assign port_dead  = {PORT_EXISTS[L] && (!st_out[L] || rt_fail),
+                         mask_port | ({4{rt_fail}} & PORT_EXISTS[3:0])};
 
     // ---------------------------------------------------------------
     // link side during BIST
@@ -235,10 +255,95 @@ module bist_node #(
     assign l_out_valid = active ? t_valid                     : r_out_valid;
     assign l_out_flit  = active ? t_flit                      : r_out_flit;
     assign l_in_ready  = active ? 5'b01111                    : r_in_ready;   // drain the four links
-    assign r_in_valid  = active ? 5'b0                        : l_in_valid;
-    assign r_in_flit   = l_in_flit;
-    assign r_out_ready = active ? 5'b0                        : l_out_ready;
-    assign r_out_room  = active ? 5'b0                        : l_out_room;
+    assign r_in_valid  = rtr ? rt_valid : active ? 5'b0       : l_in_valid;
+    assign r_in_flit   = rtr ? rt_in_flit                     : l_in_flit;
+    assign r_out_ready = rtr ? 5'b11111 : active ? 5'b0       : l_out_ready;
+    assign r_out_room  = rtr ? 5'b11111 : active ? 5'b0       : l_out_room;
+
+    // ---------------------------------------------------------------
+    // router self-test (state ST_RTR)
+    // ---------------------------------------------------------------
+    localparam integer RT_SLOT  = 8;                  // cycles per test
+    localparam integer RT_PATHS = 25;                 // (input, output) pairs, slot k: i = k/5, o = k%5
+    localparam integer RT_SLOTS = RT_PATHS + 2;       // + the arbitration test (two slots long)
+    localparam integer MY_X = MY_ID % `NOC_MESH_X, MY_Y = MY_ID / `NOC_MESH_X;
+    localparam [1:0] T_HEAD = `NOC_T_HEAD, T_TAIL = `NOC_T_TAIL;
+
+    // the two lowest-numbered link ports that exist: the arbitration test's inputs
+    function integer nth_port;
+        input integer n;
+        integer q, c;
+        begin
+            nth_port = -1; c = 0;
+            for (q = 0; q < 4; q = q + 1)
+                if (PORT_EXISTS[q]) begin
+                    if (c == n) nth_port = q;
+                    c = c + 1;
+                end
+        end
+    endfunction
+    localparam integer ARB_A = nth_port(0), ARB_B = nth_port(1);
+    localparam ARB_EN = (ARB_B >= 0) && PORT_EXISTS[L];
+
+    // a test flit that X-Y routing sends out of port `o`
+    function [FW-1:0] rt_make;
+        input [1:0]  ftype;
+        input [2:0]  o;
+        input [31:0] data;
+        integer x, y;
+        begin
+            x = MY_X + ((o == E) ? 1 : 0) - ((o == W) ? 1 : 0);
+            y = MY_Y + ((o == S) ? 1 : 0) - ((o == N) ? 1 : 0);
+            rt_make = noc_make_flit(ftype, 1'b0, MY_ID[`NOC_ID_W-1:0], x[`NOC_X_W-1:0], y[`NOC_Y_W-1:0], data);
+        end
+    endfunction
+
+    wire         rtr = (state == ST_RTR);
+    reg  [4:0]   rt_slot;                    // which test
+    reg  [3:0]   rt_c;                       // cycle inside the test
+    reg  [1:0]   sa, sb;                     // flits sent by sender A / B (0, 1, done)
+    reg  [2:0]   seen;                       // flits seen on the expected output
+    reg          rt_bad;
+    reg  [1:0]   arb_first;                  // arbitration test: 1 = A's packet came out first, 2 = B's
+    reg  [4:0]   rt_in_bad, rt_out_bad;
+    wire         rt_fail = |{rt_in_bad, rt_out_bad};
+    assign rt_status = {rt_in_bad, rt_out_bad};
+
+    wire         arb    = (rt_slot >= RT_PATHS);
+    wire [2:0]   pi     = rt_slot / 5;
+    wire [2:0]   po     = arb ? L : rt_slot % 5;
+    wire         pair   = !arb && (pi != po) && PORT_EXISTS[pi] && PORT_EXISTS[po];
+    wire [2:0]   ia     = arb ? ARB_A[2:0] : pi;                 // sender A's input port
+    wire [2:0]   ib     = ARB_B[2:0];                            // sender B's (arbitration only)
+    wire [31:0]  da     = {16'hB157, 3'b0, rt_slot, 8'hA5};      // payloads: recognisably different
+    wire [31:0]  db     = {16'hB157, 3'b0, rt_slot, 8'h5B};
+    wire [FW-1:0] fa    = rt_make(sa == 0 ? T_HEAD : T_TAIL, po, sa == 0 ? da : ~da);
+    wire [FW-1:0] fb    = rt_make(sb == 0 ? T_HEAD : T_TAIL, po, sb == 0 ? db : ~db);
+    wire         a_on   = rtr && (pair || (arb && ARB_EN)) && (sa < 2);
+    wire         b_on   = rtr && arb && ARB_EN && (sb < 2);
+
+    reg  [4:0]      rt_valid;
+    reg  [5*FW-1:0] rt_in_flit;
+    always @(*) begin
+        rt_valid   = 5'b0;
+        rt_in_flit = {5*FW{1'b0}};
+        if (a_on) begin rt_valid[ia] = 1'b1; rt_in_flit[ia*FW +: FW] = fa; end
+        if (b_on) begin rt_valid[ib] = 1'b1; rt_in_flit[ib*FW +: FW] = fb; end
+    end
+
+    // what comes out of the router this cycle
+    wire [FW-1:0] of = r_out_flit[po*FW +: FW];
+    wire          ov = r_out_valid[po];
+    wire          stray = |(r_out_valid & ~(5'b1 << po));        // a flit on any other output
+    // path test: the two flits, in order. Arbitration: a HEAD picks which packet is first.
+    wire exp_path = (seen == 0) ? (of == rt_make(T_HEAD, po, da)) : (of == rt_make(T_TAIL, po, ~da));
+    wire is_ha = (of == rt_make(T_HEAD, L, da)),  is_ta = (of == rt_make(T_TAIL, L, ~da));
+    wire is_hb = (of == rt_make(T_HEAD, L, db)),  is_tb = (of == rt_make(T_TAIL, L, ~db));
+    wire exp_arb  = (seen == 0) ? (is_ha || is_hb) :
+                    (seen == 1) ? ((arb_first == 1) ? is_ta : is_tb) :
+                    (seen == 2) ? ((arb_first == 1) ? is_hb : is_ha) :
+                                  ((arb_first == 1) ? is_tb : is_ta);
+    wire [3:0] rt_last = arb ? 2*RT_SLOT - 1 : RT_SLOT - 1;
 
     assign status = {st_in, st_out};
     assign done   = (state == ST_DONE);
@@ -268,6 +373,8 @@ module bist_node #(
             refl_f    <= {FW{1'b0}};
             mask      <= {LW{1'b0}};
             g_sent    <= 4'b0;
+            rt_slot   <= 5'd0;  rt_c <= 4'd0;  sa <= 2'd0;  sb <= 2'd0;  seen <= 3'd0;
+            rt_bad    <= 1'b0;  arb_first <= 2'd0;  rt_in_bad <= 5'b0;  rt_out_bad <= 5'b0;
         end else begin
             // reflector: one-cycle echo of the local-port ping
             refl_v <= tx_local;
@@ -314,8 +421,40 @@ module bist_node #(
                         g_sent    <= 4'b0;
                         if (ph == NPHASE - 1) state <= ST_DONE;
                         else                  ph <= ph + 1'b1;
+                        if (in_local) state <= ST_RTR;       // router self-test before the drain phase
                     end else begin
                         cyc <= cyc + 1'b1;
+                    end
+                end
+
+                ST_RTR: begin
+                    if (a_on && r_in_ready[ia]) sa <= sa + 1'b1;
+                    if (b_on && r_in_ready[ib]) sb <= sb + 1'b1;
+                    if (stray) rt_bad <= 1'b1;
+                    if (ov) begin
+                        if (seen != 3'd7) seen <= seen + 1'b1;
+                        if (!(pair || (arb && ARB_EN)) || !(arb ? (seen < 4 && exp_arb) : (seen < 2 && exp_path)))
+                            rt_bad <= 1'b1;
+                        if (arb && seen == 0) arb_first <= is_ha ? 2'd1 : 2'd2;
+                    end
+
+                    if (rt_c == rt_last) begin
+                        // close the test: anything but the expected flits fails it
+                        if (pair && (rt_bad || seen != 2)) begin
+                            rt_in_bad[pi]  <= 1'b1;
+                            rt_out_bad[po] <= 1'b1;
+                        end
+                        if (!arb && !pair && rt_bad) rt_out_bad <= rt_out_bad | r_out_valid;   // output with nothing sent
+                        if (arb && ARB_EN && (rt_bad || seen != 4)) begin
+                            rt_in_bad[ia]  <= 1'b1;
+                            rt_in_bad[ib]  <= 1'b1;
+                            rt_out_bad[L]  <= 1'b1;
+                        end
+                        rt_c <= 4'd0;  sa <= 2'd0;  sb <= 2'd0;  seen <= 3'd0;  rt_bad <= 1'b0;  arb_first <= 2'd0;
+                        if (arb) state <= ST_RUN;            // on to the drain phase and the gossip
+                        else     rt_slot <= rt_slot + 1'b1;
+                    end else begin
+                        rt_c <= rt_c + 1'b1;
                     end
                 end
 

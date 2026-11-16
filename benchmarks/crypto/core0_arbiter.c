@@ -14,7 +14,9 @@
  *         reported at once instead of after a long wait, 9 a job could not
  *         be delivered: its sequence word did not read back, 10 core 1's
  *         private memory could be read from here: only checked when built
- *         with -DEXPECT_RD_PROTECT, for a system with the read window on) */
+ *         with -DEXPECT_RD_PROTECT, for a system with the read window on,
+ *         11 a result failed its keyed checksum, 12 core 1 acted on a forged
+ *         job: only checked when built with -DFORGE_TEST) */
 #include "proto.h"
 #include "sha256.h"
 #include "wots.h"
@@ -55,20 +57,39 @@ int main(void)
     derive("CooK AES key", aes_key);                 /* first 16 bytes are the key */
     derive("CooK signing seed", seed);
 
+#ifdef FORGE_TEST
+    {   /* a job as a core without the key would write it: right format, sequence
+         * 9, wrong checksum. Core 1 must not act on it. */
+        volatile uint32_t *job = MBOX(AES_CORE);
+        uint32_t n;
+        put_bytes(job + JOB_KEY, aes_key, 16);
+        put_bytes(job + JOB_DATA, plain, 32);
+        job[JOB_LEN] = 32;
+        job[JOB_OP]  = OP_AES_ENC;
+        job[JOB_TAG] = 0x0BADF00Du;
+        job[JOB_SEQ] = 9;
+        for (n = 0; n < 30000u; n++)
+            if (mine[RES_AES] == 9) return 12;
+    }
+#endif
     if (!send_job(AES_CORE, 1, OP_AES_ENC, aes_key, 16, plain, 32)) return 9;
     if (!send_job(SIGN_CORE, 1, OP_SIGN, seed, 32, message, sizeof message)) return 9;
 
     if (!wait_for(mine + RES_AES, 1)) return 1;
     get_bytes(ct, mine + RES_AES + 2, 32);
+    if (mine[RES_AES + RES_AES_TAG] != proto_tag(1, 32, 0, ct, 32, 0, 0)) return 11;
     if (memcmp(ct, plain, 32) == 0) return 2;
     if (!send_job(AES_CORE, 2, OP_AES_DEC, aes_key, 16, ct, 32)) return 9;
     if (!wait_for(mine + RES_AES, 2)) return 3;
     get_bytes(back, mine + RES_AES + 2, 32);
+    if (mine[RES_AES + RES_AES_TAG] != proto_tag(2, 32, 0, back, 32, 0, 0)) return 11;
     if (memcmp(back, plain, 32) != 0) return 4;
 
     if (!wait_for(mine + RES_SIG, 1)) return 5;
     get_bytes(pk, mine + RES_SIG + 2, 32);
     get_bytes(sig, mine + RES_SIG + 10, 32 * (unsigned)wots_len());
+    if (mine[RES_SIG + RES_SIG_TAG] != proto_tag(1, (uint32_t)wots_len(), 0, pk, 32, sig, 32 * (unsigned)wots_len()))
+        return 11;
     if (!wots_verify(pk, message, sizeof message, sig)) return 6;
     message[0] ^= 1;
     if (wots_verify(pk, message, sizeof message, sig)) return 7;

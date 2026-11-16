@@ -39,6 +39,9 @@
 //     9  three adjacent: 0-2, 0-1, 1-3          (only 2-3 left)
 //    11  all four links                          (every tile isolated)
 //     0, 13, 14 unused (no fault).
+//   SW[10] on = break a ROUTER from the inside, SW[9:8] = which one (tile
+//   number). Its self-test fails (code F), the mesh drops all its links and
+//   that tile is cut off; the other tiles carry on around it.
 //   A multi break cuts the mesh apart: BIST still finds every dead link
 //   (code E), but packets to a cut-off tile are dropped as E_ROUTE, so the
 //   cores that need them time out and fail.
@@ -187,6 +190,8 @@ module nexys4ddr_top #(
     wire [4*NT-1:0] fault_mask = sw_s2[12] ? fault_pattern(sw_s2[3:0]) : {4*NT{1'b0}};
 
     wire            fault_flip = sw_s2[11];
+    // SW[10] on = break router SW[9:8] from the inside (noc_mesh fault_router)
+    wire [NT-1:0]   fault_router = sw_s2[10] ? ({{(NT-1){1'b0}}, 1'b1} << sw_s2[9:8]) : {NT{1'b0}};
 
     // ---------------------------------------------------------------
     // the system
@@ -197,7 +202,7 @@ module nexys4ddr_top #(
     wire [NT*5*`NOC_E_W-1:0]      rt_in_err;
     wire [NT*5-1:0]               rt_out_dead, rt_out_wd;
     wire [NT*8-1:0]               rt_drop_cnt;
-    wire [NT*10-1:0]              bist_status;
+    wire [NT*10-1:0]              bist_status, rt_status;
     wire                          sys_ready;
     wire [2:0]                    gw_flags;
     wire [31:0]                   gw_info;
@@ -242,7 +247,7 @@ module nexys4ddr_top #(
         .err_clear(err_clear),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
-        .fault_rt_mask(fault_mask), .fault_rt_flip(fault_flip),
+        .fault_rt_mask(fault_mask), .fault_rt_flip(fault_flip), .fault_router(fault_router), .rt_status(rt_status),
         .bist_status(bist_status), .sys_ready(sys_ready), .avail(),
         .gw_flags(gw_flags), .gw_info(gw_info),
         .gw_axil_awaddr(gw_awaddr), .gw_axil_awvalid(gw_awvalid), .gw_axil_awready(gw_awready),
@@ -324,7 +329,8 @@ module nexys4ddr_top #(
         .clk(clk), .rst_n(rst_n),
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead), .rt_out_wd(rt_out_wd),
-        .bist_status(bist_status), .bist_done(sys_ready), .gw_flags(gw_flags), .gw_info(gw_info),
+        .bist_status(bist_status), .rt_status(rt_status), .bist_done(sys_ready),
+        .gw_flags(gw_flags), .gw_info(gw_info),
         .bist_fault(bist_fault),
         .code_led(code_led), .tile_led(tile_led), .heartbeat(heartbeat),
         .tile_bad(tile_bad), .tile_pass(tile_pass), .tile_fail(tile_fail),

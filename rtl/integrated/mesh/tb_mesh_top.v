@@ -79,7 +79,7 @@ module tb_mesh_top;
         .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(),
-        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(1'b0),
+        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(1'b0), .fault_router({`NOC_NUM_TILES{1'b0}}),
         .bist_status(bist_status), .sys_ready(sys_ready), .avail(),
         .gw_flags(), .gw_info()
     );

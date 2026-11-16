@@ -72,7 +72,7 @@ module tb_fabric;
         .loc_out_room(r2ni_room), .loc_out_flit(r2ni_flit),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(rt_out_dead), .rt_out_wd(), .rt_drop_cnt(rt_drop_cnt),
-        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0),
+        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0), .fault_router({`NOC_NUM_TILES{1'b0}}),
         .bist_status(bist_status), .bist_done(fabric_ready)
     );
     assign fabric_err = (|rt_drop_cnt) || (|rt_out_dead);

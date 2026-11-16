@@ -53,7 +53,7 @@ module tb_gw_alltoall;
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
-        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0),
+        .fault_rt_mask({4*NT{1'b0}}), .fault_rt_flip(1'b0), .fault_router({`NOC_NUM_TILES{1'b0}}),
         .bist_status(), .sys_ready(sys_ready), .avail(avail), .gw_flags(gw_flags), .gw_info(),
         // DMA side idle: alltoall only reads the gateway's CSRs
         .gw_axil_awaddr(), .gw_axil_awvalid(), .gw_axil_awready(1'b0),

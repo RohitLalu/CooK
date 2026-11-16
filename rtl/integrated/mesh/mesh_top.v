@@ -79,8 +79,10 @@ module mesh_top #(
     // run-time link fault injection (board switches), see noc_mesh.v
     input  wire [4*`NOC_NUM_TILES-1:0] fault_rt_mask,
     input  wire                        fault_rt_flip,
+    input  wire [`NOC_NUM_TILES-1:0]   fault_router,    // run-time fault inside a router (noc_mesh.v)
     // BIST results
     output wire [`NOC_NUM_TILES*10-1:0] bist_status,   // per router, {in, out}
+    output wire [`NOC_NUM_TILES*10-1:0] rt_status,     // router self-test, {in_bad, out_bad}
     output wire                        sys_ready,       // BIST done, cores running
     output wire [`NOC_NUM_TILES-1:0]   avail,           // gateway's bitmap (0 without a gateway)
     // gateway DMA-control status (0 without a gateway), see gw_ni.v
@@ -151,7 +153,8 @@ module mesh_top #(
         .err_clear(err_clear),
         .rt_in_err(rt_in_err), .rt_out_dead(rt_out_dead),
         .rt_out_wd(rt_out_wd), .rt_drop_cnt(rt_drop_cnt),
-        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(fault_rt_flip),
+        .fault_rt_mask(fault_rt_mask), .fault_rt_flip(fault_rt_flip), .fault_router(fault_router),
+        .rt_status(rt_status),
         .bist_status(bist_status), .bist_done(mesh_bist_done)
     );
 
