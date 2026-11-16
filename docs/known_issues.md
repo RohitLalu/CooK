@@ -1,6 +1,6 @@
 # Known issues and gaps
 
-> **Status: OPEN** (2026-11-16). This is the live list. Open items: 2, 3, 9, 10, 13, 16, 17. Everything under "Fixed in this pass" is closed.
+> **Status: OPEN** (2026-11-16). This is the live list and stays open while any item is. Open items: 2 and 3 (Vivado), 10 (board), and the design limits 9, 13, 16, 17.
 
 From a review of the RTL, tests and documents on 2026-11-14. Ordered by how
 much each could mislead or break a demo. "Fixed" items are listed so the
@@ -62,6 +62,9 @@ for one read per node) and is given in the README and in `noc_router.v`.
 
 | Issue | Fix |
 |---|---|
+| No CPU benchmark used the interconnect. | `benchmarks/run_remote_tests.py`: riscv-tests executed from another tile's memory. 35 of 35 pass on both; the bus is about 10 % faster for this one-access-at-a-time load. |
+| The live-demo top was only elaboration-checked. | `run_link_sim.py --top` simulates `nexys4ddr_live_top` as built, at 115200 baud, reading the text from the display pins. Passes. |
+| LED17 red did not light for a router fault, and the display values for the router fault and multi-link switch codes were not recorded. | The LED now lights for either kind of BIST failure; the values are in `docs/hardware_test.md`. |
 | (was 9, part) BIST did not test router internals. | `bist_node.v` now runs a router self-test after the link tests: every crossbar path and one arbitration case. A router that fails reports `rt_status`, shows code F on the board, and is cut out: the mesh drops all its links. `tb_bist` case F, the M3 sweep's broken-router case, and two mutations of the router confirm it. |
 | (was 11, 12) Mailbox messages could be forged, and a damaged job went unnoticed. | Every job and result carries a keyed checksum over the whole message (`encryption_code/crypto/proto.h`); receivers ignore a wrong one. The crypto demo sends a forged job and checks core 1 ignores it. Firmware only: see open item 17. |
 | (was 15) A restarted core kept its old variables. | `crt0.S` restores initialised data from a pristine copy on every start. `restart.c` checks it. |

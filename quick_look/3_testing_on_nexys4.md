@@ -1,6 +1,6 @@
 # Testing on the Nexys4 DDR through Vivado
 
-> **Status: OPEN** (2026-11-16). The guide is written. Open: stages D and E and the "changed since the first session" items have never been run on the board, so their expected readings are predictions.
+> **Status: OPEN** (2026-11-16). The guide is complete. Open, and only closable on the board: stages D and E and the items under "changed since the first session" have never been run, so their expected readings are predictions.
 
 **Where this stands.** The first board session, on 7 November, passed for the design as it was then: the healthy test and the single-street fault switches. Everything added since has passed in simulation only and needs a fresh build: the intersection test (code F), the wait for the memory to calibrate, the privacy options, restart, the laptop link, and all the demos, which need bigger house memories. Treat every "expect" below that mentions those as a prediction. If the board disagrees, that is a useful finding. The short checklist is `docs/hardware_test.md`; the demos are in `demo_tests/README.md`.
 
@@ -155,7 +155,7 @@ SW10 up breaks a traffic cop from the inside. SW9 and SW8 pick which one, as a b
 | That tile's LEDs | its pass LED stays off: the town has cut that house off |
 | The other tiles | still pass |
 
-This has been simulated but never run on the board, and the last four display digits have not been recorded. Write down what you see.
+This has been simulated but never run on the board. The exact display for each router is in `docs/hardware_test.md` (for example `F0100150` for router 1). LED 17 red also comes on.
 
 ## Stage E: the demos
 

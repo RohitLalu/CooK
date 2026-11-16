@@ -19,6 +19,7 @@ Per-test tables are in the other files in this folder.
 | Three-core crypto demo, one fault | **pass** | **fail** | `crypto.md` |
 | Fabric benchmark, three simultaneous flows | 1,807 cycles | 2,697 cycles | `fabric.md` |
 | Random traffic from 9 nodes, same sequences | 13,513 cycles | 27,398 cycles | this file |
+| riscv-tests executed from another tile (35 tests) | 184,817 cycles | 165,536 cycles | `remote_tests.md` |
 
 ## Fabric benchmark: the one that compares the interconnects
 
@@ -46,6 +47,22 @@ Three flows of 448 words that share no link on the mesh:
   simultaneous and on different paths. Two flows into the same tile, or a
   single flow, gain nothing, and a lone remote read is still slower over the
   mesh's extra hops.
+
+## The cost: one access at a time
+
+`remote_tests.md`, from `run_remote_tests.py`. Thirty-five riscv-tests, each
+executed by a core from **another tile's memory**, three cores at once, so
+every instruction fetch is a remote read. All 35 pass on both systems.
+
+| | Cycles, total over the 35 tests |
+|---|---|
+| Run from the core's own tile | 49,249 |
+| Run remotely on the NoC | 184,817 |
+| Run remotely on the bus | 165,536 |
+
+With slow cores that wait for each access, neither fabric is loaded, and the
+bus is about 10 % faster because the mesh adds hops. This is the price of the
+NoC at this scale, and it belongs next to the gains above.
 
 ## Random traffic from every node: correctness and scaling
 

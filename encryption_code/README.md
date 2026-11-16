@@ -1,6 +1,6 @@
 # Encryption code and laptop link
 
-> **Status: OPEN** (2026-11-16). Code complete and passing in simulation; known-answer tests pass. Open: not run on the board, `laptop.py` never run against a real serial port, the live-demo top is elaboration-checked only, and the full crypto simulation was not repeated after the files moved here (its build was).
+> **Status: OPEN** (2026-11-16). Code complete; known-answer tests, the crypto runs, the link and the live-demo top all pass in simulation. Open, and only closable on the board: not run there, and `laptop.py` never run against a real serial port.
 
 The three-core cryptography demonstration, and the optional live link to a
 laptop. All C, RV32I only: no multiplier, no FPU, no custom instructions.
@@ -17,6 +17,7 @@ laptop. All C, RV32I only: no multiplier, no FPU, no custom instructions.
 cc -o /tmp/crypto_host crypto/host_test.c crypto/sha256.c crypto/aes128.c crypto/wots.c && /tmp/crypto_host
 python3 encryption_code/run_crypto.py        # from the repo root; about 40 minutes
 python3 encryption_code/run_link_sim.py      # about 10 minutes
+python3 encryption_code/run_link_sim.py --top   # the same through the live-demo board top, about 25 minutes
 ```
 
 The runners use the benchmark helpers and C runtime in `benchmarks/`

@@ -92,7 +92,7 @@ In simulation, any single link fault leaves all three cores usable on the NoC
 and none on the bus; three simultaneous traffic flows on separate paths finish
 in 1,807 clock cycles on the NoC against 2,697 on the bus; and with nine nodes
 sending random traffic the NoC needs 13,513 cycles where the bus needs 27,398.
-A single isolated access is no faster on the NoC. The cores were checked with
+With slow cores making one access at a time the bus is about 10\% faster. The cores were checked with
 riscv-tests (41 of 42) and riscv-arch-test against the Spike reference model
 (38 of 39) on both systems, and a three-core cryptography demonstration
 (AES-128, a hash-based signature, key generation and arbitration) runs on
@@ -668,10 +668,28 @@ NoC's time is almost unchanged; the bus's doubles.}
 \label{fig:scale}
 \end{figure}
 
-The limits of this result should be stated with it. The gain needs traffic
+\subsubsection{The Cost: One Access at a Time}
+
+The limits of these results should be stated with them. The gain needs traffic
 that is simultaneous and on different paths. A single flow, or two flows into
-the same tile, gain nothing, and one isolated remote read is slower over the
-mesh's extra hops.
+the same tile, gain nothing. To measure the opposite case with real
+processors, thirty-five of the riscv-tests were run with each core executing
+code stored in another tile's memory, three cores at once, so that every
+instruction fetch is a remote read. All pass on both systems.
+
+\begin{tabularx}{\textwidth}{@{}Yr@{}}
+\toprule
+\textbf{Where the 35 tests ran} & \textbf{Total cycles} \\
+\midrule
+From the core's own tile & 49,249 \\
+From another tile, over the NoC & 184,817 \\
+From another tile, over the bus & 165,536 \\
+\bottomrule
+\end{tabularx}
+
+A PicoRV32 waits for each access before issuing the next, so neither fabric is
+loaded, and the bus is about 10\% faster because the mesh adds hops. This is
+the price of the NoC at this scale.
 
 \subsection{Cryptography and Demonstration Tests}
 
@@ -939,7 +957,8 @@ around what it finds, and uses the result to decide which tiles may move data
 through the DMA, which is the link the earlier thesis~[1] left open.
 
 Measured against a single bus built from the same parts, the NoC does not
-speed up a single access or a program that stays in one tile. It does keep
+speed up a program that stays in one tile, and for one access at a time it is
+about 10\% slower than the bus. It does keep
 all three cores usable after any single link fault where the bus keeps none,
 it carries simultaneous transfers on separate paths without slowing them, and
 its time for random traffic is almost unchanged from four nodes to nine where

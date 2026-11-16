@@ -1,6 +1,6 @@
 # Demo tests
 
-> **Status: OPEN** (2026-11-16). All demos are written and pass in simulation (`results.md`, written by the runner, is complete). Open: none has run on the board, and a 64 KB-tile bitstream has not been built.
+> **Status: OPEN** (2026-11-16). All demos are written and pass in simulation (`results.md`, written by the runner, is complete). Open, and only closable in Vivado and on the board: no 64 KB-tile bitstream has been built and no demo has run there.
 
 Programs and one optional hardware piece for showing the system working on
 the board. Everything here runs on 64 KB tiles (`NOC_OFFSET_BITS=16`) and is

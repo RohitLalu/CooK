@@ -1,6 +1,6 @@
 # Benchmarks
 
-> **Status: OPEN** (2026-11-16). All four runners work and their results are final for simulation. Open: the two items under "Not done" (remote-execution mode, core-v-verif's own programs).
+> **Status: COMPLETE** (2026-11-16). All runners work and their results are final for simulation. Nothing here is a board result.
 
 Programs run on both architectures: the NoC (`rtl/`) and the single-bus
 baseline (`single_bus/`). One testbench, `tb/tb_bench.v`, builds either
@@ -35,6 +35,8 @@ git clone --depth 1 https://github.com/eembc/coremark.git
 | `run_riscv_tests.py` | riscv-tests `rv32ui` (42 tests), three cores at once | `results/riscv_tests.md` |
 | `run_arch_test.py` | riscv-arch-test 3.9.1, RV32I base set (39 tests), signatures compared with Spike | `results/arch_test.md` |
 | `run_c_benchmarks.py` | Dhrystone 2.1 (from riscv-tests) and CoreMark | `results/c_benchmarks.md` |
+| `run_remote_tests.py` | riscv-tests executed from another tile's memory (35 tests) | `results/remote_tests.md` |
+| `run_fabric.py` | three simultaneous traffic flows, NoC against bus, with test drivers in place of cores | `results/fabric.md` |
 | `../encryption_code/run_crypto.py` | three-core crypto demo: keys and arbiter, AES-128, WOTS signature; healthy and with one fault | `results/crypto.md` |
 
 Run any of them from the repo root, for example `python3 benchmarks/run_arch_test.py`.
@@ -79,8 +81,15 @@ Final numbers and the two tests that cannot pass: `results/SUMMARY.md`.
 - `fence_i` passes because `rtl/core/picorv32.v` now accepts `fence.i` as a
   no-op.
 
-## Not done
+## Remote execution
 
-- A mode that runs a test from another tile's memory, so that every fetch
-  crosses the interconnect. It needs the remote write window widened.
-- core-v-verif's own test programs: only Dhrystone and CoreMark were taken.
+`run_remote_tests.py` runs the same riscv-tests with each core executing code
+stored in another tile, so every instruction fetch crosses the interconnect
+(`results/remote_tests.md`). This is the one CPU benchmark here that uses the
+fabric. It measures the cost side: with slow cores making one access at a
+time, the bus is about 10 % faster than the NoC.
+
+## Not planned
+
+- core-v-verif's own test programs. They target the CV32E40P core and its
+  support package; Dhrystone and CoreMark were taken in their place.

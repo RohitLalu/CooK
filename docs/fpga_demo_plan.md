@@ -1,6 +1,6 @@
 # FPGA demos: status
 
-> **Status: OPEN** (2026-11-16). Every item is built and passes in simulation. Open: none has run on the board, and the live-demo top is elaboration-checked only.
+> **Status: OPEN** (2026-11-16). Every item is built and passes in simulation, including the live-demo top. Open, and only closable on the board: none has run there, and `laptop.py` has not been run against a real serial port.
 
 Goal: show on the board that the computation happens in the FPGA's NoC, on
 three cores at once, and not on the laptop.
@@ -16,7 +16,7 @@ expect on the board for each demo is in `demo_tests/README.md`.
 | The same with a fault: NoC survives, bus does not | Built, simulated | the same runner, fault cases |
 | Laptop link: decrypt and show, encrypt and return | Built, simulated with the testbench as the laptop | `encryption_code/link/`, `encryption_code/run_link_sim.py` |
 | Serial port on core 0 | Built, optional | `encryption_code/rtl/uart_port.v` |
-| A separate top module for the live demo | Built, elaboration-checked only | `encryption_code/rtl/nexys4ddr_live_top.v` |
+| A separate top module for the live demo | Built, simulated as built (`run_link_sim.py --top`): real baud rate, text read from the display pins | `encryption_code/rtl/nexys4ddr_live_top.v` |
 | Text on the 7-segment display | Built | `encryption_code/rtl/seven_seg_text.v` |
 | Laptop script | Built; its AES self-checked, never run against a board | `encryption_code/link/laptop.py` |
 | Looping traffic, so a fault switched in while running is visible | Built, simulated | `demo_tests/programs/loop_traffic.c` |

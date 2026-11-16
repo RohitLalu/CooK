@@ -20,7 +20,7 @@
 // RGB LEDs (GATEWAY = 1)
 //   LED16_G     DDR2 calibration complete (MIG init_calib_complete)
 //   LED17_B     AXI DMA interrupt pending (MM2S or S2MM)
-//   LED17_R     link BIST found a faulty link (code E has the details)
+//   LED17_R     BIST found a faulty link (code E) or a faulty router (code F)
 //
 // FAULT INJECTION SWITCHES (for the availability demo, metric M3)
 //   SW[12] on = inject a fault, SW[11] = 0 silent / 1 bit-flip,

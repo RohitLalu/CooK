@@ -1,6 +1,6 @@
 # Hardware test: Nexys4 DDR bring-up
 
-> **Status: OPEN** (2026-11-16). Stages A and B (single-link switches) passed on the board on 7 November for the design as it then was. Not yet run: anything on the current RTL, the multi-link switch codes as documented here, the router fault step (its display value is not recorded), and stage C on the current RTL.
+> **Status: OPEN** (2026-11-16). Expected readings are complete, including the router fault and multi-link codes. Open, and only closable on the board: stages A and B passed on 7 November for the design as it then was; nothing has run on the current RTL.
 
 A checklist for the first sessions on the board. Every expected reading below
 comes from simulation of the same RTL and images (`make board`, `make m3`, and
@@ -92,7 +92,11 @@ Expected for every real link:
 | `100C` | tile 3 → N | 1–3 | `E0100318` |
 | `100F` | tile 3 → W | 2–3 | `E0200231` |
 | `1000 100D 100E` | unused codes | none | as stage A, LED17 off |
-| `1003 1004 1006 1009 100B` | several links at once (codes in `nexys4ddr_top.v`) | two to four | code E; cores cut off from each other fail (not simulated here) |
+| `1003` | both horizontal links | 0–1, 2–3 | `E0000252` |
+| `1004` | both vertical links | 0–2, 1–3 | `E0000294` |
+| `1006` | all but 0–2 | 0–1, 1–3, 2–3 | `E0000252` |
+| `1009` | all but 2–3 | 0–2, 0–1, 1–3 | `E0000210` |
+| `100B` | all four links | all | `E0000210` |
 
 With SW11 up, the SW value is `18xx` and the readings are the same.
 
@@ -106,12 +110,25 @@ correctly from E, S and its local port, but could not verify its S output.
 - [ ] The pass LEDs stay on for every row: this is the M3 result on silicon.
 - [ ] Switches back down and CPU_RESET: back to stage A.
 
+With several links broken the mesh is cut apart, so the cores that are cut
+off from each other fail; that is expected. The display shows tile 0's link
+status, as the lowest-numbered tile with a failed link.
+
 **Router fault.** SW10 on breaks a router from the inside; SW9 and SW8 pick
-which one (the tile number in binary). Press CPU_RESET. Expected: code `F` on
-that tile, with the last four display digits showing its failed inputs and
-outputs; the mesh drops that router's links, so that tile's core fails and the
-other tiles pass. Simulated for router 1 (`tb_bist` case F, `make m3`); the
-exact display value has not been captured, so note what you see.
+which one (the tile number in binary). Press CPU_RESET. Expected: LED17 red
+on, code `F` on that tile, and the last digits showing the inputs and outputs
+involved in the failed paths. The mesh drops that router's links, so that
+tile's core fails and the other tiles pass.
+
+| SW (hex) | Router broken | Display |
+|---|---|---|
+| `0400` | 0 | `F00000D0` |
+| `0500` | 1 | `F0100150` |
+| `0600` | 2 | `F02000B0` |
+| `0700` | 3 | `F0300130` |
+
+These display values are from a simulation of the mesh and the status panel
+with no cores running, as the stage B table was.
 
 A switch changed *without* a reset injects a fault the start-up BIST never saw.
 `alltoall.S` finishes within a millisecond of reset, so with no traffic left,

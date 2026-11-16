@@ -110,6 +110,7 @@ We test from small to large:
 - **Nine houses all sending random letters:** the town takes 13,513 ticks, the one-road town 27,398. The town with four houses took almost the same time as with nine; the one road took twice as long.
 - **One fault:** all three workers still usable in the town, none on the one road.
 - **A single worker's speed:** identical on both, because a worker computing at home doesn't use the streets.
+- **Workers running programs kept in a neighbour's house:** the one-road town is about 10% faster. Each step is one errand at a time, and the town's streets have more corners to turn.
 
 The town wins when several things happen at once on different streets, and when something breaks. It does not win on a single errand.
 

@@ -1,175 +1,75 @@
 # CooK — Cluster of On-chip Konnectivity
 
-> **Status: OPEN** (2026-11-16). The design it describes is built and passes in simulation, but this file has not had a full pass since the router self-test, the single-bus baseline, the benchmarks and the demos were added. Sections 5 to 8 in particular predate them. For the current state use `quick_look/user_guide.md`.
+> **Status: COMPLETE** (2026-11-16) as a description of the repository. The design passes in simulation; what has and has not run in Vivado and on the board is in section 2.
 
-An AXI/DMA-extended, BIST-aware Network-on-Chip: a 2×2 mesh of **3 PicoRV32 compute
-tiles + 1 gateway tile** (DMA/DDR, no core), built from a written specification with no
-inherited code except PicoRV32.
+A BIST-aware Network-on-Chip with DMA access to DDR memory: a 2×2 mesh of **3 PicoRV32
+cores** and **1 gateway tile** (Xilinx AXI DMA, DDR2), on a Digilent Nexys4 DDR
+(xc7a100tcsg324-1). The network tests its own links and routers at start-up, routes around
+what is dead, and uses the result to decide which tiles may move data through the DMA. A
+single-bus baseline built from the same parts measures what the mesh buys.
 
-This document is the orientation point: what is actually built and verified versus
-pending, what is deliberately out of scope, and where the open questions stand.
+**New here? Start with `quick_look/user_guide.md`.**
 
 ---
 
 ## 1. What this project is
 
 This extends *Network-on-Chip Built-In Self Test for enhancing availability of
-Multi-Processor System-on-Chip* (Shashank V, NITK Surathkal / IISc CAD Lab, 2018) — a
-distributed ping-pong link-test scheme on a toroidal mesh, plus a sequential
-consolidation and decision-making algorithm determining which parts of the fabric are
-safe to use. That thesis never connected its BIST result to anything: the compute
-resources were black boxes and nothing downstream consumed the availability decision.
+Multi-Processor System-on-Chip* (Shashank V, NITK Surathkal / IISc CAD Lab, 2018): a
+distributed ping-pong link test on a mesh, plus a consolidation step that decides which
+parts of the fabric are safe. That thesis never connected its BIST result to anything; the
+compute resources were black boxes and nothing consumed the availability decision.
 
-**The goal here:** make BIST-derived availability a live, hardware-enforced input to real
-DMA data movement. Checked against OpenPiton, Chipyard/Constellation, ESP and PULP, none
-wire self-test results into admission control for data movement. That gap is the
-contribution.
+**The contribution here:** BIST-derived availability is a live, hardware-enforced input to
+routing and to DMA data movement. Among the platforms reviewed (OpenPiton, tnoc,
+M3-hardware), none feeds a self-test result into admission of data movement.
 
-**Non-goals**, stated up front:
-- No Linux, no MMU, no cache coherence
-- No adaptive routing at run time — deterministic X-Y, plus a fixed detour around links the start-up BIST found dead (2×2 only, §4). Odd-Even considered and declined, §7
-- Small mesh scale, not a scaled demonstration
-- No ASIC fabrication — synthesis/PnR numbers only, if pursued at all
+**What is the same as the thesis:** the five-port router, X-Y routing, the ping-pong link
+test. **What is different:** the result is used (routers avoid dead links, the gateway
+refuses DMA to unreachable tiles), routers are tested as well as links, every router
+learns the full dead-link list, and the whole system is measured against a bus.
 
-**Toolchain (confirmed):** AMD Vivado targeting a real FPGA. Icarus Verilog during
-development, XSIM for the FPGA flow. `riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32`
-for baremetal images. Verification via directed Verilog testbenches plus cocotb/pyuvm.
+**Non-goals:**
+- No Linux, no MMU, no caches, no cache coherence
+- No adaptive routing at run time: deterministic X-Y, plus a fixed detour around what the
+  start-up BIST found dead (2×2 only)
+- No atomic operation between cores in hardware; mutual exclusion on shared words is
+  firmware's job (a recorded decision: `docs/assumptions_decisions_risks.md`)
+- Small mesh scale; no ASIC flow
 
-Everything is simulation-first, mirroring the thesis's own methodology. FPGA bring-up is a
-bonus milestone, not a requirement.
+**Toolchain:** Icarus Verilog for simulation, Yosys for synthesis checks, AMD Vivado for
+the FPGA, `riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32` for software, Spike as the
+reference model for the compliance tests.
 
 ---
 
 ## 2. Status
 
-| Component | File(s) | Status |
-|---|---|---|
-| Shared definitions (mesh knobs, flit layout, check bits, helper functions) | `rtl/include/noc_defs.vh`, `noc_funcs.vh` | **Built.** Single source of truth for every width and field |
-| Router (crossbar, X-Y on absolute coordinates, **per-output wormhole lock**, whole-packet admission, same-cycle drop checks, poison TAILs, per-output watchdog, debug/BIST hooks) | `rtl/router/noc_router.v` | **Built and verified.** 159 directed checks + 2 cocotb tests |
-| Link buffer (multi-flit FIFO, registered ready, whole-packet room, fault injection) | `rtl/router/link_buffer.v` | **Built and verified.** 229 checks incl. randomized stalls |
-| Address decoder (absolute target coordinates) | `rtl/network_interface/address_decoder.v` | **Built and verified.** 17 tests, incl. out-of-window aliasing |
-| Network interface (initiator + responder + response queue + tags + timeout/retry + block-RAM local memory with init file + CSRs) | `rtl/network_interface/ni.v` | **Built and verified.** 48 unit checks + every mesh test |
-| End terminator (`MODE`: healthy sink vs silent) | `rtl/router/end_buff.v` | **Built.** Used on every mesh-edge port |
-| **Generated mesh, one PicoRV32 per tile, real baremetal images** | `rtl/integrated/mesh/` | **Working.** 2×2 healthy with contention, silent-link fault, bit-flip fault, all-to-all self-check on 2×2 and 3×3 |
-| **Nexys4 DDR board top** (MMCM to 50 MHz, reset synchronizer, blink-code and 7-segment status panel, constraints) | `rtl/board/` | **Built, simulated as built** (programs from init files, result read from LEDs). Not yet run through Vivado or on the board |
-| Hand-wired two- and four-router configs | `rtl/integrated/two_router_config/`, `four_router_config/` | **Legacy.** Superseded by the generated mesh; no longer compile against the new port lists |
-| Baremetal images | `sw/*.S`, `sw/build.sh` | **Working.** rv32i, linked at 0x100. `alltoall.S` and `hammer.S` are position and mesh-size independent. `build.sh` writes full-memory `.mem` images, plus `tileNN.mem` for the FPGA |
-| DMA/DDR gateway (`gw_ni`: NoC to Xilinx AXI DMA, DMA lock with round-robin handoff and lease, checks at the "go" write, DDR zones, own-tile rule, BIST control point) + block design (`create_cook_gw.tcl`: axi_dma, SmartConnect, MIG DDR2) | `rtl/dma_ddr/` | **Built, simulated** against a DMA model (49 checks, healthy and faulted mesh) and with tiles running `alltoall.S`. The real-IP bench `tb_gw_dma_ip` runs only in Vivado |
-| Link BIST and router self-test: distributed ping-pong per router (`bist_node`), a walk of every crossbar path and an arbitration check on each router, dead-link gossip and routing around dead links and failed routers, gateway collection, availability bitmap, cores held until done | `rtl/router/bist_node.v`, `rtl/router/noc_router.v`, `rtl/dma_ddr/gw_ni.v` | **Built and verified.** `tb_bist` localises silent, bit-flip and run-time faults and checks every router's mask; mesh, gateway and board benches check the start-up results and the detours |
-| M3 sweep: every single link fault, both modes, plus two double faults, on the gateway system running `alltoall.S` | `tb/tb_m3.v` (`make m3`) | **Built and passing.** 16/16 single faults leave 3/3 cores usable |
-| 3-core single-bus baseline (Step 9) | `rtl/baseline/` | **Not started** |
-| cocotb / pyuvm router testbench | `cocotb/test_router.py`, `cocotb/noc_defs.py` | Working: 20/20 routing + no-interleave |
+| Part | Where | Simulation | Vivado / board |
+|---|---|---|---|
+| Router, link buffer, address decoder, network interface | `rtl/router/`, `rtl/network_interface/` | Verified: 159, 229, 17 and 66 checks; cocotb 2 tests | Ran on the board 7 Nov (earlier revision) |
+| Generated mesh with real cores | `rtl/integrated/mesh/` | Verified on 2×2 and 3×3, healthy and faulted | Ran on the board 7 Nov (earlier revision) |
+| BIST: link test, router self-test, dead-link list, routing around faults | `rtl/router/bist_node.v` | Verified: six fault cases, two router mutations caught | Link test ran 7 Nov; router self-test not yet |
+| DMA/DDR gateway: lock, lease, zones, checks, availability | `rtl/dma_ddr/gw_ni.v` | Verified against a DMA model: 67 checks | Built and met timing (earlier revision); DMA transfers not exercised on the board |
+| Board top, status panel, fault switches | `rtl/board/` | Verified | Ran 7 Nov; later changes not yet |
+| Fault sweep (metric M3) | `make m3` | 16 single link faults: 3 of 3 cores usable in each | Single-link switches ran 7 Nov |
+| Random traffic with scoreboard | `make soak` | Passes on mesh 2×2, 3×3, with a dead link, and on the bus | simulation only |
+| Single-bus baseline | `single_bus/` | All suites pass | Vivado scripts never run |
+| Standard tests and benchmarks | `benchmarks/` | riscv-tests 41/42, arch-test 38/39 against Spike, Dhrystone, CoreMark | simulation only |
+| NoC against bus | `benchmarks/run_fabric.py`, `run_remote_tests.py` | Done: section 4 | simulation only |
+| Crypto demo and laptop link | `encryption_code/` | Pass, including the live-demo top | not yet |
+| Board demos | `demo_tests/` | Pass | not yet |
 
-Run everything with `make test` (14 suites). `make synth_check` runs Yosys on the fabric
-and reports latches and logic loops (currently zero of both). `make cocotb` runs the pyuvm
-bench. A Yosys `synth_xilinx` run of the whole board top maps every tile memory to one
-RAMB36 and uses roughly 16.8k LUTs and 6.9k flip-flops with `GATEWAY = 0` (26 % of the
-xc7a100t's LUTs); Vivado timing is still to be run.
+The last Vivado build (gateway, 4 KB tiles, before the router self-test) met timing at
+50 MHz with 1.3 ns of slack: 17,379 LUTs (27 %), 16,219 flip-flops, 5 block-RAM tiles.
+Everything changed since then needs a new build; `docs/known_issues.md` item 10 lists the
+files. The benchmarks and demos also need a 64 KB-tile build, which has never been made.
 
-> **Board status at a glance (Nexys4 DDR):**
-> LED[3:0] tile has an error · LED[7:4] tile software pass · LED[11:8] tile software fail ·
-> LED[12] 1 Hz heartbeat · LED[13] system ready (BIST done, cores running) · LED[14] blinks
-> tile+1 · LED[15] blinks the error code · LED17 red: BIST found a faulty link · LED17 blue:
-> DMA interrupt · LED16 green: DDR2 calibrated · BTNC clears router error flags ·
-> 7-segment shows code, tile and a detail word. Codes, highest priority first: 1 trap,
-> F router self-test failed, E BIST link fault, 2 NI timeout, 3 check-bit error, 4 poison received, 5 stale response,
-> 6 router output dead, 7 watchdog fired, 8 router input error, B DMA engine error,
-> 9 software failure, C DMA request refused (display shows the reason), D DMA lock lease
-> expired, A illegal address. Details in `rtl/board/status_panel.v`.
->
-> **Fault-injection switches:** SW[12] on breaks one link, SW[11] picks silent (0) or bit-flip
-> (1), SW[3:0] picks the link (tile × 4 + direction 0 N, 1 S, 2 E, 3 W). Set them, press
-> CPU_RESET: BIST runs after every total reset and localises the fault (code E, LED17 red),
-> the routers go around the link, and every core still reaches pass. Expected readings per
-> switch setting: `docs/hardware_test.md`.
-
-> **Note:** `mesh_top` puts a core on every tile by default. `CORE_MASK` removes the core
-> from a tile without rewiring anything; tile 3 loses its core when the DMA/DDR gateway
-> lands, matching the thesis's own gateway routers.
-
-> **Vivado:** `cook_vivado/cook_vivado.xpr` targets `xc7a100tcsg324-1` (Nexys4 DDR) and
-> lists only the current files. Synthesis top: `nexys4ddr_top`, constraints
-> `rtl/board/nexys4ddr/nexys4ddr.xdc`, block-RAM images `sw/tile00..03.mem` (commit them, or
-> run `sh sw/build.sh`, before synthesis). Include directory: `rtl/include`. Simulation set
-> `sim_1`: `tb_mesh_top` (default; `-generic_top TEST=1|2|3|4` for the fault and all-to-all
-> modes), `tb_board`, `tb_ni`, `tb_status_panel`, `tb_link_buffer`, `tb_address_decoder`.
-> Simulation set `sim_router`: `tb_noc_router` with `NOC_MESH_X=3`, `NOC_MESH_Y=3`.
-> Batch build and programming: `cook_vivado/build.tcl` (`-tclargs 0|1` for `GATEWAY`:
-> bitstream, reports, and a stop on negative slack) and `cook_vivado/program.tcl`. The
-> bench checklist, with the expected reading for every switch setting, is
-> `docs/hardware_test.md`.
-
-### Bugs found and fixed
-
-Latest round (router/link redesign) -- each reproduced before being fixed:
-
-- **Packets could interleave on a shared output.** The router remembered which output each
-  *input* was using, but never reserved the *output*. The round-robin pointer advanced per
-  flit, so a second HEAD could win the output between the first packet's HEAD and TAIL.
-  Reproduced in simulation: output E carried HEAD(tile 1), HEAD(tile 2), TAIL(tile 1),
-  TAIL(tile 2). Downstream that is a permanent deadlock on a router port and a corrupted
-  packet at an NI. Fixed with a per-output lock derived from the input route registers;
-  the pointer now moves only when a new packet is granted.
-- **Ready was combinational across the whole mesh.** The one-slot link buffer computed
-  `in_ready = !full || out_ready`, so ready chained through every router and link and
-  formed a structural loop around the ring. The link buffer is now a FIFO with registered
-  ready; Yosys reports zero logic loops.
-- **Request/response deadlock was possible.** The NI would not accept new input while its
-  own response was unsent. Read requests now move into a response queue at once.
-- **No defence against a corrupted or lost flit.** Added check bits on every flit, poison
-  TAILs, same-cycle drop checks and a per-output watchdog (§4).
-- **`make test` was broken**: the RTL `` `include ``s had been commented out for Vivado, so
-  no suite found its modules. The Makefile now passes explicit file lists, like Vivado.
-
-Earlier rounds: silent misroute of a Head arriving mid-packet; round-robin pointer
-advancing from the wrong slot; `end_buff.out_ready` wired to the router's `in_ready`
-*output*; `dx`/`dy`/`data` pointed at the wrong router; duplicate instance names; a
-south-to-south link that should have been south-to-north.
-
-Most recent pass — every item below was reproduced before being fixed, not inferred:
-
-- **`ni.v` did not compile at all.** It contained a pasted picorv32 *module declaration*, not an instantiation.
-- **The router silently dropped `router_code`.** `out_router_code_flit` was declared but never assigned anywhere in the body — Yosys reported all 15 bits undriven, simulation read `zzz`. The entire "source tag is the return address" plan had no transport. Now propagated through the crossbar, unchanged on every hop, with an all-ones sentinel on idle outputs.
-- **All four NIs drove the router's `W` port instead of `L`** — and collided with the `end_buff` and link-buffer drivers already on those ports.
-- **All four NIs were `ROUTER_CODE(1)`.** No tile had a unique identity.
-- **Tile IDs did not match the address map.** Routers were numbered `1,2,3,4` as `1+2X+Y`; the address map wants `2Y+X`. Not an off-by-one — the axes were transposed. Now `r00=0, r10=1, r01=2, r11=3`, so router_code == tile ID == availability-bitmap index, which was the point of the shared ID space.
-- **`four_router_top` would not elaborate**: 32 errors from `.in_router_code` vs `.in_router_code_flit`, and from nets named `to_rXX_out_...` that were never declared.
-- **`end_buff` drove `2'bzz` / `32'hzz…` onto internal nets.** No internal tristates exist on the target fabric; this is a sim/synth mismatch. Now constant-driven.
-- **`end_buff.out_ready` was wired to the router's `in_ready` output again** in the 4-router config — the same multi-driver bug the two-router config had already fixed once. All 8 instances rewired.
-- **`tb_four_router.v` was a verbatim copy of the two-router bench** — wrong module name, instantiating `two_router_top`.
-- **`tb_link_buffer.v` never included its DUT**, so the old `compile_lb` target could not have worked.
-- **Hardcoded absolute paths** in 4 `` `include ``s plus a `$dumpfile`. All now relative to the repo root (`iverilog -I.`).
-- **Response return-path race in the new NI**: the return decoder was fed the live receive register, which a newly arriving HEAD could overwrite before TX picked the response up. Now uses the latched destination.
-
-The throughline remains: repetitive, direction-indexed, hand-copied wiring is where the
-bugs hide.
+Open items and design limits: `docs/known_issues.md`.
 
 ---
 
-## 3. Repository structure
-
-```
-CooK/
-├── rtl/
-│   ├── include/             noc_defs.vh (knobs, layout), noc_funcs.vh (functions, checks)
-│   ├── router/              noc_router.v, link_buffer.v, end_buff.v
-│   ├── network_interface/   address_decoder.v, ni.v
-│   ├── core/                picorv32.v          (vendored)
-│   ├── dma_ddr/             (empty — not started)
-│   └── integrated/
-│       ├── mesh/            noc_mesh.v (generated fabric), mesh_top.v, tb_mesh_top.v
-│       ├── two_router_config/    (legacy)
-│       └── four_router_config/   (legacy)
-├── tb/                      tb_noc_router.v, tb_link_buffer.v, tb_address_decoder.v
-├── sw/                      tile0.S, spin.S, hammer.S, build.sh   (baremetal rv32i images)
-├── cocotb/                  Makefile, test_router.py (pyuvm), noc_defs.py
-├── resources/               reference papers
-└── Makefile                 `make test` runs every suite
-```
-
----
-
-## 4. Architecture
+## 3. Architecture
 
 **Topology:** plain mesh, 2×2 by default, no toroidal wraparound, deterministic X-Y
 routing. No virtual channels — dimension-order routing on a non-wraparound mesh is
@@ -202,9 +102,11 @@ run-time detours would break the deadlock argument; routing around faults is BIS
    no progress emits a poison TAIL (upstream lost) or is marked dead (downstream stuck); an
    output whose waiting HEAD can never be admitted is marked dead.
 4. NI timeout and retry with a new transaction tag; POISON to the core when retries run out.
-5. Start-up BIST (after every total reset): each router ping-pongs every link with
-   all-0s / all-1s vectors across the full flit width (stuck-at and broken links), and never
-   sends on an outlink it could not verify. The gateway then reads every tile's status over
+5. Start-up BIST (after every total reset, 545 cycles): each router ping-pongs every link
+   with all-0s / all-1s vectors across the full flit width (stuck-at and broken links), and
+   never sends on an outlink it could not verify. Each router is then tested from the
+   inside: a packet through every crossbar path, and two packets at once to check
+   arbitration. A router that fails is cut out, with all its links (code F on the board). The gateway then reads every tile's status over
    the network; a tile is available only if that round trip succeeds with a self-checking
    (complemented) status word. Cores leave reset only after this, and the gateway refuses DMA
    to or from unavailable tiles. Known limitation, inherited from the thesis: a broken
@@ -232,7 +134,8 @@ first offending flit.
 3 = (1,1). The same number is the router code, the flit's source tag, and the index into
 the availability bitmap.
 
-**Address map** — each tile owns 4KB:
+**Address map** — each tile owns 4KB by default (`NOC_OFFSET_BITS = 12`; the benchmarks and
+demos use 16, for 64 KB tiles):
 
 | Bits | Meaning |
 |---|---|
@@ -245,14 +148,17 @@ CSRs: `0x000` tile ID (read-only), `0x004` error flags, write 1 to clear: bit 0 
 response discarded, bit 4 check-bit error. `0x008` software status (read/write; upper half
 `0x600D` = pass, `0xFA11` = fail, shown on the board). `0x00C` number of tiles (read-only),
 so one binary adapts to any mesh size. `0x010` tile kind (0 core, 1 gateway). `0x014` this
-tile's link BIST status `{in[4:0], out[4:0]}` with its complement in bits 25:16.
+tile's link BIST status `{in[4:0], out[4:0]}` with its complement in bits 25:16. `0x018`
+core control: reads 1 when this tile's core has trapped; writing 1 restarts it (any tile
+may do either).
 The gateway's DMA registers (lock `0x114`, refusal reason `0x118`, BIST bitmap `0x120`,
 per-tile status `0x130+4t`) are documented at the top of `rtl/dma_ddr/gw_ni.v`.
 
 Local memory is one true-dual-port block RAM per tile: the core on one port, the network
 on the other. `INIT_FILE` preloads it for the FPGA. Other tiles may write only the mailbox
 window `0x800`–`0xEFF` (option-b isolation); the gateway may write anywhere from `0x100`,
-because DMA lands there. Reads are unrestricted.
+because DMA lands there. Reads are unrestricted by default; with `RD_PROTECT = 1` another
+tile may read only the CSRs and the mailbox, and anything else returns POISON.
 
 DDR2 is split into three 40 MB core zones and two 4 MB shared windows (`B0`: tiles 0 and 2,
 `B1`: tiles 0 and 1). The gateway enforces them on every DMA request.
@@ -289,85 +195,103 @@ DMA IP requires it.
 
 ---
 
-## 5. Build order
+## 4. Results (simulation)
 
-Current position: steps 1–2 done; **step 3 (NI) done and verified end-to-end**; step 4
-(2×2 integration) done, now generated from mesh-size knobs, with link-level fault
-detection and recovery in place. BIST and DMA are the next real work.
+Full tables: `benchmarks/results/SUMMARY.md`.
 
-| Steps | Category |
-|---|---|
-| 1–2, 4–5 | Rebuild — faithful reconstruction of the thesis's router and BIST |
-| 3, 7 | Catch-up — bus wrapping, DMA integration (standard modern practice) |
-| 6 | Secondary departure — direct status reads replacing distributed consolidation |
-| **8** | **The contribution — availability gates DMA** |
-| 9 | Evaluation — measured comparison against a 3-core single-bus baseline (§5.1) |
-| 10 | Evidence — FPGA numbers on an already-complete result |
+| Question | NoC | Single bus |
+|---|---|---|
+| Cores usable after any single link fault | **3 of 3** | 0 of 3 |
+| Cores usable with one router broken inside | 2 of 3 | n/a |
+| Three simultaneous flows on separate paths, cycles to finish | **1,807** | 2,697 |
+| The same flows one at a time | equal | equal |
+| Random traffic from 9 nodes, cycles to finish | **13,513** | 27,398 |
+| Random traffic from 4 nodes | 12,387 | 13,785 |
+| 35 riscv-tests executed from another tile's memory, total cycles | 184,817 | **165,536** |
+| Programs that stay in one tile (ISA tests, Dhrystone, CoreMark) | identical | identical |
 
-### 5.1 Step 9 restated: a 3-core single-bus baseline
+**Read these together.** The NoC wins when several transfers happen at once on different
+paths, and when something breaks. With slow cores making one access at a time it is about
+10 % slower than the bus, because the mesh adds hops. Programs that never leave their tile
+cannot tell the two apart.
 
-**The old framing is retired.** Step 9 used to read *"regression against the original's own
-fault examples."* That is not achievable here and should not be claimed. The thesis's
-Examples 1–7 all reference routers 3, 5, 11, 15, 17 and G1–G6 on a 6×6 fabric with a
-gateway column, and every one turns on quadrants, pass-through routers and toroidal
-wraparound. **None of those exist in a 2×2 plain mesh.** At 2×2 there is exactly one path
-between any two tiles, so a single faulted link makes a tile unreachable and the analysis
-is trivial. Reproducing those figures would mean rebuilding the thesis's topology, which
-§1 puts out of scope.
+Core performance (RV32I, no multiplier, no barrel shifter): 7.23 DMIPS and 11.30 CoreMark
+at 50 MHz.
 
-**The replacement is a comparison 2×2 can actually carry:** the same workload on a 3-core
-single-bus system versus this NoC. It is exactly apples-to-apples — this design is 3
-compute cores plus a DMA/DDR gateway, so the baseline is the same 3 cores sharing one bus
-to the same memory.
-
-**Why 3 cores on one bus is the right baseline, not a strawman.** The thesis's own
-motivation is that *"performance of a bus degrades as the number of processing cores
-dependent on it moves beyond 4."* Three cores is therefore where a shared bus is still at
-its **best**. Choosing it means any win is a win in the bus's favoured region.
-
-**Baseline design:** 3 × picorv32 + one shared memory on a single round-robin-arbitrated
-bus. Same cores, same memory depth, same clock, same compiler flags. This is the only
-genuinely new RTL the plan needs (`rtl/baseline/`).
-
-**Metrics, with the honest prediction for each:**
-
-| # | Metric | 3-core single bus | 2×2 NoC | Winner |
-|---|---|---|---|---|
-| M1 | Single remote-word read latency | 1–3 cycles | ~30–40 cycles (2 hops each way) | **Bus.** Say so plainly; it is the price of the fabric |
-| M2 | Aggregate cycles for *k* disjoint transfers issued together | serialized, ≈ *k* × latency | disjoint paths overlap | NoC, and the gap widens with *k* |
-| M3 | **Cores still usable after one injected fault** | **0** — one shared resource, no alternative path, no partial availability | **3 of 3 for all 16 single link faults** (8 directed links × silent/bit-flip); 2 of 3 with tile 0 cut off; 1 of 3 when the mesh splits — `tb_m3` | **NoC. This is the contribution** |
-| M4 | Fault localization granularity | none — a fault on a shared wire is global and anonymous | per-link in/out status, 10 bits per router | NoC |
-| M5 | Time from fault until the system *knows* | unbounded — the bus hangs and nothing reports it | bounded by the NI timeout, then a BIST sweep | NoC |
-
-**The headline, stated honestly:** at 3–4 cores the NoC does **not** win on speed, and the
-write-up should lead with that rather than bury it. What it wins is that *partial*
-availability exists at all. On a single bus availability is binary and global — one fault
-and every core is gone, with no way to discover which fault or to keep working around it.
-That is precisely the gap the 2018 thesis identified and never connected to data movement.
-M3, M4 and M5 are the three numbers that demonstrate it.
-
-**Fault injection for M3:** `mesh_top` takes `LINK_FAULT_MASK` (one bit per link, per
-direction) and `LINK_FAULT_MODE` (`1` = silent link, `2` = bit-flip), passed down to the
-chosen `link_buffer`s, plus the run-time `fault_rt_mask`/`fault_rt_flip` inputs the board
-switches drive, so any internal link can be faulted with no extra hardware. `make m3`
-sweeps every directed link in both modes and two double faults. In each case it checks
-the gateway's availability bitmap, that every available core passes `alltoall.S` against
-exactly the available tiles, and that single faults drop nothing. `make mesh_faults`
-checks the detour for a fault BIST saw, and POISON (not a hang) for one that appears
-after BIST. The equivalent on the bus baseline is a stuck arbiter grant or a stuck data
-line.
-
-**What M3 does not cover, stated plainly:**
-- The gateway router is a single point of failure for DMA.
-- The router self-test covers the crossbar paths and one arbitration case, not the watchdog or the error-drop paths.
-- A fault that appears after start-up shows only through M5 (NI timeout) until the next
-  reset.
-- Two faults on opposite links split the 2×2 mesh in two.
-- Rerouting is 2×2 only.
+The deadlock result should be worded with its condition: random traffic found no hang and
+no lost packet, as evidence and not proof, for at most one read outstanding per node
+(`docs/known_issues.md` has the wording).
 
 ---
 
-## 6. Open design questions
+## 5. Repository structure
+
+```
+CooK/
+├── rtl/
+│   ├── include/             noc_defs.vh (knobs, layout), noc_funcs.vh (functions, checks)
+│   ├── router/              noc_router.v, link_buffer.v, end_buff.v, bist_node.v
+│   ├── network_interface/   address_decoder.v, ni.v
+│   ├── dma_ddr/             gw_ni.v, create_cook_gw.tcl (axi_dma + SmartConnect + MIG)
+│   ├── integrated/mesh/     noc_mesh.v (generated fabric), mesh_top.v, tb_mesh_top.v
+│   ├── board/               status_panel.v, seven_seg.v, nexys4ddr/ (top, constraints)
+│   └── core/                picorv32.v (vendored; one line changed for fence.i)
+├── tb/                      unit and system testbenches, tb_m3.v, tb_soak.v
+├── sw/                      assembly images: alltoall, hammer, tile0, spin
+├── single_bus/              the baseline: rtl/, tb/, sw/, vivado_proj/, Makefile
+├── benchmarks/              C runtime (crt/), runners, results/
+├── encryption_code/         crypto/ (AES, SHA-256, WOTS, protocol), link/, rtl/ (UART, live top)
+├── demo_tests/              board demo programs and their runner
+├── cocotb/                  pyuvm router bench
+├── cook_vivado/             Vivado project, build.tcl, program.tcl
+├── docs/                    hardware checklist, known issues, assumptions and risks, demo status
+├── quick_look/              plain-language guides; start with user_guide.md
+├── reports_and_ppt/         mid-sem and end-sem reports
+└── resources/               reference thesis and paper
+```
+
+Legacy, not built: `rtl/integrated/two_router_config/`, `four_router_config/`,
+`rtl/trial_barebones/`.
+
+---
+
+## 6. How to run
+
+```
+make test                                  # every NoC suite, about 10 minutes
+make synth_check                           # Yosys: no latches, no loops
+make cocotb                                # pyuvm router bench
+cd single_bus && make test                 # the baseline's suites
+python3 benchmarks/run_fabric.py           # NoC against bus under load, 1 minute
+python3 benchmarks/run_riscv_tests.py      # and run_arch_test.py, run_c_benchmarks.py, run_remote_tests.py
+python3 encryption_code/run_crypto.py      # three-core crypto demo, both systems
+python3 demo_tests/run_demos.py            # board demos in simulation
+```
+
+Knobs live in `rtl/include/noc_defs.vh` and can be overridden per compile, for example
+`make mesh MESH_DEFS="-DNOC_MESH_X=3 -DNOC_MESH_Y=3"`. What to install for the benchmarks:
+`benchmarks/README.md`.
+
+**Board.** `cook_vivado/build.tcl` (`-tclargs 0|1` for `GATEWAY`) builds a bitstream and
+stops on negative slack; `cook_vivado/program.tcl` loads it. Synthesis top `nexys4ddr_top`,
+constraints `rtl/board/nexys4ddr/nexys4ddr.xdc`, images `sw/tile00..03.mem`. The live
+laptop demo uses a different top, `encryption_code/rtl/nexys4ddr_live_top.v`. The
+checklist with expected readings is `docs/hardware_test.md`.
+
+> **Board at a glance:** LED[3:0] tile error · LED[7:4] tile passed · LED[11:8] tile
+> failed · LED[12] heartbeat · LED[13] system ready · LED[14] blinks tile+1 · LED[15]
+> blinks the error code · LED16 green DDR2 calibrated · LED17 red BIST found a faulty link
+> or router. Display: code, tile, 0, detail. Codes: 1 trap, F router self-test, E link
+> BIST, 2 NI timeout, 3 check bits, 4 poison, 5 stale response, 6 output dead, 7 watchdog,
+> 8 router input error, B DMA error, 9 software failure, C DMA refused, D lease expired,
+> A illegal address (`rtl/board/status_panel.v`).
+> **Fault switches** (then press CPU_RESET): SW[12] injects a link fault, SW[11] silent or
+> bit-flip, SW[3:0] the fault code; SW[10] breaks a router, SW[9:8] which one. SW[15:13]
+> are faulty on our board and unused.
+
+---
+
+## 7. Open design questions
 
 1. ~~**Request/response disambiguation.**~~ **Resolved.** The packet carries an explicit
    `is_resp` bit rather than inferring intent from the source tag. Inference only works
@@ -404,9 +328,9 @@ line.
    so every tile sees its own memory at one fixed address would mean **one binary for all
    tiles**, with the orchestrator role chosen at runtime by reading the tile-ID CSR. One
    extra comparison in the decoder; the single biggest bring-up effort reduction available.
-9. **Memory protection — open.** Each tile's 4KB is shared between its own code/stack and
-   what remote tiles may write. A remote tile can scribble on a local stack. Consider
-   splitting into a local-only region and a small NoC-exposed mailbox.
+9. ~~**Memory protection.**~~ **Resolved.** Remote writes are limited to the mailbox window,
+   and with `RD_PROTECT = 1` remote reads are too. The C linker script keeps programs clear
+   of the mailbox.
 10. ~~**Reset fanout.**~~ **Resolved for bring-up.** The board top passes the reset button
    and MMCM lock through `reset_sync` (asynchronous assert, synchronous de-assert), so every
    flip-flop leaves reset on the same edge. Fanout is still high; Vivado replicates it if
@@ -414,27 +338,79 @@ line.
 
 ---
 
-## 7. Deliberately excluded
+## 8. Deliberately excluded
 
 - **Odd-Even (adaptive) routing** — better throughput under load, but real turn-restriction complexity for a benefit (load balancing) this project is not optimizing for.
-- **Software-based self-test *of the network*** — its main benefit (no external ATE) is already true of the ping-pong BIST. Software self-test of the *cores* is a different job and is planned (`alltoall.S` is its first piece).
-- **Full distance-vector routing** — per-router tables, a neighbour-exchange protocol, and transient-loop risk during reconvergence. X-Y needs none of that and is loop-free by construction. The start-up detour (§4) is computed once from a mask that is final before any traffic flows, so it has no reconvergence.
+- **Software-based self-test *of the network*** — its main benefit (no external ATE) is already true of the ping-pong BIST. Software self-test of the *cores* is a different job: `alltoall.S`, and the standard suites in `benchmarks/`.
+- **Full distance-vector routing** — per-router tables, a neighbour-exchange protocol, and transient-loop risk during reconvergence. X-Y needs none of that and is loop-free by construction. The start-up detour (section 3) is computed once from a mask that is final before any traffic flows, so it has no reconvergence.
 
 ---
 
-## 8. Immediate next steps
+## 9. Limits and future work
 
-- Run `cook_vivado/build.tcl` with `0` then `1` (timing at 50 MHz on the -1 part), run `tb_gw_dma_ip` against the real DMA IP, then work through `docs/hardware_test.md` on the board
-- Router self-test is in (`bist_node.v`, code F); rebuild the bitstream and rerun the hardware checklist
-- C runtime and linker script with private, `.mailbox` (0x800–0xEFF) and stack sections, matching the NI's remote write window
-- A debug path that does not depend on the fabric under test (serial ring or JTAG via BSCANE2)
-- Build the 3-core single-bus baseline in `rtl/baseline/` and collect M1–M5 (M3 for the NoC: `make m3`)
-- Rerouting beyond 2×2: up\*/down\* tables from the dead-link mask
-- Add the local-alias window (§6.8) so all tiles share one binary
+Design limits (each a consequence of a recorded decision): rerouting is 2×2 only; deadlock
+safety assumes one read outstanding per core; a fault that appears after start-up is
+detected but not routed around; the gateway is a single point of failure; shared words
+have no hardware lock. `docs/assumptions_decisions_risks.md` gives the assumptions, the
+decisions, what each costs, and how the system fails when firmware is wrong or hardware
+breaks while running.
+
+Future work, in the order the assumptions suggest: fix the known limitations (separate
+request and response channels first), formal verification, caches with a coherence
+protocol (MESI, snooping or directory), dynamic X-Y routing and a comparison with buffers
+inside the router, in-order and out-of-order cores, 3×3 and larger, a second memory
+element.
 
 ---
 
-## 9. Key references
+## 10. History: bugs found and fixed
+
+Latest round (router/link redesign) -- each reproduced before being fixed:
+
+- **Packets could interleave on a shared output.** The router remembered which output each
+  *input* was using, but never reserved the *output*. The round-robin pointer advanced per
+  flit, so a second HEAD could win the output between the first packet's HEAD and TAIL.
+  Reproduced in simulation: output E carried HEAD(tile 1), HEAD(tile 2), TAIL(tile 1),
+  TAIL(tile 2). Downstream that is a permanent deadlock on a router port and a corrupted
+  packet at an NI. Fixed with a per-output lock derived from the input route registers;
+  the pointer now moves only when a new packet is granted.
+- **Ready was combinational across the whole mesh.** The one-slot link buffer computed
+  `in_ready = !full || out_ready`, so ready chained through every router and link and
+  formed a structural loop around the ring. The link buffer is now a FIFO with registered
+  ready; Yosys reports zero logic loops.
+- **Request/response deadlock was possible.** The NI would not accept new input while its
+  own response was unsent. Read requests now move into a response queue at once.
+- **No defence against a corrupted or lost flit.** Added check bits on every flit, poison
+  TAILs, same-cycle drop checks and a per-output watchdog (section 3).
+- **`make test` was broken**: the RTL `` `include ``s had been commented out for Vivado, so
+  no suite found its modules. The Makefile now passes explicit file lists, like Vivado.
+
+Earlier rounds: silent misroute of a Head arriving mid-packet; round-robin pointer
+advancing from the wrong slot; `end_buff.out_ready` wired to the router's `in_ready`
+*output*; `dx`/`dy`/`data` pointed at the wrong router; duplicate instance names; a
+south-to-south link that should have been south-to-north.
+
+Most recent pass — every item below was reproduced before being fixed, not inferred:
+
+- **`ni.v` did not compile at all.** It contained a pasted picorv32 *module declaration*, not an instantiation.
+- **The router silently dropped `router_code`.** `out_router_code_flit` was declared but never assigned anywhere in the body — Yosys reported all 15 bits undriven, simulation read `zzz`. The entire "source tag is the return address" plan had no transport. Now propagated through the crossbar, unchanged on every hop, with an all-ones sentinel on idle outputs.
+- **All four NIs drove the router's `W` port instead of `L`** — and collided with the `end_buff` and link-buffer drivers already on those ports.
+- **All four NIs were `ROUTER_CODE(1)`.** No tile had a unique identity.
+- **Tile IDs did not match the address map.** Routers were numbered `1,2,3,4` as `1+2X+Y`; the address map wants `2Y+X`. Not an off-by-one — the axes were transposed. Now `r00=0, r10=1, r01=2, r11=3`, so router_code == tile ID == availability-bitmap index, which was the point of the shared ID space.
+- **`four_router_top` would not elaborate**: 32 errors from `.in_router_code` vs `.in_router_code_flit`, and from nets named `to_rXX_out_...` that were never declared.
+- **`end_buff` drove `2'bzz` / `32'hzz…` onto internal nets.** No internal tristates exist on the target fabric; this is a sim/synth mismatch. Now constant-driven.
+- **`end_buff.out_ready` was wired to the router's `in_ready` output again** in the 4-router config — the same multi-driver bug the two-router config had already fixed once. All 8 instances rewired.
+- **`tb_four_router.v` was a verbatim copy of the two-router bench** — wrong module name, instantiating `two_router_top`.
+- **`tb_link_buffer.v` never included its DUT**, so the old `compile_lb` target could not have worked.
+- **Hardcoded absolute paths** in 4 `` `include ``s plus a `$dumpfile`. All now relative to the repo root (`iverilog -I.`).
+- **Response return-path race in the new NI**: the return decoder was fed the live receive register, which a newly arriving HEAD could overwrite before TX picked the response up. Now uses the latched destination.
+
+The throughline remains: repetitive, direction-indexed, hand-copied wiring is where the
+bugs hide.
+
+---
+
+## 11. Key references
 
 - Shashank V, 2018 NITK/IISc thesis (the foundation)
 - AMBA AXI4/AXI4-Lite Protocol Specification (for the gateway's bus-facing half)

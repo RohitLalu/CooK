@@ -82,7 +82,7 @@ module status_panel #(
     output wire [`NOC_NUM_TILES-1:0]            tile_pass,   // software says pass
     output wire [`NOC_NUM_TILES-1:0]            tile_fail,   // software says fail
     output wire [31:0]                          display,
-    output wire                                 bist_fault,  // BIST failed a port somewhere
+    output wire                                 bist_fault,  // BIST failed a link or a router somewhere
     output wire [3:0]                           cur_code,
     output wire [7:0]                           cur_tile
 );
@@ -129,7 +129,7 @@ module status_panel #(
         end
     endgenerate
 
-    assign bist_fault = |ev[13*NT +: NT];
+    assign bist_fault = |ev[13*NT +: NT] | |ev[14*NT +: NT];   // a link or a router
 
     // priority rank -> code number (the order of the table above)
     function [3:0] prio_code;

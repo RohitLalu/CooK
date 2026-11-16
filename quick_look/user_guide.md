@@ -83,14 +83,17 @@ download.
 | `python3 benchmarks/run_arch_test.py` | The compliance tests, compared with Spike | 5 min |
 | `python3 benchmarks/run_c_benchmarks.py` | Dhrystone and CoreMark | over an hour |
 | `python3 benchmarks/run_fabric.py` | **The town against the one road under heavy traffic** | 1 min |
+| `python3 benchmarks/run_remote_tests.py` | Workers running programs kept in a neighbour's house, so every step uses the streets | 20 min |
 
 Results land in `benchmarks/results/`. Start with `SUMMARY.md` there: it has
 every number in one place and says what each one does and does not show.
 
 One thing to remember: the first three run inside a single house and never
 use the streets, so they give the same numbers for the town and the one-road
-town. They show the workers are correct. Only the fourth, and `make soak`,
-compare the two towns.
+town. They show the workers are correct. The last two, and `make soak`,
+compare the two towns: heavy traffic shows where the town wins, and the
+neighbour's-house test shows what it costs (the one road is about 10 % faster
+when workers run one errand at a time).
 
 ## 4. Encryption and the laptop link
 
