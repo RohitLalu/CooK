@@ -96,9 +96,9 @@ With slow cores making one access at a time the bus is about 10\% faster. The co
 riscv-tests (41 of 42) and riscv-arch-test against the Spike reference model
 (38 of 39) on both systems, and a three-core cryptography demonstration
 (AES-128, a hash-based signature, key generation and arbitration) runs on
-both. A first board session passed for the design as it stood on 7 November;
-the features added after that date pass in simulation and await a new
-bitstream.
+both. On the Nexys4~DDR, six bitstreams of the current design passed the
+link and router self-test under every fault switch setting and ran all five
+demonstrations, including DMA to DDR2 and the three-core cryptography.
 
 % ------------------------------------------------------------------ 2
 \section{Problem Statement}
@@ -143,7 +143,7 @@ Deterministic X-Y routing with wormhole flow control & Done \\
 Fair round-robin arbitration & Done \\
 Directed Verilog verification, and a cocotb/pyuvm bench & Done (cocotb: two tests) \\
 Mesh of routers with PicoRV32 cores through a network interface & Done \\
-DMA engine and DDR memory over AXI & Done in simulation; on the board for the earlier design \\
+DMA engine and DDR memory over AXI & Done; on the board (DMA demonstration) \\
 Stretch goal: NoC BIST & Done, extended to routers and to routing around faults \\
 \bottomrule
 \end{tabularx}
@@ -763,15 +763,377 @@ display, produced by core~1 and carried across the network to core~0. Its
 hardware, a serial port on core~0, is optional and is not built unless
 enabled.
 
-\subsection{Board Result}
+\subsection{Board Tests}
 
-A build with the gateway met timing at 50~MHz on the xc7a100t-1 with 1.3~ns
-of slack, using 17,379 LUTs (27\%), 16,219 flip-flops and 5 block-RAM tiles.
-A board session on 7 November passed the healthy test and the single-link
-fault switches. That bitstream predates the router self-test, the wait for
-DDR calibration, the read window, the restart register and the serial port;
-those, the single-bus build, and the larger tiles used by the benchmarks and
-demonstrations have not yet run on the board.
+A first board session on 7 November passed the healthy test and the
+single-link fault switches for the design as it stood then. On 19 and 20
+November the current design was built six times and every bitstream was
+tested on the Nexys4~DDR: the link and router self-test under every fault
+switch setting, and all five demonstration programs. All six use the DDR
+gateway (tile~3) and run at 50~MHz on the xc7a100t-1. Before each board test
+the same switch settings were simulated on the real board top, with a model
+standing in for the DDR memory, so that every reading below had a predicted
+value to compare against.
+
+\begin{tabularx}{\textwidth}{@{}lYccc@{}}
+\toprule
+\textbf{Bitstream} & \textbf{Tiles and program} & \textbf{WNS / WHS (ns)} &
+\textbf{LUTs, FFs} & \textbf{BRAM} \\
+\midrule
+\code{cook_gw1} & 4~KB; \code{alltoall} self-test on every core & 1.187 / 0.008 &
+19,323, 16,352 & 5 \\
+\code{cook_gw1_demo64_*} (5) & 64~KB; traffic, speed-up, restart, DMA,
+cryptography; read window on & 1.316 / 0.021 & 19,395, 16,468 & 50 \\
+\bottomrule
+\end{tabularx}
+
+Every reading on the board matched its prediction except where the tables
+below say otherwise. Each difference was traced to the demonstration
+programs, not to the hardware (Section~\ref{sec:boardfound}).
+
+\subsubsection{Reading the Board: Error Codes and LEDs}
+\label{sec:codes}
+
+The board reports through three things: sixteen LEDs, two RGB LEDs and an
+eight-digit display. The status panel only observes the system; it never
+changes it.
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{LED} & \textbf{Meaning} \\
+\midrule
+LED0--3 & Tile 0--3 has any error (one LED per tile, all tiles at once) \\
+LED4--7 & Tile 0--3 software reported pass (status \code{600Dxxxx}); LED7
+stays dark because tile~3 has no core \\
+LED8--11 & Tile 0--3 software reported fail (status \code{FA11xxxx}) \\
+LED12 & Heartbeat, 1~Hz: the clock runs \\
+LED13 & System ready: reset released, DDR2 calibrated, BIST done, cores
+running \\
+LED14 & Blinks the tile number plus one, for the error on the display \\
+LED15 & Blinks the error code (codes above 9: read the display instead) \\
+LD16 green & DDR2 calibration complete (dark on our board: a faulty LED;
+LED13 confirms calibration) \\
+LD17 blue & AXI DMA interrupt pending \\
+LD17 red & BIST found a faulty link (code E) or a faulty router (code F) \\
+\bottomrule
+\end{tabularx}
+
+\textbf{The display.} With switch SW7 off it shows the \emph{error panel},
+eight hexadecimal digits read as \code{C TT 0 DDDD}: one digit of error code,
+two digits of tile number, a zero, and four digits of detail. When several
+errors are present it shows the one with the highest priority, on the
+lowest-numbered tile that has it. With SW7 on it shows the \emph{program view}
+instead: the full 32-bit status word of the core chosen by SW5--SW4 (0, 1 or
+2). LEDs are not affected by SW7.
+
+\begin{tabularx}{\textwidth}{@{}clYl@{}}
+\toprule
+\textbf{Code} & \textbf{Meaning} & \textbf{Detected by, and the detail digits}
+& \textbf{Extra LEDs} \\
+\midrule
+0 & No error & detail = tile~0's status, low half & --- \\
+1 & Core trapped & core stopped on an illegal instruction; detail = its
+status, low half & --- \\
+F & Router self-test failed & BIST; detail = \{in\_bad, out\_bad\} of that
+router, 1 = failed & LD17 red \\
+E & Link failed & BIST ping-pong; detail = \{in, out\}, 1 = link good,
+0 = dead or absent & LD17 red \\
+2 & Remote read timed out & NI, after two retries; the core received
+\code{DEADBEEF} & --- \\
+3 & Check-bit error received & NI parity check & --- \\
+4 & Poison TAIL received & NI; a router cut a packet short & --- \\
+5 & Stale response discarded & NI tag check & --- \\
+6 & Router output declared dead & router watchdog & --- \\
+7 & Router watchdog fired & router watchdog & --- \\
+8 & Router input error & check bits, orphan flit, bad route or protocol & --- \\
+B & DMA engine error & gateway; detail = DMA status error bits & --- \\
+9 & Software reported failure & status word \code{FA11xxxx}; detail = the
+failed step & LED8--11 \\
+C & DMA request refused & gateway; detail = \{tile, 0, reason\} & --- \\
+D & DMA lock lease expired & gateway; detail = \{tile, 00\} & --- \\
+A & Illegal address & NI address decoder or window check & --- \\
+\bottomrule
+\end{tabularx}
+
+Every code also lights the error LED (LED0--3) of each tile where it is
+present, so the error LEDs show all affected tiles even though the display
+shows one. Codes B, C and D belong to the gateway and light LED3. Codes 1, 2
+and 8 can appear for a moment during start-up or a restart; the code that
+stays is the one to read.
+
+The rows are in priority order. A failed router (F) is shown before a failed
+link (E) because a failed router's neighbours drop their links to it, so its
+E codes are consequences. A trapped core (1) is shown before both.
+
+\textbf{Decoding an E or F code.} The detail is ten bits, \{in[4:0],
+out[4:0]\}, each in the port order L, W, E, S, N from the left. For example
+\code{E0000252}: code E, tile~00, detail \code{0x252} = in \code{10010}, out
+\code{10010}. Tile~0 has only an east and a south neighbour; L and S are good
+(1), E is dead (0), and N and W do not exist (0). So the link from tile~0 to
+tile~1 is broken in both directions.
+
+\textbf{The status word} (CSR \code{0x008}) belongs to the program. Its upper
+half is \code{600D} for pass, \code{FA11} for fail, and anything else, by
+convention \code{5255}, for still running. Its lower half is a count or a step
+number chosen by each program:
+
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Program} & \textbf{Status values} \\
+\midrule
+\code{alltoall} & \code{600D}+checks done; \code{FA11}+errors \\
+Traffic & \code{600D}+passes (counts up); \code{FA11}+failed accesses, kept
+until reset \\
+Speed-up & core~0: \code{5255000A} phase A, \code{5255000B} phase B,
+\code{600D07D0} done; \code{FA110001} own digest wrong, \code{0002} no result
+from a worker, \code{0003} worker digest wrong. Workers: \code{600D}+jobs \\
+Restart & core~0 \code{600D0001}; \code{FA110001} no trap seen, \code{0002} no
+pass after the restart. Core~1 \code{52550001} first life, \code{600D0002}
+second life \\
+DMA & \code{5255}+rounds (never passes); \code{FA110001} lock not granted,
+\code{0002} write to DDR not finished, \code{0003} read from DDR not finished,
+\code{0004} data differs, \code{0005} request refused \\
+Cryptography & core~0 \code{600D}+first two ciphertext bytes; \code{FA11}+step:
+1 AES timeout, 3 decrypt timeout, 4 decrypt mismatch, 5 signature timeout,
+6 signature rejected, 7 changed message accepted, 8 a worker does not answer,
+9 job not delivered, B checksum failed \\
+\bottomrule
+\end{tabularx}
+
+Two further registers hold detail that the display does not show: each
+tile's NI error flags (CSR \code{0x004}: timeout, illegal address, poison,
+stale response, check-bit error), and the gateway's refusal reason (CSR
+\code{0x118}: 1 no lock, 2 DDR zone, 3 tile range, 4 alignment, 5 length,
+6 register not writable, 7 busy, 8 tile not available, 9 destination not
+armed).
+
+\subsubsection{Board Test Results}
+
+The switch value is given in hexadecimal: bit~$n$ is switch SW$n$. SW12 turns
+a link fault on, SW3--SW0 choose it, SW11 makes it a bit-flip instead of a
+silent link, SW10 turns a router fault on and SW9--SW8 choose the router.
+Faults were set before reset unless stated. In the LED column, P, F and E
+list the pass, fail and error LEDs, and R is LD17 red. ``All'' means the
+three cores; ``count'' means the digits keep changing.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 1, \texttt{cook\_gw1}: link and router self-test with the
+\texttt{alltoall} program. Board: every row as predicted.}
+\label{tab:board1}
+\begin{tabularx}{\textwidth}{@{}lYllY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Panel} & \textbf{Cores 0 / 1 / 2} &
+\textbf{LEDs} \\
+\midrule
+0000, 1000, 100D, 100E & none (codes 0, 13, 14 unused) & \code{00000096} &
+all \code{600D0096} & P 4--6 \\
+1001 & link 0$\rightarrow$2 & \code{E00002D4} & all \code{600D0096} & P 4--6, E 0,2, R \\
+1002 & link 0$\rightarrow$1 & \code{E00002D2} & all \code{600D0096} & P 4--6, E 0,1, R \\
+1005 & link 1$\rightarrow$3 & \code{E0100358} & all \code{600D0096} & P 4--6, E 1,3, R \\
+1007 & link 1$\rightarrow$0 & \code{E0000252} & all \code{600D0096} & P 4--6, E 0,1, R \\
+1008 & link 2$\rightarrow$0 & \code{E0000294} & all \code{600D0096} & P 4--6, E 0,2, R \\
+100A & link 2$\rightarrow$3 & \code{E02002B1} & all \code{600D0096} & P 4--6, E 2,3, R \\
+100C & link 3$\rightarrow$1 & \code{E0100318} & all \code{600D0096} & P 4--6, E 1,3, R \\
+100F & link 3$\rightarrow$2 & \code{E0200231} & all \code{600D0096} & P 4--6, E 2,3, R \\
+1003 & both horizontal links & \code{E0000252} & \code{FA110001} / \code{600D0002} / \code{FA110001} & P 5, F 8,10, E 0--3, R \\
+1004 & both vertical links & \code{E0000294} & \code{FA110001} / \code{FA110001} / \code{600D0002} & P 6, F 8,9, E 0--3, R \\
+1006 & three links, only 0--2 left & \code{E0000252} & all \code{FA110001} & F 8--10, E 0--3, R \\
+1009 & three links, only 2--3 left & \code{E0000210} & \code{FA110001} / \code{FA110001} / \code{600D0002} & P 6, F 8,9, E 0--3, R \\
+100B & all four links & \code{E0000210} & all \code{FA110001} & F 8--10, E 0--3, R \\
+18xx & any of the above as bit-flip & same as silent & same as silent & same \\
+0400 & router 0 & \code{F00000D0} & \code{FA110001} / \code{600D004C} / \code{600D004C} & P 5,6, F 8, E 0,2, R \\
+0500 & router 1 & \code{F0100150} & \code{600D004C} / \code{FA110001} / \code{600D004C} & P 4,6, F 9, E 0,1, R \\
+0600 & router 2 & \code{F02000B0} & \code{600D004C} / \code{600D004C} / \code{FA110001} & P 4,5, F 10, E 2,3, R \\
+0700 & router 3 (gateway) & \code{F0300130} & all \code{FA110001} & F 8--10, E 0--3, R \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 2, traffic that never stops. Board: every row as predicted; the
+fail count on the display grows past \texttt{FF}, so the panel reads
+\texttt{2000xxxx}.}
+\label{tab:board2}
+\begin{tabularx}{\textwidth}{@{}lYllY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Panel} & \textbf{Cores 0 / 1 / 2} &
+\textbf{LEDs} \\
+\midrule
+0000 & none & \code{0000}+count & all \code{600D}+count & P 4--6 \\
+\multicolumn{5}{@{}l}{\emph{Fault switched on while running, no reset (BIST
+never sees it):}} \\
+1002, 1005 & link 0$\rightarrow$1 or 1$\rightarrow$3 & \code{2000xxxx} &
+\code{FA11} / \code{FA11} / count & P 6, F 8,9, E 0,1 \\
+1008, 100F & link 2$\rightarrow$0 or 3$\rightarrow$2 & \code{2000xxxx} &
+\code{FA11} / count / \code{FA11} & P 5, F 8,10 \\
+100A, 100C & link 2$\rightarrow$3 or 3$\rightarrow$1 & \code{2010xxxx} &
+count / \code{FA11} / \code{FA11} & P 4, F 9,10 \\
+1001, 1007, multi-link, routers & & \code{2000xxxx} & all \code{FA11} & F 8--10 \\
+\multicolumn{5}{@{}l}{\emph{The same faults set before reset (BIST finds them):}} \\
+any single link & & E code as in Table~\ref{tab:board1} & all \code{600D}+count
+& P 4--6, R \\
+1003, 1004, 1006, 1009, 100B & multi-link & E code & all \code{FA11} & F 8--10, E 0--3, R \\
+0400--0700 & any router & F code & all \code{FA11} & F 8--10, R \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+In the run-time rows LD17 red stays dark and the panel shows code~2
+(timeout), not E: the fault is caught by the software's own checks and the
+NI's timeouts, not by BIST. After a reset with the switches unchanged, BIST
+finds the link and every core runs again. With a router fault all three cores
+fail, because the traffic program also tries to reach the cut-off tile.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 3, parallel speed-up: three chains of 2,000 SHA-256 blocks.}
+\label{tab:board3}
+\begin{tabularx}{\textwidth}{@{}lYlY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Cores 0 / 1 / 2 at the end} &
+\textbf{Board result} \\
+\midrule
+0000 & none & \code{600D07D0} / \code{600D0001} / \code{600D0001} & phase A
+(one core) 5.22~s, phase B (three cores) 1.66~s: 3.1 times faster
+(simulation: 2.89) \\
+1002 & link 0$\rightarrow$1 & same & 5.26~s and 1.57~s: no loss from the
+detour \\
+1003 & both horizontal links & \code{FA110002} / \code{52550000} / \code{600D0001} & as predicted: core~1 never gets its job, core~2 does \\
+100B & all links & \code{FA110002} / \code{52550000} / \code{52550000} & as predicted \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The multi-link rows above were taken by programming the bitstream with the
+switches already set. Pressing CPU\_RESET after a healthy run instead
+showed a full pass under the same faults: the reset does not reload tile
+memory, and the program accepted the previous run's results, which were
+still in the mailboxes. This is a fault in the demonstration program
+(Section~\ref{sec:boardfound}).
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 4, restart: core~1 traps on purpose and core~0 restarts it.
+Each row run right after programming the bitstream.}
+\label{tab:board4}
+\begin{tabularx}{\textwidth}{@{}lYlY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Panel; cores 0 / 1 / 2} &
+\textbf{Board result} \\
+\midrule
+0000 & none & \code{00000001}; \code{600D0001} / \code{600D0002} /
+\code{600D0000} & as predicted; P 4--6 \\
+1002, 1005, 1004 & links that leave a path from 0 to 1 & E code;
+same as healthy & as predicted. After CPU\_RESET: core~0 \code{FA110001} \\
+1003, 100B, 0500 & core~1 cut off from core~0 & \code{10100001};
+\code{FA110002} / \code{52550001} / \code{600D0000} & predicted
+\code{FA110001}; board \code{FA110002} after 12.2~s \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\code{10100001} reads: code~1 (a core trapped), tile~01, detail
+\code{0001} (core~1's status, first life). Core~1 trapped as designed and
+nobody could reach it to restart it. The two differences from the
+prediction are both in the program: core~1's ``already trapped'' mark
+survives CPU\_RESET, and core~0 takes the poison value \code{DEADBEEF},
+which has bit~0 set, as ``core~1 has trapped''. 12.2~s is 200,000 polls,
+each timing out after three attempts of 1,024 cycles at 50~MHz.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 5, DMA to DDR2 and back, three cores sharing one DMA lock.
+Board: every row as predicted.}
+\label{tab:board5}
+\begin{tabularx}{\textwidth}{@{}lYllY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Panel} & \textbf{Cores 0 / 1 / 2} &
+\textbf{LEDs} \\
+\midrule
+0000 & none & \code{0000}+count & all \code{5255}+count & none lit \\
+1002, 1005, 100A, 100C, 100F & any single link & E code & all count & E, R \\
+1003 & both horizontal links & \code{E0000252} & \code{FA110004} / count /
+\code{FA110004} & F 8,10, E 0--3, R \\
+1004, 1009 & core~2 keeps link 2--3 & E code & \code{FA110004} /
+\code{FA110004} / count & F 8,9, E 0--3, R \\
+1006, 100B & no core reaches tile~3 & E code & all \code{FA110004} & F 8--10,
+E 0--3, R \\
+0500 & router 1 & \code{F0100150} & count / \code{FA110004} / count & F 9,
+E 0,1, R \\
+0700 & router 3 (gateway) & \code{F0300130} & all \code{FA110004} & F 8--10,
+E 0--3, R \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The healthy run moved data through the real AXI DMA and DDR2 for hundreds of
+thousands of rounds without an error, with the lock handed fairly between the
+three cores. A core keeps running under a fault exactly when it can still
+reach tile~3. The failing cores report \code{FA110004}, ``data differs'',
+where \code{FA110001}, ``lock not granted'', is the correct reading: the
+lock reply from an unreachable gateway is the poison value, whose bit~31
+looks like ``granted''. After the round count passes \code{0xFFFF} the
+display shows \code{5257} or \code{525F}: the program does not mask the count
+to 16 bits. LD17 blue stays dark because the program does not enable the DMA
+interrupt.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Test 6, cryptography on three cores, full-size signature. Board:
+every row as predicted.}
+\label{tab:board6}
+\begin{tabularx}{\textwidth}{@{}lYllY@{}}
+\toprule
+\textbf{SW} & \textbf{Fault} & \textbf{Panel} & \textbf{Cores 0 / 1 / 2} &
+\textbf{LEDs} \\
+\midrule
+0000 & none & \code{00002806} & \code{600D2806} / \code{600D0002} /
+\code{600D0001} & P 4--6; 7.85~s from \code{52550000} \\
+1002 & link 0$\rightarrow$1 & \code{E00002D2} & same as healthy & P 4--6, R \\
+0700 & router 3 (gateway) & \code{F0300130} & same as healthy & P 4--6, R \\
+1003, 1006 & multi-link & \code{E0000252} & \code{FA110008} / \code{52550000}
+/ \code{52550000} & F 8, E 0--3, R \\
+1004 & multi-link & \code{E0000294} & same & F 8, E 0--3, R \\
+1009, 100B & multi-link & \code{E0000210} & same & F 8, E 0--3, R \\
+0400, 0500, 0600 & router 0, 1 or 2 & F code & same & F 8, R \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\code{2806} is the first two bytes of the ciphertext, the same as the
+laptop's AES with the same key. The cryptography program needs no gateway,
+so it passes with router~3 broken. When a worker is cut off, core~0 fails at
+once with step~8: it checks that each worker answers before sending any job,
+and treats the poison value as ``no answer''.
+
+\subsubsection{What the Board Tests Found}
+\label{sec:boardfound}
+
+No board test failed because of the hardware. The router, the BIST, the
+detours, the NI timeouts and the DMA lock behaved as designed in every row.
+Four faults were found in the demonstration programs. All four have
+software fixes, listed in \code{todo/sw_changes.md}:
+
+\begin{itemize}
+\item \textbf{Poison taken for an answer.} Restart and DMA test single bits
+of a remote register. The poison value \code{DEADBEEF} has most bits set, so
+an unreachable tile looks like ``trapped'' or ``lock granted''. The cryptography
+program shows the correct approach.
+\item \textbf{Stale mailboxes after CPU\_RESET.} Speed-up and restart rely on
+mailbox contents that a reset does not clear, so a second run can reuse the
+first run's results.
+\item \textbf{Status overflow.} The DMA round count spills into the upper
+half of the status word.
+\item \textbf{DMA interrupt not enabled,} so LD17 blue never lights.
+\end{itemize}
+
+The tests also made some design choices visible: poison returned as an
+ordinary data value, no way for software to tell which reset happened, BIST
+only at reset, and one error shown at a time. These were taken deliberately
+for this stage and are listed, with proposed changes, in
+\code{todo/hw_changes.md}.
 
 % ------------------------------------------------------------------ 8
 \section{Design Choices and Known Trade-offs}
@@ -866,9 +1228,10 @@ which then finds the fault and routes around it where it can.
 \item The gateway is a single point of failure for memory.
 \item The router self-test does not exercise the watchdog or the drop paths.
 \item The mailbox sender check is firmware, with a 32-bit tag.
-\item The features added after 7 November, the single-bus Vivado project and
-any build with the larger tiles used by the benchmarks have not yet run on
+\item The single-bus Vivado project and the laptop link have not yet run on
 the board.
+\item The demonstration programs have four known faults, found on the board
+(Section~\ref{sec:boardfound}); fixes are listed in \code{todo/sw_changes.md}.
 \end{itemize}
 
 \subsection{Future Work}
@@ -949,8 +1312,7 @@ tile. A separate fabric benchmark with fast drivers was needed.
 % ------------------------------------------------------------------ 12
 \section{Conclusion}
 
-The system planned at mid-semester is complete in simulation and its earlier
-form has run on the board: a generated mesh of routers, three PicoRV32 cores
+The system planned at mid-semester is complete and runs on the board: a generated mesh of routers, three PicoRV32 cores
 behind network interfaces, and a gateway to DDR2 through an AXI DMA. Beyond
 that plan, the network tests its own links and routers at start-up, routes
 around what it finds, and uses the result to decide which tiles may move data
