@@ -3,24 +3,6 @@
 
 # XDC: C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr.xdc
 
-# Block Designs: bd/cook_gw/cook_gw.bd
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw || ORIG_REF_NAME==cook_gw} -quiet] -quiet
-
-# IP: bd/cook_gw/ip/cook_gw_dma_0/cook_gw_dma_0.xci
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_dma_0 || ORIG_REF_NAME==cook_gw_dma_0} -quiet] -quiet
-
-# IP: bd/cook_gw/ip/cook_gw_sc_0/cook_gw_sc_0.xci
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_sc_0 || ORIG_REF_NAME==cook_gw_sc_0} -quiet] -quiet
-
-# IP: bd/cook_gw/ip/cook_gw_rst50_0/cook_gw_rst50_0.xci
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_rst50_0 || ORIG_REF_NAME==cook_gw_rst50_0} -quiet] -quiet
-
-# IP: bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0.xci
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_mig_0 || ORIG_REF_NAME==cook_gw_mig_0} -quiet] -quiet
-
-# IP: bd/cook_gw/ip/cook_gw_rstui_0/cook_gw_rstui_0.xci
-set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_rstui_0 || ORIG_REF_NAME==cook_gw_rstui_0} -quiet] -quiet
-
 # Block Designs: bd/cook_gw_sim/cook_gw_sim.bd
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_sim || ORIG_REF_NAME==cook_gw_sim} -quiet] -quiet
 
@@ -39,6 +21,24 @@ set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_sim
 # IP: bd/cook_gw_sim/ip/cook_gw_sim_bram_0/cook_gw_sim_bram_0.xci
 set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_sim_bram_0 || ORIG_REF_NAME==cook_gw_sim_bram_0} -quiet] -quiet
 
-# XDC: c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/cook_gw_ooc.xdc
+# Block Designs: bd/cook_gw/cook_gw.bd
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw || ORIG_REF_NAME==cook_gw} -quiet] -quiet
+
+# IP: bd/cook_gw/ip/cook_gw_dma_0/cook_gw_dma_0.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_dma_0 || ORIG_REF_NAME==cook_gw_dma_0} -quiet] -quiet
+
+# IP: bd/cook_gw/ip/cook_gw_sc_0/cook_gw_sc_0.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_sc_0 || ORIG_REF_NAME==cook_gw_sc_0} -quiet] -quiet
+
+# IP: bd/cook_gw/ip/cook_gw_rst50_0/cook_gw_rst50_0.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_rst50_0 || ORIG_REF_NAME==cook_gw_rst50_0} -quiet] -quiet
+
+# IP: bd/cook_gw/ip/cook_gw_mig_0/cook_gw_mig_0.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_mig_0 || ORIG_REF_NAME==cook_gw_mig_0} -quiet] -quiet
+
+# IP: bd/cook_gw/ip/cook_gw_rstui_0/cook_gw_rstui_0.xci
+set_property KEEP_HIERARCHY SOFT [get_cells -hier -filter {REF_NAME==cook_gw_rstui_0 || ORIG_REF_NAME==cook_gw_rstui_0} -quiet] -quiet
 
 # XDC: c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw_sim/cook_gw_sim_ooc.xdc
+
+# XDC: c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/cook_gw_ooc.xdc

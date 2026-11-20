@@ -59,6 +59,7 @@ set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { LED17_R 
 set_property -dict { PACKAGE_PIN C4 IOSTANDARD LVCMOS33 } [get_ports { UART_TXD_IN }]
 set_property -dict { PACKAGE_PIN D4 IOSTANDARD LVCMOS33 } [get_ports { UART_RXD_OUT }]
 
+## SW[7] program view: display shows tile SW[5:4]'s full status CSR.
 ## Slide switches: fault injection (SW[12] enable, SW[11] mode, SW[3:0] fault
 ## code: single links 1,2,5,7,8,10,12,15; multi-link 3,4,6,9,11, see
 ## nexys4ddr_top.v)
@@ -140,6 +141,11 @@ set_false_path -to   [get_ports { LED[*] SEG[*] DP AN[*] LED16_G LED17_B LED17_R
 ## inside the SmartConnect's clock converter, which carries its own CDC
 ## constraints; the 200 MHz MIG input clock (CLKOUT1) is related to both
 ## through the same MMCM and needs nothing extra.
+## One exception outside the SmartConnect: init_calib_complete (ui_clk) enters
+## the NoC clock domain through the two-flop ASYNC_REG synchroniser calib_s in
+## nexys4ddr_top.v. Its first stage is a deliberate asynchronous capture, so
+## the path into it is not timed (it failed setup by 1.9 ns when it was).
+set_false_path -to [get_cells {calib_s_reg[0]}]
 
 ## Configuration bank voltage
 set_property CFGBVS VCCO [current_design]

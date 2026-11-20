@@ -56,13 +56,7 @@ if {$::dispatch::connected} {
 }
 
 OPTRACE "synth_1" START { ROLLUP_AUTO }
-set_param checkpoint.writeSynthRtdsInDcp 1
 set_param general.usePosixSpawnForFork 1
-set_param chipscope.maxJobs 4
-set_param synth.incrementalSynthesisCache C:/Users/pikum/AppData/Roaming/Xilinx/Vivado/.Xil/Vivado-11700-LAPTOP-0O737P11/incrSyn
-set_param xicom.use_bs_reader 1
-set_msg_config -id {Synth 8-256} -limit 10000
-set_msg_config -id {Synth 8-638} -limit 10000
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xc7a100tcsg324-1
 
@@ -78,6 +72,7 @@ set_property target_language Verilog [current_project]
 set_property ip_output_repo c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.cache/ip [current_project]
 set_property ip_cache_permissions {read write} [current_project]
 set_property include_dirs C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/include [current_fileset]
+set_property generic GATEWAY=1 [current_fileset]
 OPTRACE "Creating in-memory project" END { }
 OPTRACE "Adding files" START { }
 read_verilog {
@@ -91,21 +86,21 @@ read_mem {
   C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/sw/tile03.mem
 }
 read_verilog -library xil_defaultlib {
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/link_buffer.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/end_buff.v
   C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/address_decoder.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/noc_mesh.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/reset_sync.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/status_panel.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v
-  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/bist_node.v
   C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/hdl/cook_gw_wrapper.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/end_buff.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/dma_ddr/gw_ni.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/link_buffer.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/mesh_top.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/network_interface/ni.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/integrated/mesh/noc_mesh.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/router/noc_router.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/core/picorv32.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/reset_sync.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/seven_seg.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/status_panel.v
+  C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/rtl/board/nexys4ddr/nexys4ddr_top.v
 }
 add_files C:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.srcs/sources_1/bd/cook_gw/cook_gw.bd
 set_property used_in_implementation false [get_files -all c:/Users/pikum/OneDrive/Desktop/MajorProject/CooK/CooK/cook_vivado/cook_vivado.gen/sources_1/bd/cook_gw/ip/cook_gw_dma_0/cook_gw_dma_0.xdc]

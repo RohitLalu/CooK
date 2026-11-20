@@ -17,6 +17,10 @@
 //   LED[14]     slow blink code: TILE+1 blinks
 //   LED[15]     slow blink code: error CODE blinks (table in status_panel.v)
 // 7-segment display: code, tile, 0, and the low half of that tile's status CSR.
+//   PROGRAM VIEW: SW[7] on = the display shows the full 32-bit status CSR of
+//   the tile picked by SW[5:4] (e.g. 600D007D), whatever the error panel
+//   reports. Use it to watch a C program run while a fault keeps code E up.
+//   LEDs and blink codes are not affected.
 // RGB LEDs (GATEWAY = 1)
 //   LED16_G     DDR2 calibration complete (MIG init_calib_complete)
 //   LED17_B     AXI DMA interrupt pending (MM2S or S2MM)
@@ -339,8 +343,12 @@ module nexys4ddr_top #(
 
     wire [6:0] seg_hex;
     wire [7:0] an_hex;
+    // program view (SW[7]): one tile's full status CSR, SW[5:4] = tile
+    wire [31:0] display_prog = tile_sw[{sw_s2[5:4], 5'b0} +: 32];
+    wire [31:0] display_out  = sw_s2[7] ? display_prog : display;
+
     seven_seg #(.REFRESH_CYCLES(REFRESH_CYCLES)) u_7seg (
-        .clk(clk), .rst_n(rst_n), .value(display), .seg(seg_hex), .an(an_hex)
+        .clk(clk), .rst_n(rst_n), .value(display_out), .seg(seg_hex), .an(an_hex)
     );
     generate
         if (LIVE_UART != 0) begin : g_text
