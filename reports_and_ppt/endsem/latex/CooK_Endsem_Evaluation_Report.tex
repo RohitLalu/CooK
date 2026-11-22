@@ -410,6 +410,35 @@ windows;
 The availability check is the link this project set out to make: a tile that
 the self-test could not reach cannot take part in a DMA transfer.
 
+\textbf{Transfer rate.} A transfer of 448 words (1,792 bytes) was timed in
+simulation on the mesh, from the write that starts it until the last word is
+in place, with the DMA model standing in for the Xilinx DMA and the DDR2.
+
+\begin{tabularx}{\textwidth}{@{}Yrrr@{}}
+\toprule
+\textbf{Direction} & \textbf{Cycles} & \textbf{Cycles per word} &
+\textbf{Rate at 50~MHz} \\
+\midrule
+DDR to tile RAM (DMA stream out, posted writes over the mesh) & 1,807 & 4.0 &
+49.6~MB/s \\
+Tile RAM to DDR (gateway reads the tile, stream in) & 7,178 & 16.0 &
+12.5~MB/s \\
+\bottomrule
+\end{tabularx}
+
+The two directions differ because of how the words cross the network. Into a
+tile, every word is one posted write of two flits, and the network interface
+accepts a new packet every four cycles; 49.6~MB/s is within 1\% of that
+ceiling of 50~MB/s. Out of a tile, the gateway reads one word at a time and
+waits for each answer before asking for the next, because each node keeps at
+most one read outstanding (assumption A1 in Section~\ref{sec:choices}), so every word costs a
+full round trip of about sixteen cycles. Neither figure is limited by the
+memory: the AXI stream carries 32 bits per cycle, 200~MB/s at 50~MHz, and the
+DDR2 interface is faster still. On the mesh the incoming stream keeps its
+full rate while two other transfers run on separate paths
+(Section~\ref{sec:fabric}). The board test of the DMA (Table~\ref{tab:board5}) confirms
+the data are correct through the real DMA and DDR2; it does not time them.
+
 \subsubsection{AXI Bridges}
 
 AXI appears only where the Xilinx IP requires it. The cores use PicoRV32's
@@ -480,8 +509,8 @@ switches, optional serial port \\
 \code{single_bus/} & Shared bus, memory node, system and board tops \\
 \code{benchmarks/} & C runtime and linker script; runners for the test
 suites, benchmarks and the fabric comparison \\
-\code{encryption_code/}, \code{demo_tests/} & Cryptography demonstration,
-laptop link, board demonstrations \\
+\code{encryption_code/}, \code{demo_tests/} & Cryptography demonstration and
+board demonstrations \\
 \bottomrule
 \end{tabularx}
 
@@ -614,6 +643,7 @@ They establish that the cores are correct in both systems; they cannot compare
 the systems. That comparison needs traffic, which is the next benchmark.
 
 \subsubsection{NoC Against Bus Under Load}
+\label{sec:fabric}
 
 In the fabric benchmark the cores are replaced by drivers that issue accesses
 back to back, because a PicoRV32 issues so few accesses that either fabric
@@ -691,13 +721,11 @@ A PicoRV32 waits for each access before issuing the next, so neither fabric is
 loaded, and the bus is about 10\% faster because the mesh adds hops. This is
 the price of the NoC at this scale.
 
-\subsection{Cryptography and Demonstration Tests}
+\subsection{Cryptography on Three Cores}
 
-These tests show the system doing recognisable multi-core work, with real
-cores and real programs, and they exercise features that the unit tests reach
+This test shows the system doing recognisable multi-core work, with real
+cores and real programs, and it exercises features that the unit tests reach
 only one at a time.
-
-\subsubsection{Cryptography on Three Cores}
 
 \begin{tabularx}{\textwidth}{@{}llY@{}}
 \toprule
@@ -737,38 +765,35 @@ by multiplication, which these cores perform in software; a hash-based scheme
 needs only the hash. The simulated run uses a reduced signature size, and the
 full-size images are built for the board.
 
-\subsubsection{Other Demonstrations}
+\subsection{Demonstrations and Board Tests}
 
-\begin{tabularx}{\textwidth}{@{}YY@{}}
+Four further programs were written to show particular behaviours of the
+system, and each was run first in simulation and then on the board together
+with the cryptography test above.
+
+\begin{tabularx}{\textwidth}{@{}YYY@{}}
 \toprule
-\textbf{Demonstration and what it shows} & \textbf{Result in simulation} \\
+\textbf{Demonstration and what it shows} & \textbf{Simulation} &
+\textbf{Board} \\
 \midrule
 Parallel speed-up: the same hashing work on one core, then shared among
-three & 2.89 times faster, equal digests \\
+three & 2.89 times faster, equal digests & 3.1 times faster (5.22~s against
+1.66~s); no loss with a link detoured (Table~\ref{tab:board3}) \\
 DMA with lock contention: three cores each move a block to DDR and back,
-three rounds, taking turns on the lock & pass, all data equal \\
+taking turns on the lock & pass, all data equal (DMA model) & hundreds of
+thousands of rounds through the real DMA and DDR2 without an error
+(Table~\ref{tab:board5}) \\
 Continuous traffic with a link killed mid-run, no reset: detection without
-repair & the two cores using that link report failure, the third continues \\
+repair & the two cores using that link report failure, the third continues &
+as predicted for every link (Table~\ref{tab:board2}) \\
 Restart: core~1 traps, core~0 sees it and restarts it & pass; initialised
-data restored \\
-Laptop link over a serial port: the laptop sends ciphertext, the board
-decrypts it and shows the text; or the board encrypts and the laptop checks &
-pass, equal to the laptop's AES \\
+data restored & as predicted when healthy; a program fault when core~1 is cut
+off (Table~\ref{tab:board4}) \\
 \bottomrule
 \end{tabularx}
 
-The laptop link exists to show that the computation happens on the board: the
-laptop sends ciphertext only, and the plaintext appears on the board's own
-display, produced by core~1 and carried across the network to core~0. Its
-hardware, a serial port on core~0, is optional and is not built unless
-enabled.
-
-\subsection{Board Tests}
-
-A first board session on 7 November passed the healthy test and the
-single-link fault switches for the design as it stood then. On 19 and 20
-November the current design was built six times and every bitstream was
-tested on the Nexys4~DDR: the link and router self-test under every fault
+The current design was built as six bitstreams and every one was tested on
+the Nexys4~DDR: the link and router self-test under every fault
 switch setting, and all five demonstration programs. All six use the DDR
 gateway (tile~3) and run at 50~MHz on the xc7a100t-1. Before each board test
 the same switch settings were simulated on the real board top, with a model
@@ -1102,8 +1127,8 @@ every row as predicted.}
 \end{tabularx}
 \end{table}
 
-\code{2806} is the first two bytes of the ciphertext, the same as the
-laptop's AES with the same key. The cryptography program needs no gateway,
+\code{2806} is the first two bytes of the ciphertext, the same as OpenSSL
+gives on the development machine with the same key and plaintext. The cryptography program needs no gateway,
 so it passes with router~3 broken. When a worker is cut off, core~0 fails at
 once with step~8: it checks that each worker answers before sending any job,
 and treats the poison value as ``no answer''.
@@ -1137,6 +1162,7 @@ for this stage and are listed, with proposed changes, in
 
 % ------------------------------------------------------------------ 8
 \section{Design Choices and Known Trade-offs}
+\label{sec:choices}
 
 \subsection{Assumptions}
 
@@ -1228,8 +1254,8 @@ which then finds the fault and routes around it where it can.
 \item The gateway is a single point of failure for memory.
 \item The router self-test does not exercise the watchdog or the drop paths.
 \item The mailbox sender check is firmware, with a 32-bit tag.
-\item The single-bus Vivado project and the laptop link have not yet run on
-the board.
+\item The single-bus baseline has been compared in simulation only; its Vivado
+project has not been built or run on the board.
 \item The demonstration programs have four known faults, found on the board
 (Section~\ref{sec:boardfound}); fixes are listed in \code{todo/sw_changes.md}.
 \end{itemize}
@@ -1324,7 +1350,9 @@ about 10\% slower than the bus. It does keep
 all three cores usable after any single link fault where the bus keeps none,
 it carries simultaneous transfers on separate paths without slowing them, and
 its time for random traffic is almost unchanged from four nodes to nine where
-the bus's doubles. These results are from simulation. The assumptions they
+the bus's doubles. The comparison with the bus is from simulation; the
+NoC's self-test, its detours around faults and all five demonstrations,
+including DMA to DDR2, were also confirmed on the board. The assumptions they
 rest on, chiefly one outstanding read per core and faults present at
 start-up, are stated with the risks they carry, and they set the order of the
 future work: separate request and response channels and formal verification
