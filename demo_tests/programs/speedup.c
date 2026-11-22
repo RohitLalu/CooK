@@ -8,7 +8,13 @@
  * a stopwatch on the board, with a large BLOCKS) can time them:
  *   0x5255000A  phase A running      0x5255000B  phase B running
  *   0x600D0000 | BLOCKS  done, digests equal     0xFA110000 | step  on failure
- * Workers: 0x600D0000 | jobs done. */
+ * Workers: 0x600D0000 | jobs done.
+ *
+ * Safe after CPU_RESET, which does not clear the mailboxes: a worker ignores
+ * whatever job is already in its mailbox at boot; core 0 clears its result
+ * slots, uses a sequence number different from the one already in each
+ * worker's mailbox, and confirms each job by reading the sequence word back.
+ * A lost job is reported at once (step 2). */
 #include "tile.h"
 #include "sha256.h"
 
@@ -29,8 +35,9 @@ static void chain(uint32_t seed, uint32_t blocks, uint8_t d[32])
 int main(void)
 {
     volatile uint32_t *job = MBOX(tile_id()), *res = MBOX(0) + 16 * tile_id();
-    uint32_t seq, last = 0, jobs = 0, i, w[8];
+    uint32_t seq, last, jobs = 0, i, w[8];
     uint8_t d[32];
+    last = job[0];                       /* a job left from before this boot is not a new job */
     tile_status(0x52550000);
     for (;;) {
         seq = job[0];
@@ -49,22 +56,26 @@ int main(void)
     static const uint32_t seed[3] = { 0x11111111u, 0x22222222u, 0x33333333u };
     volatile uint32_t *mine = MBOX(0);
     uint8_t a[3][32], b[32];
-    uint32_t t, i, n;
+    uint32_t t, i, n, seq[3] = { 0, 0, 0 };
 
     tile_status(0x5255000A);
     for (t = 0; t < 3; t++) chain(seed[t], BLOCKS, a[t]);
 
     tile_status(0x5255000B);
     for (t = 1; t < 3; t++) {
+        mine[16 * t] = 0;                                /* clear the result slot */
+        seq[t] = MBOX(t)[0] + 1;                         /* differs from what the worker last saw */
+        if (seq[t] == 0 || seq[t] == POISON) seq[t] = 1;
         MBOX(t)[2] = seed[t];
         MBOX(t)[1] = BLOCKS;
-        MBOX(t)[0] = 1;
+        MBOX(t)[0] = seq[t];                             /* last: the job is complete */
+        if (MBOX(t)[0] != seq[t]) return 2;              /* posted write: confirm it arrived */
     }
     chain(seed[0], BLOCKS, b);
     if (memcmp(b, a[0], 32)) return 1;
     for (t = 1; t < 3; t++) {
-        for (n = 0; n < 40000000u && mine[16 * t] != 1; n++) ;
-        if (mine[16 * t] != 1) return 2;
+        for (n = 0; n < 40000000u && mine[16 * t] != seq[t]; n++) ;
+        if (mine[16 * t] != seq[t]) return 2;
         for (i = 0; i < 32; i++) b[i] = (uint8_t)(mine[16 * t + 1 + (i >> 2)] >> (8 * (i & 3)));
         if (memcmp(b, a[t], 32)) return 3;
     }

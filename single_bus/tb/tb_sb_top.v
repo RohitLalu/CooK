@@ -8,7 +8,9 @@
 //           shared DDR, and the words are where they should be.
 // TEST = 2  stuck arbiter from reset, alltoall.mem: no core hangs, every
 //           core reports failure. Usable cores: 0 of 3 (metric M3).
-// TEST = 3  flipped data wire from reset: the same result.
+// TEST = 3  flipped data wire from reset: every core reports failure too, but
+//           nothing flags it in hardware. AXI4-Lite has no check bits, so the
+//           corrupted words are caught only by the programs' own checks.
 
 `timescale 1ns/1ps
 `include "noc_defs.vh"
@@ -133,7 +135,11 @@ module tb_sb_top;
             end
         end else begin
             check(npass == 0 && nfail == 3, "usable cores: 0 of 3 -- every core reports failure");
-            check(tile_err[0*5] && tile_err[1*5] && tile_err[2*5], "every core's NI flags a timeout");
+            if (TEST == 2)
+                check(tile_err[0*5] && tile_err[1*5] && tile_err[2*5], "every core's tile flags a timeout");
+            else
+                check(tile_err[0*5 +: 5] == 0 && tile_err[1*5 +: 5] == 0 && tile_err[2*5 +: 5] == 0,
+                      "no hardware flag: the corruption is silent");
         end
 
         $display("----------------------------------------");

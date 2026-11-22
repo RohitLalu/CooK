@@ -34,6 +34,10 @@
 //   1  silent link: never accepts, never delivers
 //   2  bit-flip: inverts DATA bit 0 of every flit written, so the check bits
 //      no longer match and the downstream router must catch it
+//   3  one wire of the flit stuck: bit FBIT of every flit written reads FVAL
+//   4  the input valid wire stuck at FVAL
+//   5  the ready wire towards the sender stuck at FVAL
+//   (3 to 5 are for the fault-coverage campaign, tb/tb_coverage.v)
 // rt_silent / rt_flip apply the same two faults at run time (the board's
 // fault-injection switches). Tie both to 0 when unused.
 //
@@ -45,7 +49,9 @@
 module link_buffer #(
     parameter DEPTH = `NOC_LB_DEPTH,
     parameter ROOM  = `NOC_MAX_PKT_FLITS,
-    parameter FAULT = 0
+    parameter FAULT = 0,
+    parameter integer FBIT = 0,    // FAULT 3: which flit bit
+    parameter [0:0]   FVAL = 1'b0  // FAULT 3 to 5: the stuck value
 ) (
     input  wire                   clk,
     input  wire                   rst_n,
@@ -91,16 +97,19 @@ module link_buffer #(
     wire rdy_int  = silent ? 1'b0 : !full;
     wire room_int = silent ? 1'b0 : ((DEPTH - count) >= ROOM);
 
-    assign in_ready  = rdy_int;
+    assign in_ready  = (FAULT == 5) ? FVAL : rdy_int;
     assign in_room   = room_int;
     assign out_valid = silent ? 1'b0 : !empty;
     // Drive a defined value when empty so X never leaks into router decode.
     assign out_flit  = empty ? {FW{1'b0}} : mem[rd_ptr];
 
-    wire push = in_valid && rdy_int;
+    wire vld_in = (FAULT == 4) ? FVAL : in_valid;
+    wire push = vld_in && rdy_int;
     wire pop  = out_valid && out_ready;
 
-    wire [FW-1:0] wr_flit = flip ? (in_flit ^ {{(FW-1){1'b0}}, 1'b1}) : in_flit;
+    wire [FW-1:0] flit_in = (FAULT == 3) ? ((in_flit & ~({{(FW-1){1'b0}}, 1'b1} << FBIT)) |
+                                            ({{(FW-1){1'b0}}, FVAL} << FBIT)) : in_flit;
+    wire [FW-1:0] wr_flit = flip ? (flit_in ^ {{(FW-1){1'b0}}, 1'b1}) : flit_in;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

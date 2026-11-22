@@ -34,12 +34,13 @@ MEM_WORDS = 1 << (OB - 2)
 CC = "riscv64-unknown-elf-gcc"
 OC = "riscv64-unknown-elf-objcopy"
 
+VAXI = [f"single_bus/third_party/verilog-axi/{m}.v" for m in ("axil_interconnect", "arbiter", "priority_encoder")]
 RTL_SHARED = ["rtl/router/link_buffer.v", "rtl/network_interface/address_decoder.v",
               "rtl/network_interface/ni.v", "rtl/core/picorv32.v"]
 RTL_NOC = ["rtl/router/noc_router.v", "rtl/router/end_buff.v", "rtl/router/bist_node.v",
            "rtl/integrated/mesh/noc_mesh.v", "rtl/integrated/mesh/mesh_top.v", "rtl/dma_ddr/gw_ni.v"]
-RTL_BUS = ["single_bus/rtl/sb_bus.v", "single_bus/rtl/sb_mem_ni.v", "single_bus/rtl/sb_top.v",
-           "single_bus/tb/axi4_mem_model.v"]
+RTL_BUS = ["single_bus/rtl/sb_axil_tile.v", "single_bus/rtl/sb_axil_info.v", "single_bus/rtl/sb_axil_bus.v",
+            "single_bus/rtl/sb_top.v", *VAXI, "single_bus/tb/axi4_mem_model.v"]
 
 
 def sh(cmd, **kw):

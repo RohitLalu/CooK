@@ -14,14 +14,15 @@ checked in simulation first. **None of it has run on the board yet**, and a
 | 1 | **Crypto on three cores, with and without a fault** | `encryption_code/crypto/`, `encryption_code/run_crypto.py --board` | Three pass LEDs; display ends in `2806`, the first ciphertext bytes. Set a fault switch and press reset: same result on the NoC. On the single-bus build with its fault switch: all cores fail | yes, both architectures |
 | 2 | **Traffic that never stops** | `programs/loop_traffic.c` | Display counts up. Flip a fault switch **without** reset: the cores that use that link turn their fail LEDs on, the others keep counting | yes |
 | 3 | **Parallel speed-up** | `programs/speedup.c` | Core 0 does the work alone, then shares it with cores 1 and 2; time the two phases (status `5255000A`, then `5255000B`, then pass) | yes |
-| 4 | **DMA to DDR and back** | `programs/dma_lock.c` | LED17 blue flickers (DMA interrupts), status counts rounds | yes, with the DMA model |
+| 4 | **DMA to DDR and back** | `programs/dma_lock.c` | LED17 blue flickers (DMA interrupts), status shows `5255` and the round count (low 16 bits); it runs until reset and never lights a pass LED | yes, with the DMA model |
 | 5 | **Lock contention** | the same program on all three cores | All three cores keep making rounds: the gateway hands the one DMA lock round in turn | yes |
 | 6 | **Dhrystone on three cores** | `benchmarks/run_c_benchmarks.py` (images `benchmarks/build/dhry500_t0.mem` to `_t2.mem`) | Three pass LEDs after about 40 ms | yes, both architectures |
+| 9 | **DMA transfer rate** | `programs/dma_rate.c` (core 0 only) | Core 0 times DDR-to-tile and tile-to-DDR transfers; status `5255000A` to `5255000C` (MM2S), `5255000B` to `5255000D` (S2MM), then `600D0000`. Time the phases from the UART or a logic analyser to get the rate | yes, with the DMA model |
 | 8 | **Restart a stopped core** | `programs/restart.c` | Core 1 stops on purpose (its error LED and code 1 show briefly), core 0 notices and restarts it, both end on pass | yes |
 | 7 | **Laptop link** (live demo) | `encryption_code/link/`, `encryption_code/rtl/` | Type a message on the laptop; the board decrypts it and shows the first 8 characters, or encrypts it and the laptop checks the answer | yes |
 
 ```
-python3 demo_tests/run_demos.py            # simulate 2 to 5 and 8, writes results.md
+python3 demo_tests/run_demos.py            # simulate 2 to 5, 8 and 9, plus the board-fault regressions, writes results.md
 python3 demo_tests/run_demos.py --board    # build their board images
 python3 encryption_code/run_link_sim.py    # simulate 7
 python3 encryption_code/run_link_sim.py --board # build its board images
@@ -32,6 +33,11 @@ The demos are simulated with the remote read window on (`RD_PROTECT = 1` on
 tiles. Set the same generic on the board build for the crypto and link demos,
 so that "core 1's keys stay in core 1" is enforced by hardware. Leave it off
 for `alltoall.S`, which fetches code from other tiles.
+
+CPU_RESET does not reload tile RAM. The speed-up and restart demos are written
+for that: a run after CPU_RESET, with or without a fault switch, behaves as
+after a fresh bitstream. The `fixes` case of `run_demos.py` checks this (a
+healthy run, then a reset with a fault set and the memory left as it was).
 
 Board images land in `benchmarks/build/` as `<name>_t00.mem` to `_t02.mem`.
 To use a set, build the FPGA with the Verilog define `NOC_OFFSET_BITS=16` and

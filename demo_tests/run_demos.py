@@ -2,7 +2,8 @@
 """Simulates the board demos in demo_tests/programs on the NoC and checks them.
 
     python3 demo_tests/run_demos.py                 # all
-    python3 demo_tests/run_demos.py traffic dma     # some: traffic, dma, speedup, restart
+    python3 demo_tests/run_demos.py traffic dma     # some: traffic, dma, speedup, restart, fixes
+                                                    # (fixes: the program faults found on the board)
     python3 demo_tests/run_demos.py --board         # only build the board images
 
 Board images: benchmarks/build/demo_<name>_tNN.mem (64 KB tiles).
@@ -96,13 +97,74 @@ def restart(out):
              f"status {', '.join(r['status'])}; core 1 running again (trap bits {r['trap']}); {r['cycles']} cycles")]
 
 
-DEMOS = {"traffic": traffic, "dma": dma, "speedup": speedup, "restart": restart}
+# ---- the program faults found on the board (todo/sw_changes.md), as regressions ----
+# Fault masks are the board's multi-link codes (nexys4ddr_top.v fault_pattern):
+HORIZONTAL, ALL_LINKS = "8484", "95A6"     # SW 1003, SW 100B
+
+
+def board_fixes(out):
+    rows = []
+    rv = [build_c("demo_restart", [P / "restart.c"], 0)[0],
+          build_c("demo_restart_victim", [P / "restart.c"], 1, flags=["-DVICTIM"])[0],
+          build_c("demo_restart", [P / "restart.c"], 2)[0]]
+
+    # 1. restart, core 1 cut off: must report "unreachable" (3) at once, not "no pass" (2) after 200,000 polls
+    for what, args in (("links 0-1 and 2-3 dead", dict(fault=HORIZONTAL)), ("router 1 broken", dict(frt="2"))):
+        r = run(out, rv, limit=400000, need=1, **args)
+        rows.append((f"Fix 1, restart with core 1 cut off ({what})", r["status"][0] == "fa110003",
+                     f"core 0 {r['status'][0]} after {r['cycles']} cycles (board, before the fix: fa110002 after 12.2 s)"))
+
+    # 2b. restart after CPU_RESET: the second run must trap and restart again, not pass at once
+    r = run(out, rv, limit=400000, need=1, rerun=1)
+    rows.append(("Fix 2b, restart after CPU_RESET (memory not reloaded)",
+                 r["status"][0] == "600d0001" and r["status"][1] == "600d0002",
+                 f"second run: core 0 {r['status'][0]}, core 1 {r['status'][1]} (board, before: core 0 fa110001)"))
+
+    # 1. DMA with the gateway unreachable: "lock never granted" (1), not "data differs" (4)
+    dm = images("dma_lock", ["-DROUNDS=3"])
+    r = run(out, dm, limit=400000, need=7, frt="8")
+    rows.append(("Fix 1, DMA with the gateway's router broken", all(x == "fa110001" for x in r["status"]),
+                 f"status {', '.join(r['status'])} (board, before: fa110004)"))
+    r = run(out, dm, limit=400000, need=5, fault=HORIZONTAL)
+    rows.append(("Fix 1, DMA with links 0-1 and 2-3 dead (cores 0, 2 cut off from the gateway)",
+                 r["status"][0] == "fa110001" and r["status"][2] == "fa110001",
+                 f"status {', '.join(r['status'])} (core 1 still reaches the gateway)"))
+
+    # 2a. speed-up after CPU_RESET with every link dead: must fail (2), not reuse the first run's results
+    sp = images("speedup", ["-DBLOCKS=2"], ["-DWORKER"])
+    r = run(out, sp, limit=4000000, need=1, rerun=1, fault=ALL_LINKS)
+    rows.append(("Fix 2a, speed-up after CPU_RESET with every link dead", r["status"][0] == "fa110002",
+                 f"core 0 {r['status'][0]} (board, before: a false pass, 600d07d0)"))
+    return rows
+
+
+def dma_rate(out):
+    """DMA rate, both directions, from the times core 0 changes phase (simulation, DMA model)."""
+    words, ra, rb = 448, 4, 2
+    r = run(out, images("dma_rate", [f"-DWORDS={words}", f"-DROUNDS_A={ra}", f"-DROUNDS_B={rb}"]),
+            limit=3000000, need=1)
+    at = {v: c for core, c, v in r["changes"] if core == 0}
+    good = r["status"][0] == "600d0000" and all(k in at for k in ("5255000a", "5255000b", "5255000c", "5255000d"))
+    if not good:
+        return [("DMA rate", False, f"status {r['status']}")]
+    a = (at["5255000c"] - at["5255000a"]) / (ra * words)
+    b = (at["5255000d"] - at["5255000b"]) / (rb * words)
+    mb = lambda cpw: 50e6 * 4 / cpw / 1e6
+    return [("DMA rate, DDR to tile, as the board program measures it", True,
+             f"{a:.1f} cycles per word, {mb(a):.1f} MB/s at 50 MHz, including the per-transfer setup and polling"),
+            ("DMA rate, tile to DDR, as the board program measures it", True,
+             f"{b:.1f} cycles per word, {mb(b):.1f} MB/s at 50 MHz, including the per-transfer setup and polling")]
+
+
+DEMOS = {"traffic": traffic, "dma": dma, "speedup": speedup, "restart": restart, "fixes": board_fixes,
+         "dma_rate": dma_rate}
 
 
 def main():
     if "--board" in sys.argv:
         sets = {"traffic": images("loop_traffic"), "dma": images("dma_lock"),
                 "speedup": images("speedup", [], ["-DWORKER"]),
+                "dma_rate": images("dma_rate"),
                 "restart": [build_c("demo_restart", [P / "restart.c"], 0)[0],
                             build_c("demo_restart_victim", [P / "restart.c"], 1, flags=["-DVICTIM"])[0],
                             build_c("demo_restart", [P / "restart.c"], 2)[0]]}

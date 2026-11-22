@@ -9,17 +9,18 @@ BUILD   = sim/build
 compile = $(IV) -o $(BUILD)/$(1).out $(2) > $(BUILD)/$(1).clog 2>&1 || (cat $(BUILD)/$(1).clog; exit 1)
 run     = $(VVP) $(BUILD)/$(1).out > $(BUILD)/$(1).log 2>&1; grep -E "$(2)" $(BUILD)/$(1).log; ! grep -q "FAIL" $(BUILD)/$(1).log
 
-RTL_SHARED = ../rtl/router/link_buffer.v ../rtl/network_interface/address_decoder.v \
-             ../rtl/network_interface/ni.v ../rtl/core/picorv32.v
-RTL_BUS    = rtl/sb_bus.v rtl/sb_mem_ni.v rtl/sb_top.v
+RTL_SHARED = ../rtl/core/picorv32.v
+VAXI       = third_party/verilog-axi/axil_interconnect.v third_party/verilog-axi/arbiter.v \
+             third_party/verilog-axi/priority_encoder.v
+RTL_BUS    = rtl/sb_axil_tile.v rtl/sb_axil_info.v rtl/sb_axil_bus.v rtl/sb_top.v $(VAXI)
 RTL_ALL    = $(RTL_BUS) $(RTL_SHARED)
 RTL_BOARD  = ../rtl/board/reset_sync.v ../rtl/board/status_panel.v ../rtl/board/seven_seg.v \
              rtl/sb_nexys4ddr_top.v
 MODEL      = tb/axi4_mem_model.v
 
-.PHONY: all test clean sw bus mem system faults board soak synth_check
+.PHONY: all test clean sw axi system faults board soak synth_check
 
-test: bus mem system faults board soak
+test: axi system faults board soak
 	@echo ""
 	@echo "=== single-bus suites completed ==="
 
@@ -28,15 +29,10 @@ all: test
 $(BUILD):
 	@mkdir -p $(BUILD)
 
-bus: | $(BUILD)
-	@echo "=== sb_bus (arbitration, buffering, drops, faults) ==="
-	@$(call compile,bus,tb/tb_sb_bus.v rtl/sb_bus.v ../rtl/router/link_buffer.v)
-	@$(call run,bus,FAIL|PASSED|TOTAL)
-
-mem: | $(BUILD)
-	@echo "=== memory node (sb_mem_ni + AXI4 memory model), two requesters ==="
-	@$(call compile,mem,-s tb_sb_mem tb/tb_sb_mem.v $(MODEL) $(RTL_ALL))
-	@$(call run,mem,FAIL|PASSED|TOTAL)
+axi: | $(BUILD)
+	@echo "=== AXI bus parts (tiles, windows, DDR, decode error, stuck bus, restart) ==="
+	@$(call compile,axi,-s tb_sb_axi tb/tb_sb_axi.v $(MODEL) $(RTL_BUS))
+	@$(call run,axi,FAIL|PASSED|TOTAL)
 
 # real picorv32 cores: the NoC's own images, then the DDR test
 system: sw | $(BUILD)
@@ -64,8 +60,7 @@ board: sw | $(BUILD)
 	@$(call run,boardf,FAIL|PASSED|TOTAL)
 
 # the NoC's randomised soak test, on the bus (four and nine nodes)
-SOAK_RTL = ../tb/tb_soak.v rtl/sb_bus.v ../rtl/router/link_buffer.v ../rtl/network_interface/address_decoder.v \
-           ../rtl/network_interface/ni.v
+SOAK_RTL = ../tb/tb_soak.v rtl/sb_axil_tile.v rtl/sb_axil_info.v rtl/sb_axil_bus.v $(VAXI)
 soak: | $(BUILD)
 	@echo "=== soak: random traffic from every node, scoreboard ==="
 	@$(call compile,soak,-DSOAK_BUS -Ptb_soak.SEED=1 $(SOAK_RTL))
@@ -74,10 +69,10 @@ soak: | $(BUILD)
 	@$(call run,soak9,^soak|FAIL|PASSED|TOTAL)
 
 synth_check: | $(BUILD)
-	@echo "=== yosys: bus + memory node, latches and loops ==="
-	@yosys -q -l $(BUILD)/yosys.log -p "read_verilog -I../rtl/include rtl/sb_bus.v rtl/sb_mem_ni.v ../rtl/router/link_buffer.v; hierarchy -check; synth -flatten -top sb_bus; check -assert; design -reset; read_verilog -I../rtl/include rtl/sb_mem_ni.v; synth -flatten -top sb_mem_ni; check -assert" > /dev/null 2>&1 || (tail -5 $(BUILD)/yosys.log; exit 1)
+	@echo "=== yosys: AXI tile, memory-node registers and bus, latches and loops ==="
+	@yosys -q -l $(BUILD)/yosys.log -p "read_verilog -I../rtl/include rtl/sb_axil_tile.v rtl/sb_axil_info.v rtl/sb_axil_bus.v $(VAXI); hierarchy -check -top sb_axil_bus; synth -flatten -top sb_axil_bus; check -assert; design -reset; read_verilog -I../rtl/include rtl/sb_axil_tile.v; synth -flatten -top sb_axil_tile; check -assert; design -reset; read_verilog -I../rtl/include rtl/sb_axil_info.v; synth -flatten -top sb_axil_info; check -assert" > /dev/null 2>&1 || (tail -5 $(BUILD)/yosys.log; exit 1)
 	@echo "latches inferred: $$(grep -c '^Latch inferred' $(BUILD)/yosys.log)"
-	@grep "problems" $(BUILD)/yosys.log | tail -2
+	@grep "problems" $(BUILD)/yosys.log | tail -3
 
 # ddr.S here; alltoall.mem comes from the NoC's sw/ (prebuilt, shared)
 sw: sw/ddr.mem

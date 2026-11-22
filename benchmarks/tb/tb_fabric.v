@@ -1,9 +1,8 @@
 // tb_fabric.v
-// Fabric benchmark: the same endpoints on two interconnects, loaded hard
-// enough for the interconnect to matter. Compile with -DFABRIC_BUS for the
-// shared bus (sb_bus), without it for the 2x2 mesh (noc_mesh). Everything
-// else is identical: three tiles behind ni.v, the DMA gateway gw_ni on
-// tile 3 with the behavioural DMA model as the DDR.
+// Fabric benchmark, NoC side: the 2x2 mesh (noc_mesh), loaded hard enough
+// for the interconnect to matter. Three tiles behind ni.v, the DMA gateway
+// gw_ni on tile 3 with the behavioural DMA model as the DDR. The AXI bus
+// baseline runs the same flows in tb_fabric_axi.v.
 //
 // The cores are replaced by bus-functional drivers that issue the next
 // access as soon as the last one is accepted. A PicoRV32 needs so many cycles
@@ -50,19 +49,6 @@ module tb_fabric;
     wire             fabric_ready;
     wire             fabric_err;
 
-`ifdef FABRIC_BUS
-    wire [NT-1:0] err_drop;
-    sb_bus #(.N(NT)) u_fabric (
-        .clk(clk), .rst_n(rst_n),
-        .loc_in_valid(ni2r_valid), .loc_in_ready(ni2r_ready), .loc_in_flit(ni2r_flit),
-        .loc_out_valid(r2ni_valid), .loc_out_ready(r2ni_ready),
-        .loc_out_room(r2ni_room), .loc_out_flit(r2ni_flit),
-        .fault_grant(1'b0), .fault_flip(1'b0), .err_drop(err_drop), .bus_active()
-    );
-    assign bist_status  = {NT*10{1'b1}};         // no link BIST on a bus: report healthy
-    assign fabric_ready = 1'b1;
-    assign fabric_err   = |err_drop;
-`else
     wire [NT*8-1:0] rt_drop_cnt;
     wire [NT*5-1:0] rt_out_dead;
     noc_mesh u_fabric (
@@ -76,7 +62,6 @@ module tb_fabric;
         .bist_status(bist_status), .bist_done(fabric_ready)
     );
     assign fabric_err = (|rt_drop_cnt) || (|rt_out_dead);
-`endif
 
     // ---------------- tiles 0..2: driver + ni ----------------
     reg  [2:0]  c_valid = 0;

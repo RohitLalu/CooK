@@ -8,7 +8,7 @@ and core 1 ignored a job whose keyed checksum was wrong.
 
 | Arch | Result | Cycles | Core 0 status | Core 1 status | Core 2 status | Flits on the interconnect |
 |---|---|---|---|---|---|---|
-| noc, healthy | pass | 4517881 | 600d2806 | 600d0002 | 600d0001 | 328 |
-| bus, healthy | pass | 4517882 | 600d2806 | 600d0002 | 600d0001 | 328 |
-| noc, link 0-1 dead | pass | 4517897 | 600d2806 | 600d0002 | 600d0001 | 328 |
-| bus, arbiter stuck | FAIL 0008 | 5088 | fa110008 | - | - | 0 |
+| noc, healthy | pass | 4517573 | 600d2806 | 600d0002 | 600d0001 | 328 |
+| bus, healthy | pass | 4517879 | 600d2806 | 600d0002 | 600d0001 | 310 |
+| noc, link 0-1 dead | pass | 4517589 | 600d2806 | 600d0002 | 600d0001 | 328 |
+| bus, arbiter stuck | FAIL 0008 | 5005 | fa110008 | - | - | 0 |

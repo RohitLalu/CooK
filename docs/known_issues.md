@@ -1,6 +1,6 @@
 # Known issues and gaps
 
-> **Status: OPEN** (2026-11-16). This is the live list and stays open while any item is. Open items: 2 and 3 (Vivado), 10 (board), and the design limits 9, 13, 16, 17.
+> **Status: OPEN** (2026-11-16). This is the live list and stays open while any item is. Open items: 2 and 3 (Vivado), 10 (board), and the design limits 9, 13, 16, 17, 18, 19.
 
 From a review of the RTL, tests and documents on 2026-11-14. Ordered by how
 much each could mislead or break a demo. "Fixed" items are listed so the
@@ -17,6 +17,8 @@ reason for the change is on record.
 | 13 | **Deadlock freedom rests on one outstanding read per node.** The soak test exercises exactly that case and found nothing. | A node that issued several reads at once, or separate request and response traffic at larger scale, is not covered. See "How to word the deadlock result" below. | Separate request and response channels, as the README's open question 4 says. |
 | 16 | **The router self-test does not cover everything in a router.** It walks every crossbar path, the route for each direction and one arbitration case. | The watchdog and the error-drop paths are not exercised, and a fault that appears after start-up is not seen. | Extend the test, or accept: those paths only matter once something else has already failed. |
 | 17 | **The mailbox checksum is firmware.** A program that holds the key can still forge a message, and the tag is 32 bits. | It stops a core without the key and catches damaged messages; it is not hardware enforcement. | A per-slot owner check in the NI, if hardware enforcement is ever wanted. |
+| 18 | **The router self-test misses stuck header bits.** Fault coverage (`benchmarks/results/coverage.md`, 1816 single stuck-at faults): every link data and valid wire and every router output valid is caught, but 113 of 1056 stuck router output data wires are not. All are header fields (dst, src, type bit 0, poison, parity) that the test packets hold constant. | 93.3 % overall, 89.3 % on router output data. A stuck destination or source bit would misroute or mislabel real traffic after start-up. | Send each test packet twice with the header fields complemented, or walk the dst and src fields as the payload is walked. |
+| 19 | **A link ready line stuck at 1 is not detected** (8 of 16 cases; stuck at 0 is). Likely reason, not yet confirmed: the receiving buffer always has room during the ping-pong, so a ready that never falls changes nothing. | A downstream buffer that overflows would drop flits silently. | Fill the receiving buffer during the test and check that ready falls, or state it as a limit. |
 
 ## Architectural decisions (deliberate, not gaps)
 

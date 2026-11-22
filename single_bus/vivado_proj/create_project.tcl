@@ -10,7 +10,7 @@
 # Synthesis top: sb_nexys4ddr_top. Constraints: the NoC board's
 # rtl/board/nexys4ddr/nexys4ddr.xdc (same board, same port names).
 # Simulation set sim_1: tb_sb_top (default; -generic_top TEST=0..3),
-# tb_sb_bus, tb_sb_mem, tb_sb_board.
+# tb_sb_axi, tb_sb_board.
 
 set here [file dirname [file normalize [info script]]]
 set sb   [file normalize [file join $here ..]]
@@ -24,16 +24,17 @@ set_property target_language Verilog [current_project]
 add_files -norecurse [list \
     [file join $repo rtl include noc_defs.vh] \
     [file join $repo rtl include noc_funcs.vh] \
-    [file join $repo rtl router link_buffer.v] \
-    [file join $repo rtl network_interface address_decoder.v] \
-    [file join $repo rtl network_interface ni.v] \
     [file join $repo rtl core picorv32.v] \
     [file join $repo rtl board reset_sync.v] \
     [file join $repo rtl board status_panel.v] \
     [file join $repo rtl board seven_seg.v] \
-    [file join $sb rtl sb_bus.v] \
-    [file join $sb rtl sb_mem_ni.v] \
+    [file join $sb rtl sb_axil_tile.v] \
+    [file join $sb rtl sb_axil_info.v] \
+    [file join $sb rtl sb_axil_bus.v] \
     [file join $sb rtl sb_top.v] \
+    [file join $sb third_party verilog-axi axil_interconnect.v] \
+    [file join $sb third_party verilog-axi arbiter.v] \
+    [file join $sb third_party verilog-axi priority_encoder.v] \
     [file join $sb rtl sb_nexys4ddr_top.v] \
     [file join $repo sw tile00.mem] \
     [file join $repo sw tile01.mem] \
@@ -48,8 +49,7 @@ add_files -fileset constrs_1 -norecurse [file join $repo rtl board nexys4ddr nex
 
 add_files -fileset sim_1 -norecurse [list \
     [file join $sb tb axi4_mem_model.v] \
-    [file join $sb tb tb_sb_bus.v] \
-    [file join $sb tb tb_sb_mem.v] \
+    [file join $sb tb tb_sb_axi.v] \
     [file join $sb tb tb_sb_top.v] \
     [file join $sb tb tb_sb_board.v] \
     [file join $repo sw alltoall.mem] \

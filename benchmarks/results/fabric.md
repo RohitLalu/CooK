@@ -7,14 +7,14 @@ no link.
 
 | Flow | NoC alone | NoC together | NoC slowdown | Bus alone | Bus together | Bus slowdown |
 |---|---|---|---|---|---|---|
-| DMA: DDR to tile 0 RAM | 1807 | 1807 | 1.00x | 1805 | 2697 | 1.49x |
-| W1: tile 1 writes tile 2's mailbox | 1796 | 1796 | 1.00x | 1795 | 2687 | 1.50x |
-| W2: tile 2 writes tile 1's mailbox | 1797 | 1796 | 1.00x | 1796 | 2689 | 1.50x |
+| DMA: DDR to tile 0 RAM | 1807 | 1807 | 1.00x | 3136 | 9395 | 3.00x |
+| W1: tile 1 writes tile 2's mailbox | 1796 | 1796 | 1.00x | 4030 | 9401 | 2.33x |
+| W2: tile 2 writes tile 1's mailbox | 1797 | 1796 | 1.00x | 4031 | 9408 | 2.33x |
 
 | | NoC | Bus |
 |---|---|---|
-| All three together, until the last one finishes | 1807 | 2697 |
-| The same three one after another (sum of the alone times) | 5400 | 5396 |
-| Gain from running them together | 2.99x | 2.00x |
+| All three together, until the last one finishes | 1807 | 9408 |
+| The same three one after another (sum of the alone times) | 5400 | 11197 |
+| Gain from running them together | 2.99x | 1.19x |
 
 Every word arrived and no error flag was set: yes.

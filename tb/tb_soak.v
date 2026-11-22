@@ -1,9 +1,10 @@
 // tb_soak.v
 // Randomised soak test of the interconnect with a scoreboard. Every tile has
-// a driver behind a real ni.v that issues OPS random accesses to random other
-// tiles, with random pauses, all tiles at once. Compile with -DSOAK_BUS for
-// the shared bus (sb_bus), without it for the mesh (noc_mesh, any size: the
-// knobs NOC_MESH_X / NOC_MESH_Y).
+// a driver behind its real interface (ni.v on the mesh, sb_axil_tile on the
+// bus) that issues OPS random accesses to random other tiles, with random
+// pauses, all tiles at once. Compile with -DSOAK_BUS for the shared AXI4-Lite
+// bus (sb_axil_bus), without it for the mesh (noc_mesh, any size: the knobs
+// NOC_MESH_X / NOC_MESH_Y).
 //
 // WHAT A DRIVER DOES, at random
 //   * read another tile's ID register                 -> must be that tile's number
@@ -51,17 +52,31 @@ module tb_soak;
     wire             fabric_ready, fabric_err;
 
 `ifdef SOAK_BUS
-    wire [NT-1:0] err_drop;
-    sb_bus #(.N(NT)) u_fabric (
-        .clk(clk), .rst_n(rst_n),
-        .loc_in_valid(ni2r_valid), .loc_in_ready(ni2r_ready), .loc_in_flit(ni2r_flit),
-        .loc_out_valid(r2ni_valid), .loc_out_ready(r2ni_ready),
-        .loc_out_room(r2ni_room), .loc_out_flit(r2ni_flit),
-        .fault_grant(1'b0), .fault_flip(1'b0), .err_drop(err_drop), .bus_active()
+    // the single-bus baseline: a shared AXI4-Lite bus, every tile a master and a slave
+    wire [NT*32-1:0] s_awaddr, s_wdata, s_araddr, s_rdata, m_awaddr, m_wdata, m_araddr, m_rdata;
+    wire [NT*3-1:0]  s_awprot, s_arprot, m_awprot, m_arprot;
+    wire [NT*4-1:0]  s_wstrb, m_wstrb;
+    wire [NT*2-1:0]  s_bresp, s_rresp, m_bresp, m_rresp;
+    wire [NT-1:0]    s_awvalid, s_awready, s_wvalid, s_wready, s_bvalid, s_bready;
+    wire [NT-1:0]    s_arvalid, s_arready, s_rvalid, s_rready;
+    wire [NT-1:0]    m_awvalid, m_awready, m_wvalid, m_wready, m_bvalid, m_bready;
+    wire [NT-1:0]    m_arvalid, m_arready, m_rvalid, m_rready;
+    sb_axil_bus #(.MASTERS(NT), .NODES(NT), .DDR(0)) u_fabric (
+        .clk(clk), .rst_n(rst_n), .fault_grant(1'b0), .fault_flip(1'b0), .active(),
+        .s_awaddr(s_awaddr), .s_awprot(s_awprot), .s_awvalid(s_awvalid), .s_awready(s_awready),
+        .s_wdata(s_wdata), .s_wstrb(s_wstrb), .s_wvalid(s_wvalid), .s_wready(s_wready),
+        .s_bresp(s_bresp), .s_bvalid(s_bvalid), .s_bready(s_bready),
+        .s_araddr(s_araddr), .s_arprot(s_arprot), .s_arvalid(s_arvalid), .s_arready(s_arready),
+        .s_rdata(s_rdata), .s_rresp(s_rresp), .s_rvalid(s_rvalid), .s_rready(s_rready),
+        .m_awaddr(m_awaddr), .m_awprot(m_awprot), .m_awvalid(m_awvalid), .m_awready(m_awready),
+        .m_wdata(m_wdata), .m_wstrb(m_wstrb), .m_wvalid(m_wvalid), .m_wready(m_wready),
+        .m_bresp(m_bresp), .m_bvalid(m_bvalid), .m_bready(m_bready),
+        .m_araddr(m_araddr), .m_arprot(m_arprot), .m_arvalid(m_arvalid), .m_arready(m_arready),
+        .m_rdata(m_rdata), .m_rresp(m_rresp), .m_rvalid(m_rvalid), .m_rready(m_rready)
     );
     assign bist_status  = {NT*10{1'b0}};
     assign fabric_ready = 1'b1;
-    assign fabric_err   = |err_drop;
+    assign fabric_err   = 1'b0;            // bus errors show in the tiles' error flags
 `else
     wire [NT*8-1:0] rt_drop_cnt;
     wire [NT*5-1:0] rt_out_dead, rt_out_wd;
@@ -97,6 +112,33 @@ module tb_soak;
             wire        c_ready;
             wire [31:0] c_rdata;
 
+`ifdef SOAK_BUS
+            sb_axil_tile #(.MY_ID(g)) u_ni (
+                .clk(clk), .rst_n(rst_n),
+                .mem_valid(c_valid), .mem_instr(1'b0), .mem_ready(c_ready),
+                .mem_addr(c_addr), .mem_wdata(c_wdata), .mem_wstrb(c_wstrb), .mem_rdata(c_rdata),
+                .m_axil_awaddr(s_awaddr[g*32 +: 32]), .m_axil_awprot(s_awprot[g*3 +: 3]),
+                .m_axil_awvalid(s_awvalid[g]), .m_axil_awready(s_awready[g]),
+                .m_axil_wdata(s_wdata[g*32 +: 32]), .m_axil_wstrb(s_wstrb[g*4 +: 4]),
+                .m_axil_wvalid(s_wvalid[g]), .m_axil_wready(s_wready[g]),
+                .m_axil_bresp(s_bresp[g*2 +: 2]), .m_axil_bvalid(s_bvalid[g]), .m_axil_bready(s_bready[g]),
+                .m_axil_araddr(s_araddr[g*32 +: 32]), .m_axil_arprot(s_arprot[g*3 +: 3]),
+                .m_axil_arvalid(s_arvalid[g]), .m_axil_arready(s_arready[g]),
+                .m_axil_rdata(s_rdata[g*32 +: 32]), .m_axil_rresp(s_rresp[g*2 +: 2]),
+                .m_axil_rvalid(s_rvalid[g]), .m_axil_rready(s_rready[g]),
+                .s_axil_awaddr(m_awaddr[g*32 +: 32]), .s_axil_awprot(m_awprot[g*3 +: 3]),
+                .s_axil_awvalid(m_awvalid[g]), .s_axil_awready(m_awready[g]),
+                .s_axil_wdata(m_wdata[g*32 +: 32]), .s_axil_wstrb(m_wstrb[g*4 +: 4]),
+                .s_axil_wvalid(m_wvalid[g]), .s_axil_wready(m_wready[g]),
+                .s_axil_bresp(m_bresp[g*2 +: 2]), .s_axil_bvalid(m_bvalid[g]), .s_axil_bready(m_bready[g]),
+                .s_axil_araddr(m_araddr[g*32 +: 32]), .s_axil_arprot(m_arprot[g*3 +: 3]),
+                .s_axil_arvalid(m_arvalid[g]), .s_axil_arready(m_arready[g]),
+                .s_axil_rdata(m_rdata[g*32 +: 32]), .s_axil_rresp(m_rresp[g*2 +: 2]),
+                .s_axil_rvalid(m_rvalid[g]), .s_axil_rready(m_rready[g]),
+                .err_flags(err_flags[g*5 +: 5]), .sw_status(), .bist_status(10'b0),
+                .core_trap(1'b0), .core_restart()
+            );
+`else
             ni #(.MY_ID(g)) u_ni (
                 .clk(clk), .rst_n(rst_n),
                 .mem_valid(c_valid), .mem_instr(1'b0), .mem_ready(c_ready),
@@ -104,8 +146,10 @@ module tb_soak;
                 .in_valid(r2ni_valid[g]), .in_ready(r2ni_ready[g]), .in_room(r2ni_room[g]),
                 .in_flit(r2ni_flit[g*FW +: FW]),
                 .out_valid(ni2r_valid[g]), .out_ready(ni2r_ready[g]), .out_flit(ni2r_flit[g*FW +: FW]),
-                .err_flags(err_flags[g*5 +: 5]), .sw_status(), .bist_status(bist_status[g*10 +: 10])
+                .err_flags(err_flags[g*5 +: 5]), .sw_status(), .bist_status(bist_status[g*10 +: 10]),
+                .core_trap(1'b0), .core_restart()
             );
+`endif
 
             integer seed, n, k, tgt, slot, kind, idx, w;
             reg [31:0] val, got, addr;

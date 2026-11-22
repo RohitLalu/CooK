@@ -1,6 +1,6 @@
 # create_sb_mem.tcl
-# Builds the block design behind the single-bus baseline's memory node
-# (sb_mem_ni): its AXI4 master -> SmartConnect -> memory. Source it with the
+# Builds the block design behind the single-bus baseline's DDR slave: the
+# AXI4 master of sb_top (m_axi_*) -> SmartConnect -> memory. Source it with the
 # single-bus Vivado project open (vivado_proj/create_project.tcl does):
 #
 #   set sb_variant ddr ; source <repo>/single_bus/rtl/create_sb_mem.tcl
@@ -14,12 +14,12 @@
 # Ports of both (the wrapper is <bd>_wrapper):
 #   clk50, rst_n          system clock and active-low reset (bus domain)
 #   mem_axi               AXI4 slave, 32-bit address and data, no ID:
-#                         connects to sb_mem_ni's m_axi_*
+#                         connects to sb_top's m_axi_*
 # ddr variant only:
 #   clk200                200 MHz MIG system/reference clock
 #   ddr2_sdram            DDR2 pins
 #   init_calib_complete   MIG calibration done
-# The memory sits at address 0, which is what sb_mem_ni's DDR_BASE counts from.
+# The memory sits at address 0: sb_top maps bus address 0x8000_0000 + x to x.
 
 if {![info exists sb_variant]} { set sb_variant ddr }
 set sb_dir [file dirname [file normalize [info script]]]

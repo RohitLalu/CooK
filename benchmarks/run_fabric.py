@@ -3,30 +3,30 @@
 
     python3 benchmarks/run_fabric.py
 
-Same endpoints on both (three tiles behind ni.v, the DMA gateway on tile 3,
-a DMA model as the DDR); only the interconnect differs. Three traffic flows
+NoC: three tiles behind ni.v, the DMA gateway on tile 3, a DMA model as the
+DDR (tb/tb_fabric.v). Bus: three sb_axil_tile tiles and a DMA master on the
+shared AXI4-Lite bus (tb/tb_fabric_axi.v). Three traffic flows
 that share no link on the mesh are run one at a time and then together:
-see tb/tb_fabric.v. Writes results/fabric.md.
+see the testbenches. Writes results/fabric.md.
 """
 import re
-from cooklib import HERE, REPO, BUILD, sh
+from cooklib import HERE, REPO, BUILD, VAXI, sh
 
-COMMON = ["benchmarks/tb/tb_fabric.v", "tb/axi_dma_model.v", "rtl/dma_ddr/gw_ni.v",
-          "rtl/network_interface/ni.v", "rtl/network_interface/address_decoder.v",
-          "rtl/router/link_buffer.v"]
 FABRIC = {
-    "noc": (["rtl/router/noc_router.v", "rtl/router/end_buff.v", "rtl/router/bist_node.v",
-             "rtl/integrated/mesh/noc_mesh.v"], []),
-    "bus": (["single_bus/rtl/sb_bus.v"], ["-DFABRIC_BUS"]),
+    "noc": ["benchmarks/tb/tb_fabric.v", "tb/axi_dma_model.v", "rtl/dma_ddr/gw_ni.v",
+            "rtl/network_interface/ni.v", "rtl/network_interface/address_decoder.v",
+            "rtl/router/link_buffer.v", "rtl/router/noc_router.v", "rtl/router/end_buff.v",
+            "rtl/router/bist_node.v", "rtl/integrated/mesh/noc_mesh.v"],
+    "bus": ["benchmarks/tb/tb_fabric_axi.v", "single_bus/rtl/sb_axil_tile.v",
+            "single_bus/rtl/sb_axil_bus.v", *VAXI],
 }
 FLOWS = [("dma", "DMA: DDR to tile 0 RAM"), ("w1", "W1: tile 1 writes tile 2's mailbox"),
          ("w2", "W2: tile 2 writes tile 1's mailbox")]
 
 
 def run(arch):
-    files, defs = FABRIC[arch]
     out = BUILD / f"fabric_{arch}.out"
-    sh(["iverilog", "-g2012", "-Irtl/include", *defs, "-o", str(out), *COMMON, *files], cwd=REPO)
+    sh(["iverilog", "-g2012", "-Irtl/include", "-o", str(out), *FABRIC[arch]], cwd=REPO)
     text = sh(["vvp", "-n", str(out)]).stdout
     res = {}
     for m in re.finditer(r"FABRIC case=(\w+) dma=(\d+) w1=(\d+) w2=(\d+) total=(\d+) ok=(\d)", text):

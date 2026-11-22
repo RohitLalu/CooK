@@ -1,11 +1,12 @@
 # ddr.S -- every core uses the shared DDR through the bus at once. Position
 # independent: the same image runs on every core tile.
 #
-# The memory node is the last node (kind CSR 0x010 = 2, see sb_mem_ni.v).
-#   1. set my DDR_BASE to id << 20 (a private megabyte)
-#   2. write 64 words {id, 0x5A, index} through the window, then read all 64 back
+# The DDR is a slave on the AXI bus at 0x8000_0000 (single_bus/rtl/sb_top.v),
+# addressed directly by every core.
+#   1. my private megabyte starts at 0x8000_0000 + (id << 20)
+#   2. write 64 words {id, 0x5A, index} there, then read all 64 back
 #   3. one byte store into word 0, then lw: only that byte changed
-#   4. move DDR_BASE to the shared megabyte 15, write id+1 into slot id, read it back
+#   4. in the shared megabyte 15 (0x80F0_0000), write id+1 into slot id, read it back
 #   = 66 checks. All three cores run this together, so every access contends
 #   for the one bus and the one memory port.
 # Results as in alltoall.S: 0xF00 errors, 0xF04 marker 0xC0DE, 0xF08 checks,
@@ -38,13 +39,10 @@ _start:
     li    t0, 0x52550000
     sw    t0, 8(s0)          # status: running
 
-    addi  t0, s2, -1
-    slli  s4, t0, TILE_SHIFT         # s4 = memory node base
-    addi  s5, s4, 0x200      # s5 = DDR window
-
     # 1. private megabyte
+    li    s5, 0x80000000
     slli  t0, s1, 20
-    sw    t0, 0x20(s4)
+    add   s5, s5, t0         # s5 = my megabyte of the DDR
 
     # 2. 64 words out, 64 words back
     slli  s6, s1, 24
@@ -77,8 +75,7 @@ _start:
     CHECK t0, t2
 
     # 4. shared megabyte, one slot per core
-    li    t0, 0x00F00000
-    sw    t0, 0x20(s4)
+    li    s5, 0x80F00000
     slli  t2, s1, 2
     add   t2, t2, s5
     addi  t3, s1, 1

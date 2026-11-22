@@ -1,6 +1,6 @@
 # Software changes (to do)
 
-> **Status: OPEN** (2026-11-20). Found during the board tests of 19 and 20 November 2026 on the six GATEWAY = 1 bitstreams. None of these needs a hardware change. Every item here was seen on the board or in the board-top simulation; each says which.
+> **Status: DONE in simulation.** Items 1 to 4 are fixed in the programs and checked by the `fixes` case of `demo_tests/run_demos.py`; item 5 is done for `demo_tests/README.md`. Open: rerun on the board, and `quick_look/3_testing_on_nexys4.md`. None of these needed a hardware change. Every item here was seen on the board or in the board-top simulation; each says which.
 
 All the demo programs are in `demo_tests/programs/` unless stated otherwise. After a change, rebuild the images (`python3 demo_tests/run_demos.py --board`), rerun the simulation (`python3 demo_tests/run_demos.py`), and either rebuild the 64 KB bitstream or swap the new images into the existing one with `updatemem` (see `hw_changes.md`, item 12).
 

@@ -30,6 +30,15 @@
 module noc_mesh #(
     parameter [4*`NOC_NUM_TILES-1:0] LINK_FAULT_MASK = {4*`NOC_NUM_TILES{1'b0}},
     parameter integer LINK_FAULT_MODE = 1,
+    parameter integer LINK_FAULT_BIT  = 0,      // link_buffer FBIT (modes 3 to 5)
+    parameter [0:0]   LINK_FAULT_VAL  = 1'b0,   // link_buffer FVAL
+    // one stuck wire on one router output, for the fault-coverage campaign:
+    // router RT_FAULT_TILE, output RT_FAULT_PORT, flit bit RT_FAULT_BIT
+    // (-1 = the output's valid wire) stuck at RT_FAULT_VAL. -1 = none.
+    parameter integer RT_FAULT_TILE   = -1,
+    parameter integer RT_FAULT_PORT   = 0,
+    parameter integer RT_FAULT_BIT    = 0,
+    parameter [0:0]   RT_FAULT_VAL    = 1'b0,
     parameter integer LB_DEPTH        = `NOC_LB_DEPTH,
     parameter integer WD_PRESCALE_W   = 2,
     parameter integer WD_LOCK_LIMIT   = 8,
@@ -108,9 +117,15 @@ module noc_mesh #(
 
                 // fault injection sits between the router and its BIST node, so the
                 // self-test sees what a broken router would send
-                wire [5*FW-1:0] ro_flit;
-                assign rr_out_flit[ID*5*FW +: 5*FW] =
-                    ro_flit ^ (fault_router[ID] ? ({{(5*FW-1){1'b0}}, 1'b1} << (PL*FW)) : {5*FW{1'b0}});
+                wire [5*FW-1:0] ro_flit, ro_flip;
+                wire [4:0]      ro_valid;
+                assign ro_flip = ro_flit ^ (fault_router[ID] ? ({{(5*FW-1){1'b0}}, 1'b1} << (PL*FW)) : {5*FW{1'b0}});
+                localparam STUCK_D = (RT_FAULT_TILE == ID) && (RT_FAULT_BIT >= 0);
+                localparam STUCK_V = (RT_FAULT_TILE == ID) && (RT_FAULT_BIT < 0);
+                localparam [5*FW-1:0] SMASK = STUCK_D ? ({{(5*FW-1){1'b0}}, 1'b1} << (RT_FAULT_PORT*FW + RT_FAULT_BIT)) : {5*FW{1'b0}};
+                localparam [4:0]      VMASK = STUCK_V ? (5'b1 << RT_FAULT_PORT) : 5'b0;
+                assign rr_out_flit[ID*5*FW +: 5*FW] = (ro_flip & ~SMASK) | (RT_FAULT_VAL ? SMASK : {5*FW{1'b0}});
+                assign rr_out_valid[ID*5 +: 5]      = (ro_valid & ~VMASK) | (RT_FAULT_VAL ? VMASK : 5'b0);
 
                 noc_router #(
                     .MY_X(gx), .MY_Y(gy), .PORT_EXISTS(PORTS),
@@ -122,7 +137,7 @@ module noc_mesh #(
                     .in_valid (rr_in_valid [ID*5 +: 5]),
                     .in_ready (rr_in_ready [ID*5 +: 5]),
                     .in_flit  (rr_in_flit  [ID*5*FW +: 5*FW]),
-                    .out_valid(rr_out_valid[ID*5 +: 5]),
+                    .out_valid(ro_valid),
                     .out_ready(rr_out_ready[ID*5 +: 5]),
                     .out_room (rr_out_room [ID*5 +: 5]),
                     .out_flit (ro_flit),
@@ -177,7 +192,8 @@ module noc_mesh #(
 
                     if (HAS) begin : g_link
                         // our output gd -> neighbour's input OPP
-                        link_buffer #(.DEPTH(LB_DEPTH), .FAULT(FLT)) u_lb (
+                        link_buffer #(.DEPTH(LB_DEPTH), .FAULT(FLT), .FBIT(LINK_FAULT_BIT),
+                                      .FVAL(LINK_FAULT_VAL)) u_lb (
                             .clk(clk), .rst_n(rst_n),
                             .rt_silent(fault_rt_mask[ID*4+gd] && !fault_rt_flip),
                             .rt_flip  (fault_rt_mask[ID*4+gd] &&  fault_rt_flip),

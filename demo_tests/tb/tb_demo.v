@@ -8,6 +8,11 @@
 //     +fault=<hex>       link mask (bit tile*4 + direction), silent links
 //     +fault_at=<cycle>  cycle (after the cores start) at which the fault appears;
 //                        0 = from reset, so the start-up BIST sees it
+//     +frt=<hex>         routers broken inside (bit t = router t), from reset
+//     +rerun=1           CPU_RESET test: run once healthy until +need is met,
+//                        then apply +fault / +frt and reset again WITHOUT
+//                        reloading tile memory, as the board's CPU_RESET does,
+//                        and report the second run
 // Prints   ST <core> <cycle> <status>   at every change of a status CSR, then
 //   DEMO cycles=<n> st0=<..> st1=<..> st2=<..> trap=<bits> err=<NI flags of tiles 0..2> gw=<gateway flags>
 
@@ -21,6 +26,7 @@ module tb_demo;
     always #5 clk = ~clk;
 
     reg  [4*NT-1:0]  fault = 0, fault_now = 0;
+    reg  [NT-1:0]    frt = 0, frt_now = 0;
     wire [NT-1:0]    tile_trap;
     wire [NT*5-1:0]  tile_err;
     wire [NT*32-1:0] tile_sw;
@@ -40,7 +46,7 @@ module tb_demo;
         .tile_trap(tile_trap), .tile_err(tile_err), .tile_sw(tile_sw),
         .port_disable({NT*5{1'b0}}), .err_clear(1'b0),
         .rt_in_err(), .rt_out_dead(), .rt_out_wd(), .rt_drop_cnt(),
-        .fault_rt_mask(fault_now), .fault_rt_flip(1'b0), .fault_router({`NOC_NUM_TILES{1'b0}}),
+        .fault_rt_mask(fault_now), .fault_rt_flip(1'b0), .fault_router(frt_now),
         .bist_status(), .sys_ready(sys_ready), .avail(), .gw_flags(gw_flags), .gw_info(),
         .gw_axil_awaddr(awaddr), .gw_axil_awvalid(awvalid), .gw_axil_awready(awready),
         .gw_axil_wdata(wdata), .gw_axil_wstrb(wstrb), .gw_axil_wvalid(wvalid), .gw_axil_wready(wready),
@@ -70,12 +76,38 @@ module tb_demo;
     reg [8*256-1:0] img;
     reg [NT*32-1:0] sw_q;
     reg [2:0]       need = 3'b000, fin;
-    integer limit, fault_at, cyc, t;
+    integer limit, fault_at, cyc, t, rerun;
+
+    // run the cores from a reset until +need is met or the limit
+    task run_once;
+        input integer late_fault;            // apply `fault` at cycle fault_at
+        begin
+            rst_n = 0;
+            repeat (4) @(posedge clk);
+            rst_n = 1;
+            while (!sys_ready) @(posedge clk);
+            cyc = 0; fin = 3'b0; sw_q = {NT*32{1'b0}};
+            while (cyc < limit && !(need != 0 && (fin & need) == need)) begin
+                @(posedge clk);
+                cyc = cyc + 1;
+                if (late_fault && fault_at != 0 && cyc == fault_at) fault_now = fault;
+                for (t = 0; t < 3; t = t + 1) begin
+                    if (tile_sw[t*32 +: 32] !== sw_q[t*32 +: 32])
+                        $display("ST %0d %0d %h", t, cyc, tile_sw[t*32 +: 32]);
+                    fin[t] = tile_trap[t] || tile_sw[t*32 + 16 +: 16] === 16'h600D ||
+                             tile_sw[t*32 + 16 +: 16] === 16'hFA11;
+                end
+                sw_q = tile_sw;
+            end
+        end
+    endtask
 
     initial begin
         if (!$value$plusargs("limit=%d", limit)) limit = 200000;
         if (!$value$plusargs("fault_at=%d", fault_at)) fault_at = 0;
+        if (!$value$plusargs("rerun=%d", rerun)) rerun = 0;
         if ($value$plusargs("fault=%h", fault)) ;
+        if ($value$plusargs("frt=%h", frt)) ;
         if ($value$plusargs("need=%d", need)) ;
         for (t = 0; t < (1 << (`NOC_OFFSET_BITS - 2)); t = t + 1) begin
             dut.g_tile[0].g_ni.u_ni.mem[t] = 32'b0;
@@ -85,22 +117,16 @@ module tb_demo;
         if ($value$plusargs("img0=%s", img)) $readmemh(img, dut.g_tile[0].g_ni.u_ni.mem);
         if ($value$plusargs("img1=%s", img)) $readmemh(img, dut.g_tile[1].g_ni.u_ni.mem);
         if ($value$plusargs("img2=%s", img)) $readmemh(img, dut.g_tile[2].g_ni.u_ni.mem);
-        if (fault_at == 0) fault_now = fault;
-        repeat (4) @(posedge clk);
-        rst_n = 1;
-        while (!sys_ready) @(posedge clk);
-        cyc = 0; fin = 3'b0; sw_q = {NT*32{1'b0}};
-        while (cyc < limit && !(need != 0 && (fin & need) == need)) begin
-            @(posedge clk);
-            cyc = cyc + 1;
-            if (fault_at != 0 && cyc == fault_at) fault_now = fault;
-            for (t = 0; t < 3; t = t + 1) begin
-                if (tile_sw[t*32 +: 32] !== sw_q[t*32 +: 32])
-                    $display("ST %0d %0d %h", t, cyc, tile_sw[t*32 +: 32]);
-                fin[t] = tile_trap[t] || tile_sw[t*32 + 16 +: 16] === 16'h600D ||
-                         tile_sw[t*32 + 16 +: 16] === 16'hFA11;
-            end
-            sw_q = tile_sw;
+        if (rerun) begin
+            run_once(0);                                 // healthy first run
+            $display("RUN1 cycles=%0d st0=%h st1=%h st2=%h", cyc, tile_sw[0 +: 32], tile_sw[32 +: 32], tile_sw[64 +: 32]);
+            fault_now = (fault_at == 0) ? fault : 0;     // then CPU_RESET with the fault set
+            frt_now   = frt;
+            run_once(1);
+        end else begin
+            fault_now = (fault_at == 0) ? fault : 0;
+            frt_now   = frt;
+            run_once(1);
         end
         $display("DEMO cycles=%0d st0=%h st1=%h st2=%h trap=%b err=%h gw=%b",
                  cyc, tile_sw[0 +: 32], tile_sw[32 +: 32], tile_sw[64 +: 32], tile_trap[2:0],

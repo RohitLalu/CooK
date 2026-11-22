@@ -9,6 +9,7 @@
 # Output in cook_vivado/out/:
 #   cook_gw<G>.bit                     the bitstream (program.tcl loads it)
 #   timing_gw<G>.rpt, util_gw<G>.rpt   timing summary and utilisation
+#   util_hier_gw<G>.rpt                utilisation per module (BIST overhead)
 #   drc_gw<G>.rpt
 # Stops with an error when synthesis or implementation fails, or when setup
 # (WNS) or hold (WHS) slack is negative: a bitstream that misses timing is
@@ -50,6 +51,8 @@ if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {
 open_run impl_1
 report_timing_summary -max_paths 20 -file [file join $out timing_gw$gw.rpt]
 report_utilization                  -file [file join $out util_gw$gw.rpt]
+# per module, for the BIST overhead in the paper (benchmarks/overhead_from_vivado.py)
+report_utilization -hierarchical -hierarchical_depth 8 -file [file join $out util_hier_gw$gw.rpt]
 report_drc                          -file [file join $out drc_gw$gw.rpt]
 
 set wns [get_property SLACK [get_timing_paths -delay_type max]]

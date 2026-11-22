@@ -1,6 +1,6 @@
 // axi4_mem_model.v
 // Behavioural AXI4 slave memory standing in for the DDR2 controller (MIG) in
-// simulation. Single-beat transfers only, which is all sb_mem_ni issues.
+// simulation. Single-beat transfers only, which is all sb_top issues.
 // The index wraps modulo MEM_WORDS, so any DDR address lands somewhere.
 // LAT = cycles between accepting an address and answering, to model a
 // controller that is slower than the bus. An address at or above ERR_ADDR
